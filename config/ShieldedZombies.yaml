@@ -1,0 +1,8 @@
+# The chance of a zombie spawning with a shield in hand: 0.015 means 1.5%
+normalSpawnChance: 0.03
+# The chance of a zombie spawning with a shield in hand if game difficulty is HARD: 0.03 means 3%
+hardSpawnChance: 0.03
+# Determines how long the zombie can hold the blocking stance; the default is 3 seconds
+blockDuration: 3
+# Specifies the minimum cooldown time between shield activations
+shieldCooldown: 10
