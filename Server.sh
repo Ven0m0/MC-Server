@@ -1,5 +1,7 @@
 #!/bin/bash
 
+powerprofilesctl set performance
+
 # Start playit in a new Konsole window and detach immediately
 konsole --noclose -e playit &
 sleep 5
