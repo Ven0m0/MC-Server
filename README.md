@@ -2,9 +2,9 @@
 
 - [fabric](https://fabricmc.net/use/server)
 
--[geyser](https://geysermc.org)
+- [geyser](https://geysermc.org)
 
--[playit.gg](https://playit.gg)
+- [playit.gg](https://playit.gg)
 
 ## Compress the java files and their contents for reducingload times
 
