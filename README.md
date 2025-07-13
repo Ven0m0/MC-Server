@@ -6,6 +6,9 @@ https://geysermc.org/
 
 https://playit.gg/
 
+## Compress the java files and their contents for reducingload times
+
+[mc-repack](https://crates.io/crates/mc-repack)
 
 https://github.com/krusic22/Potato-Scripts
 
