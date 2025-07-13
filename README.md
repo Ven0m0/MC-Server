@@ -1,10 +1,10 @@
 # MC-Server
 
-https://fabricmc.net/use/server/
+- [fabric](https://fabricmc.net/use/server)
 
-https://geysermc.org/
+-[geyser](https://geysermc.org)
 
-https://playit.gg/
+-[playit.gg](https://playit.gg)
 
 ## Compress the java files and their contents for reducingload times
 
