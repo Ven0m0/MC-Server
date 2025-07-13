@@ -10,7 +10,7 @@
 
 - [mc-repack](https://crates.io/crates/mc-repack)
 
-https://github.com/krusic22/Potato-Scripts
+- https://github.com/krusic22/Potato-Scripts
 
 ### auto download and update mods for your server
 
