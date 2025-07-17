@@ -1,6 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
+hash -r
+hash mkdir cat curl rm mc-repack
+
 echo "[*] Starting Minecraft mod and GeyserConnect update..."
 
 # ─── Update mc-repack.toml config using sd ─────────────────────────────────────
@@ -58,7 +61,7 @@ mc-repack jars -c "$config" --in "$mods_src" --out "$mods_dst"
 
 # ─── Download GeyserConnect ────────────────────────────────────────────────────
 echo "[*] Downloading latest GeyserConnect..."
-curlopts=(-fsSL -Z --parallel-immediate --ca-native --compressed --compressed-ssh --http3 --http2)
+curlopts=(-fsSL -Z --parallel-immediate --compressed --http3)
 
 URL="https://download.geysermc.org/v2/projects/geyserconnect/versions/latest/builds/latest/downloads/geyserconnect"
 dest_dir="$HOME/Documents/MC/Minecraft/config/Geyser-Fabric/extensions"
