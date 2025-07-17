@@ -17,3 +17,5 @@
 - [ferium](https://github.com/gorilla-devs/ferium)
 
 - [minecetch](https://github.com/KirillkoTankisto/minefetch)
+
+https://github.com/Quozul/minecraft_world_trimmer
