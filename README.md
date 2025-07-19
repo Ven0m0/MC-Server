@@ -10,6 +10,10 @@
 
 - [mc-repack](https://crates.io/crates/mc-repack)
 
+- [PackSquash](https://github.com/ComunidadAylas/PackSquash)
+
+- [World trimmer](https://github.com/Quozul/minecraft_world_trimmer)
+
 - https://github.com/krusic22/Potato-Scripts
 
 ### auto download and update mods for your server
@@ -18,4 +22,4 @@
 
 - [minecetch](https://github.com/KirillkoTankisto/minefetch)
 
-https://github.com/Quozul/minecraft_world_trimmer
+
