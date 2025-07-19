@@ -6,6 +6,12 @@
 
 - [playit.gg](https://playit.gg)
 
+## Server management
+
+- [mcv-cli](https://crates.io/crates/mcvcli)
+
+-[Anvil-mc](https://crates.io/crates/anvil-mc)
+
 ## Compress the java files and their contents for reducingload times
 
 - [mc-repack](https://crates.io/crates/mc-repack)
