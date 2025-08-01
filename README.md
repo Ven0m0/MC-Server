@@ -29,3 +29,8 @@
 - [minecetch](https://github.com/KirillkoTankisto/minefetch)
 
 
+### Other
+
+- [Linux game server manager](https://linuxgsm.com) [Github](https://github.com/GameServerManagers/LinuxGSM)
+
+- [Auto mcs](https://www.auto-mcs.com)
