@@ -12,7 +12,7 @@
 
 - [Anvil-mc](https://crates.io/crates/anvil-mc)
 
-## Compress the java files and their contents for reducingload times
+## Compress the java files and their contents for reducing load times
 
 - [mc-repack](https://crates.io/crates/mc-repack)
 
@@ -31,6 +31,6 @@
 
 ### Other
 
-- [Linux game server manager](https://linuxgsm.com) [Github](https://github.com/GameServerManagers/LinuxGSM)
+- [Linux game server manager](https://linuxgsm.com) &nbsp;-[Github](https://github.com/GameServerManagers/LinuxGSM)
 
 - [Auto mcs](https://www.auto-mcs.com)
