@@ -28,6 +28,12 @@
 
 - [minecetch](https://github.com/KirillkoTankisto/minefetch)
 
+- [automc](https://crates.io/crates/automc)
+
+
+### Proxy / Hosting
+
+- [Infrarust](https://infrarust.dev/) [Cargo](https://crates.io/crates/infrarust)
 
 ### Other
 
