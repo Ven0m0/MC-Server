@@ -1,10 +1,10 @@
 # MC-Server
 
-- [fabric](https://fabricmc.net/use/server)
+- [Fabric](https://fabricmc.net/use/server)
 
-- [geyser](https://geysermc.org)
+- [Geyser](https://geysermc.org)
 
-- [playit.gg](https://playit.gg)
+- [Playit.gg](https://playit.gg)
 
 ## Server management
 
@@ -14,7 +14,7 @@
 
 ## Compress the java files and their contents for reducing load times
 
-- [mc-repack](https://crates.io/crates/mc-repack)
+- [Mc-repack](https://crates.io/crates/mc-repack)
 
 - [PackSquash](https://github.com/ComunidadAylas/PackSquash)
 
