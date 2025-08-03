@@ -1,8 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-hash -r
-hash mkdir cat curl rm mc-repack
+echo eula=true >eula.txt
 
 echo "[*] Starting Minecraft mod and GeyserConnect update..."
 
