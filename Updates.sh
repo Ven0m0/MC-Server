@@ -1,9 +1,20 @@
 #!/bin/bash
-set -euo pipefail
+set -euo pipefail; IFS=$'\n\t'
+LC_COLLATE=C LC_CTYPE=C LANG=C.UTF-8
+shopt -s nullglob globstar
+
+WORKDIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]:-}")" && pwd)"
+cd $WORKDIR
 
 echo eula=true >eula.txt
 
 echo "[*] Starting Minecraft mod and GeyserConnect update..."
+
+echo "Taking ownership of all server files/folders in dirname/minecraft..."
+sudo chown -R "$(id -un):$(id -gn)" $WORKDIR/world
+sudo chmod -R 755 $WORKDIR/*.sh
+
+echo "Complete"
 
 # ─── Update mc-repack.toml config using sd ─────────────────────────────────────
 config="$HOME/mc-repack.toml"
