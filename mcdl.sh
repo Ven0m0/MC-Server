@@ -6,6 +6,13 @@ set -euo pipefail
 # LOADER        : override to pin a Fabric Loader version (e.g. "0.16.14")
 # STABLE_LOADER : "true" (default) to pick newest stable loader; "false" for absolute newest
 
+available_versions=$(curl -s https://meta.fabricmc.net/v2/versions/game | jq -r '.[] | select( .stable == true ) | .version')
+server_version="$output"
+loader_version=$(curl -s https://meta.fabricmc.net/v2/versions/loader/$server_version | jq -r 'first( .[] | .loader | .version )')
+installer_verison=$(curl -s https://meta.fabricmc.net/v2/versions/installer | jq -r 'first( .[] | .version )')
+server_jar="fabric-server-mc.$server_version-loader.$loader_version-launcher.$installer_verison.jar"
+wget -O "$server_jar" "https://meta.fabricmc.net/v2/versions/loader/$server_version/$loader_version/$installer_verison/server/jar" || exit 1
+
 # 1. Resolve MC (latest non-snapshot) unless $MC is set
 MC="${MC:-$(
   curl -s https://meta.fabricmc.net/v2/versions/game \
