@@ -13,17 +13,14 @@ installer_verison=$(curl -s https://meta.fabricmc.net/v2/versions/installer | jq
 server_jar="fabric-server-mc.$server_version-loader.$loader_version-launcher.$installer_verison.jar"
 wget -O "$server_jar" "https://meta.fabricmc.net/v2/versions/loader/$server_version/$loader_version/$installer_verison/server/jar" || exit 1
 
-# 1. Resolve MC (latest non-snapshot) unless $MC is set
-MC="${MC:-$(
-  curl -s https://meta.fabricmc.net/v2/versions/game \
-    | jq -r '.[] 
-        | select(.version|test("^[0-9]+\\.[0-9]+(\\.[0-9]+)?$")) 
-        | .version' \
-    | head -n1
-)}"
+# Done
+MC_VERSION=$(curl -sSL https://meta.fabricmc.net/v2/versions/game | jq -r '.[] | select(.stable== true )|.version' | head -n1)
+FABRIC_VERSION=$(curl -sSL https://meta.fabricmc.net/v2/versions/installer | jq -r '.[0].version')
+wget -O fabric-installer.jar https://maven.fabricmc.net/net/fabricmc/fabric-installer/$FABRIC_VERSION/fabric-installer-$FABRIC_VERSION.jar
+java -jar fabric-installer.jar server -mcversion $MC_VERSION -downloadMinecraft
 
 # 2. Resolve Loader version
-if [ "${STABLE_LOADER:-true}" = "true" ]; then
+if [[ ${STABLE_LOADER:-true} = true ]]; then
   LOADER="${LOADER:-$(
     curl -s https://meta.fabricmc.net/v2/versions/loader \
       | jq -r '.[] 
