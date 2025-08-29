@@ -12,6 +12,8 @@
 
 - [Anvil-mc](https://crates.io/crates/anvil-mc)
 
+- [mcsctl](https://github.com/Hetsh/mcsctl)
+
 ## Compress the java files and their contents for reducing load times
 
 - [Mc-repack](https://crates.io/crates/mc-repack)
