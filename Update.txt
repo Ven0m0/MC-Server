@@ -1,4 +1,5 @@
 https://github.com/K4zoku/StartupScripts
+https://github.com/HSGamer/StartupScripts
 
 ferium scan
 sleep 5
