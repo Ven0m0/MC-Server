@@ -42,3 +42,7 @@
 - [Linux game server manager](https://linuxgsm.com) &nbsp;-[Github](https://github.com/GameServerManagers/LinuxGSM)
 
 - [Auto mcs](https://www.auto-mcs.com)
+
+### TODO:
+
+https://github.com/Botspot/pi-apps/blob/master/apps/Minecraft%20Java%20Server/install
