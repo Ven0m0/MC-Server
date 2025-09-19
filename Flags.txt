@@ -1,0 +1,5 @@
+Graalvm:
+
+-Djdk.graal.CompilerConfiguration=enterprise
+-Djdk.graal.OptDuplication=true
+-Djdk.graal.TuneInlinerExploration=1
