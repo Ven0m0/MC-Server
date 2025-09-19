@@ -14,10 +14,11 @@ G1:
 -XX:+ParallelRefProcEnabled
 -XX:+G1PeriodicGCInvokesConcurrent
 -XX:+DisableExplicitGC
--XX:UseCompressedOops
--XX:UseCompressedClassesPointers
+-XX:+UseCompressedOops
+-XX:+UseCompressedClassesPointers
 -XX:+UseCompactObjectHeaders
--XX:CompressedClassSpaceSize
+-XX:+CompressedClassSpaceSize
+-XX:+CompactStrings
 
 echo madvise | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
 
