@@ -9,6 +9,17 @@ G1:
 -XX:+UseStringDeduplication
 -XX:+AlwaysPreTouch
 -Xlog:async
--XX:+UseLargePages
+-XX:+UseLargePages 
+-XX:+UseTransparentHugePages
 -XX:+ParallelRefProcEnabled
+-XX:+G1PeriodicGCInvokesConcurrent
+-XX:+DisableExplicitGC
+-XX:UseCompressedOops
+-XX:UseCompressedClassesPointers
+-XX:+UseCompactObjectHeaders
+-XX:CompressedClassSpaceSize
+
+echo madvise | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
+
+echo advise | sudo tee/sys/kernel/mm/transparent_hugepage/shmem_enabled
 
