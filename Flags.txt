@@ -1,8 +1,11 @@
 Graalvm:
-
+https://www.graalvm.org/latest/reference-manual/compiler/operations/
 -Djdk.graal.CompilerConfiguration=enterprise
 -Djdk.graal.OptDuplication=true
 -Djdk.graal.TuneInlinerExploration=1
+-XX:+UseJVMCICompiler
+
+-XX:+UseGraalJIT
 
 https://docs.oracle.com/en/java/javase/25/gctuning/garbage-first-garbage-collector-tuning.html
 G1:
@@ -19,6 +22,7 @@ G1:
 -XX:+UseCompactObjectHeaders
 -XX:+CompressedClassSpaceSize
 -XX:+CompactStrings
+-XX:+TieredCompilation
 
 echo madvise | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
 
