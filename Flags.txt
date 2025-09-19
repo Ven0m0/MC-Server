@@ -6,3 +6,4 @@ Graalvm:
 
 G1:
 -XX:+UseStringDeduplication
+-XX:+AlwaysPreTouch
