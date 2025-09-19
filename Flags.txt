@@ -4,6 +4,11 @@ Graalvm:
 -Djdk.graal.OptDuplication=true
 -Djdk.graal.TuneInlinerExploration=1
 
+https://docs.oracle.com/en/java/javase/25/gctuning/garbage-first-garbage-collector-tuning.html
 G1:
 -XX:+UseStringDeduplication
 -XX:+AlwaysPreTouch
+-Xlog:async
+-XX:+UseLargePages
+-XX:+ParallelRefProcEnabled
+
