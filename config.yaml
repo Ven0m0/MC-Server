@@ -1,0 +1,58 @@
+# Basic Configuration
+bind: "0.0.0.0:25565"           # Address to bind the proxy to
+keepAliveTimeout: 30s           # Connection keepalive timeout
+domains: ["example.com"]        # Default domains (optional)
+addresses: ["localhost:25566"]  # Default target addresses (optional)
+
+sendProxyProtocol: false    # Enable PROXY protocol support
+proxy_protocol_version: 2   # PROXY protocol version to use (1 or 2)
+proxyMode: "passthrough"    # Proxy mode (passthrough/client_only/offline/server_only)
+
+# File Provider Configuration
+file_provider:
+  proxies_path: ["./proxies"]   # Path to proxy configurations
+  file_type: "yaml"             # File type (currently only yaml supported)
+  watch: true                   # Enable hot-reload of configurations
+
+# Docker Provider Configuration
+docker_provider:
+  docker_host: "unix:///var/run/docker.sock"  # Docker daemon socket
+  label_prefix: "infrarust"                   # Label prefix for containers
+  polling_interval: 10                        # Polling interval in seconds
+  watch: true                                 # Watch for container changes
+  default_domains: []                         # Default domains for containers
+
+# Cache Configuration
+cache:
+  status_ttl_seconds: 30        # TTL for status cache entries
+  max_status_entries: 1000      # Maximum number of status cache entries
+
+# Telemetry Configuration
+telemetry:
+  enabled: false               # Enable telemetry collection
+  export_interval_seconds: 30  # Export interval
+  export_url: "http://..."     # Export destination (optional)
+  enable_metrics: false        # Enable metrics collection
+  enable_tracing: false        # Enable distributed tracing
+
+# Logging Configuration
+logging:
+  use_color: true              # Use colors in console output
+  use_icons: true              # Use icons in console output
+  show_timestamp: true         # Show timestamps in logs
+  time_format: "%Y-%m-%d %H:%M:%S%.3f"  # Timestamp format
+  show_target: false           # Show log target
+  show_fields: false           # Show log fields
+  template: "{timestamp} {level}: {message}"  # Log template
+  field_prefixes: {}           # Field prefix mappings
+
+# Default MOTD Configuration
+motds:
+  unknown:                    # MOTD for unknown servers
+    version: "1.20.1"        # Minecraft version to display
+    max_players: 100         # Maximum players to show
+    online_players: 0        # Online players to show
+    text: "Unknown server" # Server description
+    favicon: "data:image/png;base64,..." # Server icon (optional)
+  unreachable:              # MOTD for unreachable servers
+    # Same options as 'unknown'
