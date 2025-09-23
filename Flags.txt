@@ -28,3 +28,57 @@ echo madvise | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
 
 echo advise | sudo tee/sys/kernel/mm/transparent_hugepage/shmem_enabled
 
+
+
+-XX:+TrustFinalNonStaticFields -XX:+UseFastUnorderedTimeStamps --illegal-access=permit -XX:+UseTransparentHugePages -XX:LargePageSizeInBytes=2M -XX:+UseLargePages -XX:+UseCMoveUnconditionally -XX:+UseNewLongLShift -XX:+UseVectorCmov -XX:+UseXmmI2D -XX:+UseXmmI2F
+
+# JDK tweaks: graal
+-XX:+UnlockExperimentalVMOptions
+-XX:+UseJVMCICompiler
+
+-XX:+TieredStopAtLevel=4   # Tiered compilation stops at level 4 (highest optimization)
+-XX:+AggressiveOpts         # Experimental optimizations
+-XX:+OptimizeStringConcat   # String concatenation optimization
+
+-XX:+UseG1GC              # Good balance throughput / latency
+-XX:MaxGCPauseMillis=50   # Tune target pause
+-XX:InitiatingHeapOccupancyPercent=30
+-XX:ParallelGCThreads=8
+-XX:+UseStringDeduplication
+-XX:ConcGCThreads=4
+-Xms12G -Xmx12G
+-XX:CompileThreshold=500
+
+
+# Eclipse Temurin:
+-XX:+UseG1GC
+-XX:MaxGCPauseMillis=50
+-XX:+UseStringDeduplication
+-XX:ParallelGCThreads=8
+-XX:ConcGCThreads=4
+-XX:+TieredCompilation
+-XX:+AggressiveOpts
+-XX:CompileThreshold=1000    # Lower threshold for faster hotspot compilation
+-XX:MaxInlineSize=32
+
+-XX:+OptimizeStringConcat
+
+-Xshare:dump
+-Xshare:on
+
+-Dfile.encoding=UTF-8
+
+
+Disable verbose GC logs: 
+-Xlog:gc*:file=/dev/null -Xlog:safepoint*:file=/dev/null
+Disable assertions:
+-da
+
+paru -S graalvm-ce-java21-bin
+paru -S temurin17-jdk
+
+export JAVA_GRAALVM=/usr/lib/graalvm-ce-java21
+export JAVA_TEMURIN=/usr/lib/jvm/temurin-17
+alias use-graalvm='export JAVA_HOME=$JAVA_GRAALVM && export PATH=$JAVA_HOME/bin:$PATH'
+alias use-temurin='export JAVA_HOME=$JAVA_TEMURIN && export PATH=$JAVA_HOME/bin:$PATH'
+
