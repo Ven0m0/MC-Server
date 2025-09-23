@@ -45,4 +45,6 @@
 
 ### TODO:
 
-https://github.com/Botspot/pi-apps/blob/master/apps/Minecraft%20Java%20Server/install
+- https://github.com/Botspot/pi-apps/blob/master/apps/Minecraft%20Java%20Server/install
+
+- https://medium.com/graalvm/native-minecraft-servers-with-graalvm-native-image-1a3f6a92eb48
