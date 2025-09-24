@@ -22,6 +22,8 @@
 
 - [World trimmer](https://github.com/Quozul/minecraft_world_trimmer)
 
+- [GraalVM native image as server jdk](https://github.com/hpi-swa/native-minecraft-server)
+
 - https://github.com/krusic22/Potato-Scripts
 
 ### auto download and update mods for your server
@@ -47,4 +49,3 @@
 
 - https://github.com/Botspot/pi-apps/blob/master/apps/Minecraft%20Java%20Server/install
 
-- https://medium.com/graalvm/native-minecraft-servers-with-graalvm-native-image-1a3f6a92eb48
