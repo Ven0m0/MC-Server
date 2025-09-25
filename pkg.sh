@@ -1,5 +1,5 @@
 #!/bin/bash
 
-sudo pacman -S --noconfirm ferium
+paru --noconfirm -S ferium jdk24-graalvm-ee-bin
 sleep 1
-paru -S --noconfirm jdk24-graalvm-ee-bin
+paru --noconfirm -S  
