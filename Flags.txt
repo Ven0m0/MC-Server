@@ -25,15 +25,63 @@ G1:
 -XX:+CompressedClassSpaceSize
 -XX:+CompactStrings
 -XX:+TieredCompilation
+-XX:+ExplicitGCInvokesConcurrent
+-XX:+UseStringDeduplication -XX:StringDeduplicationAgeThreshold=2 vs 3
+
+-XX:+UseLargePages 
+-XX:+UseTransparentHugePages
+vs
+-XX:+UseLargePages 
+echo 4096 | sudo tee /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
 
 echo madvise | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
 
 echo advise | sudo tee/sys/kernel/mm/transparent_hugepage/shmem_enabled
 
+-XX:AllocatePrefetchInstr=2
+
+-XX:AllocatePrefetchStyle=2 vs -XX:AllocatePrefetchStyle=3
+-XX:CICompilerCount="$(nproc)" vs -XX:CICompilerCount="$(nproc --ignore=1)"
+-XX:AllocatePrefetchStepSize
+-XX:AllocatePrefetchLines
+-XX:AllocatePrefetchDistance
+-XX:AllocateInstancePrefetchLines
+-XX:CompileThresholdScaling
+-XX:-DoEscapeAnalysis
+-XX:+BackgroundCompilation
+-XX:InlineSmallCode=1000 vs -XX:InlineSmallCode=2000
+-XX:FreqInlineSize
+-XX:MaxInlineSize
+-XX:C1MaxInlineSize
+-XX:MaxTrivialSize
+-XX:C1MaxTrivialSize
+-XX:MaxNodeLimit
+-XX:NonNMethodCodeHeapSize
+-XX:NonProfiledCodeHeapSize
+-XX:+TieredCompilation
+-XX:+SegmentedCodeCache
+-XX:ReservedCodeCacheSize
+-XX:+UseFMA
+-XX:+UseAESIntrinsics -XX:+UseAESCTRIntrinsics
+-XX:+UseSHA -XX:+UseSHA1Intrinsics -XX:-UseSHA256Intrinsics -XX:-UseSHA512Intrinsics
+-XX:+UseCMoveUnconditionally -XX:+UseCondCardMark
+-XX:LoopStripMiningIter=1000 vs 1500
+-XX:+DisableAttachMechanism
+-XX:-UsePerfData
+-XX:+AggressiveHeap
+-XX:+AlwaysPreTouch
+-XX:+DisableExplicitGC
+-XX:MaxHeapFreeRatio=10 -XX:MinHeapFreeRatio=5
+-XX:ParallelGCThreads="$(nproc --ignore=1)" vs -XX:ParallelGCThreads="$(nproc)"
+-Xlog:disable vs -Xlog:async
+-XX:+UseNUMA
+-XX:+ParallelRefProcEnabled
+-XX:+UseG1GC vs -XX:+UseParallelGC vs -XX:+UseZGC
 
 
 
-
+-XX:SharedArchiveFile -XX:SharedArchiveFile=<static_archive>:<dynamic_archive>
+-XX:AOTCache=cachefile -XX:AOTCacheOutput=cachefile -XX:AOTConfiguration=configfile
 
 
 -XX:+TrustFinalNonStaticFields -XX:+UseFastUnorderedTimeStamps --illegal-access=permit -XX:+UseTransparentHugePages -XX:LargePageSizeInBytes=2M -XX:+UseLargePages -XX:+UseCMoveUnconditionally -XX:+UseNewLongLShift -XX:+UseVectorCmov -XX:+UseXmmI2D -XX:+UseXmmI2F
