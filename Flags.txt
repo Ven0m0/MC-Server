@@ -1,3 +1,5 @@
+https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html#advanced-options-for-java
+
 Graalvm:
 https://www.graalvm.org/latest/reference-manual/compiler/operations/
 -Djdk.graal.CompilerConfiguration=enterprise
@@ -7,7 +9,8 @@ https://www.graalvm.org/latest/reference-manual/compiler/operations/
 -XX:+UseJVMCICompiler
 -XX:+UnlockExperimentalVMOptions
 -XX:+UseGraalJIT
-
+# maybe
+-Djdk.graal.OptimizeLongJumps=true
 
 https://docs.oracle.com/en/java/javase/25/gctuning/garbage-first-garbage-collector-tuning.html
 G1:
@@ -136,3 +139,11 @@ export JAVA_TEMURIN=/usr/lib/jvm/temurin-17
 alias use-graalvm='export JAVA_HOME=$JAVA_GRAALVM && export PATH=$JAVA_HOME/bin:$PATH'
 alias use-temurin='export JAVA_HOME=$JAVA_TEMURIN && export PATH=$JAVA_HOME/bin:$PATH'
 
+
+java -XX:ArchiveClassesAtExit=classes.jsa -cp server.jar 
+java -XX:SharedArchiveFile=classes.jsa -cp server.jar
+or
+java -XX:+AutoCreateSharedArchive -XX:SharedArchiveFile=classes.jsa -cp
+
+native-image -O3 -march=native --pgo-instrument
+native-image -O3 -march=native --pgo
