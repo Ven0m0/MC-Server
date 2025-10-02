@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # mc-launcher.sh: auto-tuned Minecraft JVM launcher
 
+# Use Transparent Huge Pages
+echo madvise | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
+
 # Detect CPU cores and RAM (in GB)
 CPU_CORES=$(nproc)
 TOTAL_RAM=$(awk '/MemTotal/ {printf "%.0f\n",$2/1024/1024}' /proc/meminfo)
