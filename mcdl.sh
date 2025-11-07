@@ -6,10 +6,17 @@ set -euo pipefail
 # LOADER        : override to pin a Fabric Loader version (e.g. "0.16.14")
 # STABLE_LOADER : "true" (default) to pick newest stable loader; "false" for absolute newest
 
+# Detect JSON processor: prefer jaq, fallback to jq
+if command -v jaq &>/dev/null; then
+  JSON_PROC="jaq"
+else
+  JSON_PROC="jq"
+fi
+
 # Cache API responses to avoid redundant aria2 calls
 echo "[*] Fetching Minecraft and Fabric versions..."
-MC_VERSION="${MC_VERSION:-$(aria2c -q -d /tmp -o - https://meta.fabricmc.net/v2/versions/game | jaq -r '.[] | select(.stable == true) | .version' | head -n1)}"
-FABRIC_VERSION=$(aria2c -q -d /tmp -o - https://meta.fabricmc.net/v2/versions/installer | jaq -r '.[0].version')
+MC_VERSION="${MC_VERSION:-$(aria2c -q -d /tmp -o - https://meta.fabricmc.net/v2/versions/game | $JSON_PROC -r '.[] | select(.stable == true) | .version' | head -n1)}"
+FABRIC_VERSION=$(aria2c -q -d /tmp -o - https://meta.fabricmc.net/v2/versions/installer | $JSON_PROC -r '.[0].version')
 
 echo "→ Minecraft version: $MC_VERSION"
 echo "→ Fabric installer version: $FABRIC_VERSION"
@@ -25,7 +32,7 @@ java -jar fabric-installer.jar server -mcversion "$MC_VERSION" -downloadMinecraf
 if [[ ${STABLE_LOADER:-true} = true ]]; then
   LOADER="${LOADER:-$(
     aria2c -q -d /tmp -o - https://meta.fabricmc.net/v2/versions/loader \
-      | jaq -r '.[] 
+      | $JSON_PROC -r '.[] 
           | select(.stable==true) 
           | .version' \
       | head -n1
@@ -33,14 +40,14 @@ if [[ ${STABLE_LOADER:-true} = true ]]; then
 else
   LOADER="${LOADER:-$(
     aria2c -q -d /tmp -o - https://meta.fabricmc.net/v2/versions/loader \
-      | jaq -r '.[0].version'
+      | $JSON_PROC -r '.[0].version'
   )}"
 fi
 
 # 3. Lookup matching intermediary (mappings) version
 INTERMEDIARY="$(
   aria2c -q -d /tmp -o - "https://meta.fabricmc.net/v2/versions/loader/${MC_VERSION}/${LOADER}" \
-    | jaq -r '.[0].intermediary'
+    | $JSON_PROC -r '.[0].intermediary'
 )"
 
 echo "→ Fabric Loader: $LOADER (stable filter: ${STABLE_LOADER:-true})"
