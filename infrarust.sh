@@ -1,3 +1,4 @@
+#!/bin/bash
 
 rustup update
 # From source

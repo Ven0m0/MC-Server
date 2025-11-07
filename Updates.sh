@@ -4,15 +4,15 @@ LC_COLLATE=C LC_CTYPE=C LANG=C.UTF-8
 shopt -s nullglob globstar
 
 WORKDIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]:-}")" && pwd)"
-cd $WORKDIR
+cd "$WORKDIR"
 
 echo eula=true >eula.txt
 
 echo "[*] Starting Minecraft mod and GeyserConnect update..."
 
 echo "Taking ownership of all server files/folders in dirname/minecraft..."
-sudo chown -R "$(id -un):$(id -gn)" $WORKDIR/world
-sudo chmod -R 755 $WORKDIR/*.sh
+sudo chown -R "$(id -un):$(id -gn)" "$WORKDIR/world"
+sudo chmod -R 755 "$WORKDIR"/*.sh
 
 echo "Complete"
 
@@ -71,7 +71,8 @@ mc-repack jars -c "$config" --in "$mods_src" --out "$mods_dst"
 
 # ─── Download GeyserConnect ────────────────────────────────────────────────────
 echo "[*] Downloading latest GeyserConnect..."
-curlopts=(-fsSL -Z --parallel-immediate --compressed --http3)
+# Define curl options once for reuse
+CURLOPTS=(-fsSL -Z --parallel-immediate --compressed --http3)
 
 URL="https://download.geysermc.org/v2/projects/geyserconnect/versions/latest/builds/latest/downloads/geyserconnect"
 dest_dir="$HOME/Documents/MC/Minecraft/config/Geyser-Fabric/extensions"
@@ -80,7 +81,7 @@ final_jar="$dest_dir/GeyserConnect.jar"
 
 mkdir -p "$dest_dir"
 
-if curl "${curlopts[@]}" -o "$tmp_jar" "$URL"; then
+if curl "${CURLOPTS[@]}" -o "$tmp_jar" "$URL"; then
     echo "[*] Download complete: $tmp_jar"
 else
     echo "[!] Failed to download GeyserConnect!" >&2
