@@ -2,13 +2,13 @@
 set -euo pipefail
 
 # ── Configurable environment vars ─────────────────────
-# MC            : override to pin a Minecraft version (e.g. "1.21.6")
+# MC_VERSION    : override to pin a Minecraft version (e.g. "1.21.6")
 # LOADER        : override to pin a Fabric Loader version (e.g. "0.16.14")
 # STABLE_LOADER : "true" (default) to pick newest stable loader; "false" for absolute newest
 
 # Cache API responses to avoid redundant curl calls
 echo "[*] Fetching Minecraft and Fabric versions..."
-MC_VERSION="${MC:-$(curl -sSL https://meta.fabricmc.net/v2/versions/game | jq -r '.[] | select(.stable == true) | .version' | head -n1)}"
+MC_VERSION="${MC_VERSION:-$(curl -sSL https://meta.fabricmc.net/v2/versions/game | jq -r '.[] | select(.stable == true) | .version' | head -n1)}"
 FABRIC_VERSION=$(curl -sSL https://meta.fabricmc.net/v2/versions/installer | jq -r '.[0].version')
 
 echo "→ Minecraft version: $MC_VERSION"
