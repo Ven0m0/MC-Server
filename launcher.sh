@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # mc-launcher.sh: auto-tuned Minecraft JVM launcher
 
-# Use Transparent Huge Pages
-echo madvise | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
+# Use Transparent Huge Pages (direct redirect is more efficient than echo pipe)
+sudo tee /sys/kernel/mm/transparent_hugepage/enabled >/dev/null <<< 'madvise'
 
 # Detect CPU cores and RAM (in GB)
 CPU_CORES=$(nproc)
