@@ -1,5 +1,6 @@
 #!/bin/bash
 
-paru --noconfirm -S ferium jdk24-graalvm-ee-bin
+paru --noconfirm --skipreview -Sq ferium jdk25-graalvm-bin
+sudo pacman --noconfirm -Sq ferium
 sleep 1
-paru --noconfirm -S  
+sudo pacman --noconfirm -Sq gamemode preload prelockd nohang memavaild adaptivemm uresourced
