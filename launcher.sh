@@ -4,9 +4,8 @@
 # Use Transparent Huge Pages (direct redirect is more efficient than echo pipe)
 sudo tee /sys/kernel/mm/transparent_hugepage/enabled >/dev/null <<< 'madvise'
 
-JAVA_FLAGS="
--XX:+UnlockExperimentalVMOptions
--XX:+UseCompactObjectHeaders -XX:+UseZGC
+JVM_FLAGS="
+-XX:+UseZGC
 
 "
 
@@ -27,15 +26,18 @@ case "$MC_JDK" in
     JAVA_CMD=${JAVA_GRAALVM:-/usr/lib/graalvm-ce-java21}/bin/java
     JVM_FLAGS=(
       -XX:+UnlockExperimentalVMOptions
+      -XX:+UseG1GC
       -XX:+UseJVMCICompiler
       -XX:+TieredStopAtLevel=4
       -XX:+AggressiveOpts
       -XX:CompileThreshold=500
       -XX:+OptimizeStringConcat
-      -XX:+UseG1GC
+      -XX:+UseCompactObjectHeaders
       -XX:MaxGCPauseMillis=50
       -XX:InitiatingHeapOccupancyPercent=30
       -XX:+UseStringDeduplication
+      --add-modules=jdk.incubator.vector
+      -XX:+UseLargePages
       -XX:ParallelGCThreads="$CPU_CORES"
       -XX:ConcGCThreads=$((CPU_CORES/2))
       -Xms"${XMS}G"
@@ -51,7 +53,9 @@ case "$MC_JDK" in
       -XX:+AggressiveOpts
       -XX:CompileThreshold=1000
       -XX:+OptimizeStringConcat
+      -XX:+UseCompactObjectHeaders
       -XX:+UseStringDeduplication
+      --add-modules=jdk.incubator.vector
       -XX:+UseG1GC
       -XX:MaxGCPauseMillis=50
       -XX:InitiatingHeapOccupancyPercent=30
