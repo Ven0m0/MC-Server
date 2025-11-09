@@ -13,9 +13,10 @@ else
   JSON_PROC="jq"
 fi
 
-# Cache API responses to avoid redundant aria2 calls
+# Cache API responses to avoid redundant network calls
 echo "[*] Fetching Minecraft and Fabric versions..."
-MC_VERSION="${MC_VERSION:-$(aria2c -q -d /tmp -o - https://meta.fabricmc.net/v2/versions/game | $JSON_PROC -r '.[] | select(.stable == true) | .version' | head -n1)}"
+GAME_VERSIONS=$(aria2c -q -d /tmp -o - https://meta.fabricmc.net/v2/versions/game)
+MC_VERSION="${MC_VERSION:-$(echo "$GAME_VERSIONS" | $JSON_PROC -r '.[] | select(.stable == true) | .version' | head -n1)}"
 FABRIC_VERSION=$(aria2c -q -d /tmp -o - https://meta.fabricmc.net/v2/versions/installer | $JSON_PROC -r '.[0].version')
 
 echo "→ Minecraft version: $MC_VERSION"
@@ -28,20 +29,12 @@ aria2c -x 16 -s 16 -o fabric-installer.jar "https://maven.fabricmc.net/net/fabri
 echo "[*] Installing Fabric server..."
 java -jar fabric-installer.jar server -mcversion "$MC_VERSION" -downloadMinecraft
 
-# 2. Resolve Loader version
+# 2. Resolve Loader version (cache loader versions API call)
+LOADER_VERSIONS=$(aria2c -q -d /tmp -o - https://meta.fabricmc.net/v2/versions/loader)
 if [[ ${STABLE_LOADER:-true} = true ]]; then
-  LOADER="${LOADER:-$(
-    aria2c -q -d /tmp -o - https://meta.fabricmc.net/v2/versions/loader \
-      | $JSON_PROC -r '.[] 
-          | select(.stable==true) 
-          | .version' \
-      | head -n1
-  )}"
+  LOADER="${LOADER:-$(echo "$LOADER_VERSIONS" | $JSON_PROC -r '.[] | select(.stable==true) | .version' | head -n1)}"
 else
-  LOADER="${LOADER:-$(
-    aria2c -q -d /tmp -o - https://meta.fabricmc.net/v2/versions/loader \
-      | $JSON_PROC -r '.[0].version'
-  )}"
+  LOADER="${LOADER:-$(echo "$LOADER_VERSIONS" | $JSON_PROC -r '.[0].version')}"
 fi
 
 # 3. Lookup matching intermediary (mappings) version

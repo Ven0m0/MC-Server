@@ -26,40 +26,38 @@ if has archlinux-java; then
   sudo archlinux-java fix 2>/dev/null
   JAVA_CMD="$(archlinux-java get 2>/dev/null)"
 fi
-[[ $TOTAL_RAM -ge 1 ]] && JVM_FLAGS=+(-XX:+DisableExplicitGC -XX:-UseParallelGC)
-
-JVM_FLAGS="
--XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:+IgnoreUnrecognizedVMOptions --illegal-access=permit
--Dfile.encoding=UTF-8 
--Xlog:async -Xlog:gc*:file=/dev/null
--XX:+UseLargePages -XX:+UseTransparentHugePages -XX:LargePageSizeInBytes=2M -XX:+UseLargePagesInMetaspace
--Xms"${XMS}G" -Xmx"${XMX}G"
--XX:ConcGCThreads=$((CPU_CORES/2)) -XX:ParallelGCThreads="$CPU_CORES"
--XX:+AlwaysPreTouch -XX:+UseFastAccessorMethods -XX:+UseCompressedOops -XX:-DontCompileHugeMethods
--XX:+AggressiveOpts -XX:+OptimizeStringConcat -XX:+UseCompactObjectHeaders -XX:+UseStringDeduplication
---add-modules=jdk.incubator.vector -da
--XX:MaxGCPauseMillis=50 -XX:InitiatingHeapOccupancyPercent=30
-"
-GRAAL_FLAGS="
--Djdk.graal.CompilerConfiguration=enterprise
--Djdk.graal.UsePriorityInlining=true -Djdk.graal.Vectorization=true -Djdk.graal.OptDuplication=true -Djdk.graal.DetectInvertedLoopsAsCounted=true -Djdk.graal.LoopInversion=true -Djdk.graal.VectorizeHashes=true -Djdk.graal.EnterprisePartialUnroll=true -Djdk.graal.VectorizeSIMD=true -Djdk.graal.StripMineNonCountedLoops=true -Djdk.graal.SpeculativeGuardMovement=true -Djdk.graal.TuneInlinerExploration=1 -Djdk.graal.LoopRotation=true
-"
-EXP_FLAGS="
--XX:+UseCMoveUnconditionally -XX:+UseNewLongLShift -XX:+UseVectorCmov -XX:+UseXmmI2D -XX:+UseXmmI2F
-"
+# Base JVM flags for performance
+JVM_FLAGS=(
+  -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:+IgnoreUnrecognizedVMOptions --illegal-access=permit
+  -Dfile.encoding=UTF-8
+  -Xlog:async -Xlog:gc*:file=/dev/null
+  -XX:+UseLargePages -XX:+UseTransparentHugePages -XX:LargePageSizeInBytes=2M -XX:+UseLargePagesInMetaspace
+  "-Xms${XMS}G" "-Xmx${XMX}G"
+  "-XX:ConcGCThreads=$((CPU_CORES/2))" "-XX:ParallelGCThreads=${CPU_CORES}"
+  -XX:+AlwaysPreTouch -XX:+UseFastAccessorMethods -XX:+UseCompressedOops -XX:-DontCompileHugeMethods
+  -XX:+AggressiveOpts -XX:+OptimizeStringConcat -XX:+UseCompactObjectHeaders -XX:+UseStringDeduplication
+  --add-modules=jdk.incubator.vector -da
+  -XX:MaxGCPauseMillis=50 -XX:InitiatingHeapOccupancyPercent=30
+  -XX:+UseCMoveUnconditionally -XX:+UseNewLongLShift -XX:+UseVectorCmov -XX:+UseXmmI2D -XX:+UseXmmI2F
+)
 
 case "$MC_JDK" in
   graalvm)
     JAVA_CMD=${JAVA_GRAALVM:-/usr/lib/graalvm-ce-java21}/bin/java
-    JVM_FLAGS=(
+    # Add GraalVM-specific optimizations to existing flags
+    JVM_FLAGS+=(
       -XX:+UseG1GC
       -XX:+UseJVMCICompiler
       -XX:+TieredStopAtLevel=4
       -XX:CompileThreshold=500
+      -Djdk.graal.CompilerConfiguration=enterprise
+      -Djdk.graal.UsePriorityInlining=true -Djdk.graal.Vectorization=true
+      -Djdk.graal.OptDuplication=true -Djdk.graal.TuneInlinerExploration=1
     ) ;;
   temurin|*)
     JAVA_CMD=${JAVA_TEMURIN:-/usr/lib/jvm/java-25-temurin}/bin/java
-    JVM_FLAGS=(
+    # Add Temurin-specific optimizations to existing flags
+    JVM_FLAGS+=(
       -XX:+UseG1GC
       -XX:+TieredCompilation
       -XX:CompileThreshold=1000

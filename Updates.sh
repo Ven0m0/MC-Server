@@ -22,10 +22,8 @@ touch "$config"
 
 echo "[*] Updating mc-repack config at $config..."
 
-# Remove specific TOML sections cleanly using sd
-for section in json nbt png toml jar; do
-    sd -s "^\[$section\](\n(?!\[).*)*" "" "$config" || true
-done
+# Remove all specific TOML sections in one operation using sd regex
+sd -s '^\[(json|nbt|png|toml|jar)\](\n(?!\[).*)*' '' "$config" || true
 
 # Append updated configuration
 cat >> "$config" <<'EOF'

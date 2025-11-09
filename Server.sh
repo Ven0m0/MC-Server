@@ -1,16 +1,13 @@
 #!/bin/bash
 
+# Set performance profile before starting server
+powerprofilesctl set performance 2>/dev/null || true
 
-
-# Use awk instead of grep+sed chain for better performance
+# Use awk for efficient memory calculation (allocate 1/3 of total RAM)
 mem=$(awk '/MemTotal/ {print int($2/1024/1024/3)}' /proc/meminfo)
 
-${JAVA:-java} -Xmx"${mem}"G -Xms"${mem}"G -jar server.jar nogui
+# Start playit in background (detached, no need for new window)
+playit &
 
-powerprofilesctl set performance
-
-# Start playit in a new Konsole window and detach immediately
-konsole --noclose -e playit &
-
-# Now start the Minecraft server in Alacritty (removed unnecessary sleep)
-alacritty -e ./start.sh
+# Start Minecraft server in Alacritty
+alacritty -e sh -c "${JAVA:-java} -Xmx${mem}G -Xms${mem}G -jar server.jar nogui"
