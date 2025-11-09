@@ -2,8 +2,14 @@
 
 sudo -v
 
-# G1GC-optimized configuration (removed duplicate flags, formatted for readability)
-sudo gamemoderun java -Xms8192M -Xmx8192M \
+# Calculate dynamic memory allocation (leaving 2GB for system)
+TOTAL_RAM=$(awk '/MemTotal/ {print int($2/1024/1024)}' /proc/meminfo)
+HEAP_SIZE=$((TOTAL_RAM - 2))
+# Ensure minimum 4GB heap
+[[ $HEAP_SIZE -lt 4 ]] && HEAP_SIZE=4
+
+# G1GC-optimized configuration with dynamic memory
+sudo gamemoderun java "-Xms${HEAP_SIZE}G" "-Xmx${HEAP_SIZE}G" \
   -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions \
   -XX:+UseG1GC -XX:+AlwaysActAsServerClassMachine -XX:+AlwaysPreTouch -XX:+DisableExplicitGC \
   -XX:NmethodSweepActivity=1 -XX:ReservedCodeCacheSize=400M \
