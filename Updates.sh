@@ -1,9 +1,14 @@
 #!/bin/bash
-set -euo pipefail; IFS=$'\n\t'
+
+# Source common functions
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
+
+init_strict_mode
 LC_COLLATE=C LC_CTYPE=C LANG=C.UTF-8
 shopt -s nullglob globstar
 
-WORKDIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]:-}")" && pwd)"
+WORKDIR=$(get_script_dir)
 cd "$WORKDIR"
 
 echo eula=true >eula.txt

@@ -1,19 +1,25 @@
 #!/usr/bin/env bash
-set -euo pipefail; shopt -s nullglob globstar
-IFS=$'\n\t' SHELL="$(command -v bash 2>/dev/null)"
+
+# Source common functions
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
+
+init_strict_mode
+shopt -s nullglob globstar
+SHELL="$(command -v bash 2>/dev/null)"
 export LC_ALL=C LANG=C LANGUAGE=C HOME="/home/${SUDO_USER:-$USER}"
 [[ $EUID -ne 0 ]] && sudo -v
-builtin cd -P -- "$(dirname -- "${BASH_SOURCE[0]:-}")" && printf '%s\n' "$PWD" || exit 1
-has(){ command -v "$1" &>/dev/null; }
+cd_script_dir
+printf '%s\n' "$PWD" || exit 1
 # mc-launcher.sh: auto-tuned Minecraft JVM launcher
-has java || { echo >&2 "No JDK found. Aborting..."; exit 1; }
+has_command java || { echo >&2 "No JDK found. Aborting..."; exit 1; }
 
 # Use Transparent Huge Pages (direct redirect is more efficient than echo pipe)
 sudo tee /sys/kernel/mm/transparent_hugepage/enabled >/dev/null <<< 'madvise'
 
 # Detect CPU cores and RAM (in GB)
 CPU_CORES=$(nproc 2>/dev/null)
-TOTAL_RAM=$(awk '/MemTotal/ {printf "%.0f\n",$2/1024/1024}' /proc/meminfo 2>/dev/null)
+TOTAL_RAM=$(get_total_ram_gb)
 # Compute heap sizes: leave ~2GB for OS / background
 XMS=$((TOTAL_RAM - 2)) XMX=$((TOTAL_RAM - 2))
 (( XMS < 1 )) && XMS=1 XMX=1
