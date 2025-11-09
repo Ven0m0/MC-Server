@@ -6,6 +6,7 @@ export LC_ALL=C LANG=C LANGUAGE=C HOME="/home/${SUDO_USER:-$USER}"
 builtin cd -P -- "$(dirname -- "${BASH_SOURCE[0]:-}")" && printf '%s\n' "$PWD" || exit 1
 has(){ command -v "$1" &>/dev/null; }
 # mc-launcher.sh: auto-tuned Minecraft JVM launcher
+has java || { echo >&2 "No JDK found. Aborting..."; exit 1; }
 
 # Use Transparent Huge Pages (direct redirect is more efficient than echo pipe)
 sudo tee /sys/kernel/mm/transparent_hugepage/enabled >/dev/null <<< 'madvise'
