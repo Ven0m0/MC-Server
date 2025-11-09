@@ -4,6 +4,12 @@
 # Use Transparent Huge Pages (direct redirect is more efficient than echo pipe)
 sudo tee /sys/kernel/mm/transparent_hugepage/enabled >/dev/null <<< 'madvise'
 
+JAVA_FLAGS="
+-XX:+UnlockExperimentalVMOptions
+-XX:+UseCompactObjectHeaders -XX:+UseZGC
+
+"
+
 # Detect CPU cores and RAM (in GB)
 CPU_CORES=$(nproc)
 TOTAL_RAM=$(awk '/MemTotal/ {printf "%.0f\n",$2/1024/1024}' /proc/meminfo)
