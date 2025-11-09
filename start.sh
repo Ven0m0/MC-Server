@@ -1,10 +1,13 @@
 #!/usr/bin/bash
 
+# Source common functions
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
+
 sudo -v
 
 # Calculate dynamic memory allocation (leaving 2GB for system)
-TOTAL_RAM=$(awk '/MemTotal/ {print int($2/1024/1024)}' /proc/meminfo)
-HEAP_SIZE=$((TOTAL_RAM - 2))
+HEAP_SIZE=$(get_heap_size_gb 2)
 # Ensure minimum 4GB heap
 [[ $HEAP_SIZE -lt 4 ]] && HEAP_SIZE=4
 

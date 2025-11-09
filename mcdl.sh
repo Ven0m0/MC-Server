@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
-set -euo pipefail
+
+# Source common functions
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
+
+init_strict_mode
 
 # ── Configurable environment vars ─────────────────────
 # MC_VERSION    : override to pin a Minecraft version (e.g. "1.21.6")
