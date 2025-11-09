@@ -10,10 +10,9 @@ rustup update
 # Or via cargo
 cargo install infrarust
 
+# Create systemd service directory and file in one operation
 sudo mkdir -p /etc/systemd/system
-sudo touch /etc/systemd/system/infrarust.service
-
-echo '
+sudo tee /etc/systemd/system/infrarust.service >/dev/null <<'EOF'
 # /etc/systemd/system/infrarust.service
 [Unit]
 Description=Infrarust Minecraft Proxy
@@ -28,8 +27,7 @@ Restart=always
 
 [Install]
 WantedBy=multi-user.target
-' | sudo tee /etc/systemd/system/infrarust.service
-
+EOF
 
 sudo systemctl enable infrarust
 sudo systemctl start infrarust
