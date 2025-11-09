@@ -5,8 +5,14 @@
 sudo tee /sys/kernel/mm/transparent_hugepage/enabled >/dev/null <<< 'madvise'
 
 JVM_FLAGS="
+-XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions
 -XX:+UseZGC
-
+-Xlog:async -Dfile.encoding=UTF-8
+-XX:+UseLargePages
+"
+GRAAL_FLAGS="
+-Djdk.graal.CompilerConfiguration=enterprise
+-Djdk.graal.UsePriorityInlining=true -Djdk.graal.Vectorization=true -Djdk.graal.OptDuplication=true -Djdk.graal.DetectInvertedLoopsAsCounted=true -Djdk.graal.LoopInversion=true -Djdk.graal.VectorizeHashes=true -Djdk.graal.EnterprisePartialUnroll=true -Djdk.graal.VectorizeSIMD=true -Djdk.graal.StripMineNonCountedLoops=true -Djdk.graal.SpeculativeGuardMovement=true -Djdk.graal.TuneInlinerExploration=1 -Djdk.graal.LoopRotation=true
 "
 
 # Detect CPU cores and RAM (in GB)
@@ -25,7 +31,7 @@ case "$MC_JDK" in
   graalvm)
     JAVA_CMD=${JAVA_GRAALVM:-/usr/lib/graalvm-ce-java21}/bin/java
     JVM_FLAGS=(
-      -XX:+UnlockExperimentalVMOptions
+      -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions
       -XX:+UseG1GC
       -XX:+UseJVMCICompiler
       -XX:+TieredStopAtLevel=4
