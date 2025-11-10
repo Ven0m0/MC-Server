@@ -1,0 +1,28 @@
+# Build artifacts
+*.jar
+*.log
+
+# Server files
+eula.txt
+world/
+server.properties.bak
+banned-*.json
+ops.json
+usercache.json
+whitelist.json
+
+# Mod files
+mods/
+.fabric/
+fabric-installer.jar
+
+# Config backups
+*.bak
+*.old
+
+# Temporary files
+*.tmp
+/tmp/
+
+# Test outputs (keep test script)
+test_output_*.txt

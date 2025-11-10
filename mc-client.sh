@@ -202,8 +202,7 @@ MAIN_CLASS=$(cat "$VERSION_MANIFEST" | $JSON_PROC -r '.mainClass')
 # Build JVM arguments
 JVM_ARGS=$(cat "$VERSION_MANIFEST" | $JSON_PROC -r '.arguments.jvm[]? // empty' | grep -v '^\$' || echo "")
 
-# Detect CPU cores and RAM
-CPU_CORES=$(get_cpu_cores)
+# Detect RAM and calculate memory allocation
 XMS=$(get_client_xms_gb)
 XMX=$(get_client_xmx_gb)
 
