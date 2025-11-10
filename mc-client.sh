@@ -116,7 +116,9 @@ done
 if [[ -f "$ASSET_INPUT_FILE" ]] && [[ -s "$ASSET_INPUT_FILE" ]]; then
     if has_command aria2c; then
         echo "  Downloading missing assets with aria2c..."
-        aria2c -x 16 -s 16 -j 16 -i "$ASSET_INPUT_FILE" --auto-file-renaming=false --allow-overwrite=true
+        # shellcheck disable=SC2046
+        read -ra ARIA2_OPTS <<< $(get_aria2c_opts)
+        aria2c "${ARIA2_OPTS[@]}" -j 16 -i "$ASSET_INPUT_FILE" --auto-file-renaming=false --allow-overwrite=true
     else
         echo "  Warning: aria2c not found, assets download may be slow"
         cat "$ASSET_INDEX_FILE" | $JSON_PROC -r '.objects[] | .hash' | while read -r hash; do
@@ -202,11 +204,8 @@ JVM_ARGS=$(cat "$VERSION_MANIFEST" | $JSON_PROC -r '.arguments.jvm[]? // empty' 
 
 # Detect CPU cores and RAM
 CPU_CORES=$(nproc 2>/dev/null || echo 4)
-TOTAL_RAM=$(get_total_ram_gb)
-XMS=$((TOTAL_RAM / 4))
-XMX=$((TOTAL_RAM / 2))
-(( XMS < 1 )) && XMS=1
-(( XMX < 2 )) && XMX=2
+XMS=$(get_client_xms_gb)
+XMX=$(get_client_xmx_gb)
 
 # Default JVM flags if not in manifest
 if [[ -z "$JVM_ARGS" ]]; then

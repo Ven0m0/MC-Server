@@ -11,15 +11,13 @@ init_strict_mode
 # LOADER        : override to pin a Fabric Loader version (e.g. "0.16.14")
 # STABLE_LOADER : "true" (default) to pick newest stable loader; "false" for absolute newest
 
-# Detect JSON processor: prefer jaq, fallback to jq
-if command -v jaq &>/dev/null; then
-  JSON_PROC="jaq"
-else
-  JSON_PROC="jq"
-fi
+# Get JSON processor
+JSON_PROC=$(get_json_processor) || exit 1
 
 # Cache API responses to avoid redundant network calls
 echo "[*] Fetching Minecraft and Fabric versions..."
+# shellcheck disable=SC2046
+read -ra ARIA2_OPTS <<< $(get_aria2c_opts)
 GAME_VERSIONS=$(aria2c -q -d /tmp -o - https://meta.fabricmc.net/v2/versions/game)
 MC_VERSION="${MC_VERSION:-$(echo "$GAME_VERSIONS" | $JSON_PROC -r '.[] | select(.stable == true) | .version' | head -n1)}"
 FABRIC_VERSION=$(aria2c -q -d /tmp -o - https://meta.fabricmc.net/v2/versions/installer | $JSON_PROC -r '.[0].version')
@@ -29,7 +27,7 @@ echo "→ Fabric installer version: $FABRIC_VERSION"
 
 # Download and run Fabric installer (single approach)
 echo "[*] Downloading Fabric installer..."
-aria2c -x 16 -s 16 -o fabric-installer.jar "https://maven.fabricmc.net/net/fabricmc/fabric-installer/${FABRIC_VERSION}/fabric-installer-${FABRIC_VERSION}.jar" || exit 1
+aria2c "${ARIA2_OPTS[@]}" -o fabric-installer.jar "https://maven.fabricmc.net/net/fabricmc/fabric-installer/${FABRIC_VERSION}/fabric-installer-${FABRIC_VERSION}.jar" || exit 1
 
 echo "[*] Installing Fabric server..."
 java -jar fabric-installer.jar server -mcversion "$MC_VERSION" -downloadMinecraft
@@ -53,6 +51,6 @@ echo "→ Intermediary:  $INTERMEDIARY"
 
 # 4. Download the server-loader jar
 echo "[*] Downloading server-loader jar..."
-aria2c -x 16 -s 16 "https://meta.fabricmc.net/v2/versions/loader/${MC_VERSION}/${LOADER}/${INTERMEDIARY}/server/jar"
+aria2c "${ARIA2_OPTS[@]}" "https://meta.fabricmc.net/v2/versions/loader/${MC_VERSION}/${LOADER}/${INTERMEDIARY}/server/jar"
 
 echo "[✔] Fabric server setup complete."
