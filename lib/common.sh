@@ -128,3 +128,37 @@ extract_natives() {
     # Remove META-INF directory
     rm -rf "${dest_dir}/META-INF"
 }
+
+# Initialize SCRIPT_DIR and source common.sh
+# This function should be called at the start of scripts
+init_script_dir() {
+    SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[1]}")" && pwd)"
+    export SCRIPT_DIR
+}
+
+# Get aria2c download options for consistent configuration
+get_aria2c_opts() {
+    echo "-x 16 -s 16"
+}
+
+# Calculate client memory allocation (Xms = 1/4 RAM, Xmx = 1/2 RAM)
+get_client_xms_gb() {
+    local total_ram
+    total_ram=$(get_total_ram_gb)
+    local xms=$((total_ram / 4))
+    [[ $xms -lt 1 ]] && xms=1
+    echo "$xms"
+}
+
+get_client_xmx_gb() {
+    local total_ram
+    total_ram=$(get_total_ram_gb)
+    local xmx=$((total_ram / 2))
+    [[ $xmx -lt 2 ]] && xmx=2
+    echo "$xmx"
+}
+
+# Get number of CPU cores
+get_cpu_cores() {
+    nproc 2>/dev/null || echo 4
+}

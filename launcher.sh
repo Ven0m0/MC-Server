@@ -18,11 +18,10 @@ has_command java || { echo >&2 "No JDK found. Aborting..."; exit 1; }
 sudo tee /sys/kernel/mm/transparent_hugepage/enabled >/dev/null <<< 'madvise'
 
 # Detect CPU cores and RAM (in GB)
-CPU_CORES=$(nproc 2>/dev/null)
-TOTAL_RAM=$(get_total_ram_gb)
-# Compute heap sizes: leave ~2GB for OS / background
-XMS=$((TOTAL_RAM - 2)) XMX=$((TOTAL_RAM - 2))
-(( XMS < 1 )) && XMS=1 XMX=1
+CPU_CORES=$(get_cpu_cores)
+# Calculate heap sizes: leave ~2GB for OS / background (uses get_heap_size_gb from common.sh)
+XMS=$(get_heap_size_gb 2)
+XMX=$(get_heap_size_gb 2)
 JARNAME="server.jar"
 AFTERJAR="--nogui"
 # Detect JDK selection: default Temurin

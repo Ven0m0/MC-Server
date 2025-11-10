@@ -74,15 +74,15 @@ mc-repack jars -c "$config" --in "$mods_src" --out "$mods_dst"
 
 # ─── Download GeyserConnect ────────────────────────────────────────────────────
 echo "[*] Downloading latest GeyserConnect..."
-# Define aria2c options once for reuse
-ARIA2OPTS=(-x 16 -s 16 --allow-overwrite=true)
+# Get aria2c options from common.sh
+read -ra ARIA2OPTS <<< "$(get_aria2c_opts) --allow-overwrite=true"
 
 URL="https://download.geysermc.org/v2/projects/geyserconnect/versions/latest/builds/latest/downloads/geyserconnect"
 dest_dir="$HOME/Documents/MC/Minecraft/config/Geyser-Fabric/extensions"
 tmp_jar="$dest_dir/GeyserConnect2.jar"
 final_jar="$dest_dir/GeyserConnect.jar"
 
-mkdir -p "$dest_dir"
+ensure_dir "$dest_dir"
 
 if aria2c "${ARIA2OPTS[@]}" -o "$tmp_jar" "$URL"; then
     echo "[*] Download complete: $tmp_jar"
