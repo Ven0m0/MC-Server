@@ -2,9 +2,8 @@
 # mc-client.sh: Minecraft client launcher with automatic version management
 # Based on https://github.com/Sushkyn/mc-launcher
 
-# Source common functions
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/lib/common.sh"
+# Source common functions (SCRIPT_DIR is auto-initialized)
+source "$(dirname -- "${BASH_SOURCE[0]}")/lib/common.sh"
 
 init_strict_mode
 
@@ -116,8 +115,7 @@ done
 if [[ -f "$ASSET_INPUT_FILE" ]] && [[ -s "$ASSET_INPUT_FILE" ]]; then
     if has_command aria2c; then
         echo "  Downloading missing assets with aria2c..."
-        # shellcheck disable=SC2046
-        read -ra ARIA2_OPTS <<< $(get_aria2c_opts)
+        ARIA2_OPTS=($(get_aria2c_opts_array))
         aria2c "${ARIA2_OPTS[@]}" -j 16 -i "$ASSET_INPUT_FILE" --auto-file-renaming=false --allow-overwrite=true
     else
         echo "  Warning: aria2c not found, assets download may be slow"

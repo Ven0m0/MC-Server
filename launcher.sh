@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
-# Source common functions
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/lib/common.sh"
+# Source common functions (SCRIPT_DIR is auto-initialized)
+source "$(dirname -- "${BASH_SOURCE[0]}")/lib/common.sh"
 
 init_strict_mode
 shopt -s nullglob globstar

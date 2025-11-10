@@ -1,6 +1,12 @@
 #!/bin/bash
 # Common functions and utilities for MC-Server scripts
 
+# Auto-initialize SCRIPT_DIR when this file is sourced
+if [[ -z "${SCRIPT_DIR:-}" ]]; then
+    SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+    export SCRIPT_DIR
+fi
+
 # Initialize strict mode for bash scripts
 init_strict_mode() {
     set -euo pipefail
@@ -139,6 +145,28 @@ init_script_dir() {
 # Get aria2c download options for consistent configuration
 get_aria2c_opts() {
     echo "-x 16 -s 16"
+}
+
+# Get aria2c options as array (safely handles word splitting)
+# Usage: read -ra OPTS <<< "$(get_aria2c_opts_array)"
+# or: OPTS=($(get_aria2c_opts_array))
+get_aria2c_opts_array() {
+    echo "-x" "16" "-s" "16"
+}
+
+# Source this script from another script with automatic SCRIPT_DIR setup
+# This eliminates the need for manual SCRIPT_DIR initialization
+# Usage: Instead of:
+#   SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+#   source "$SCRIPT_DIR/lib/common.sh"
+# Just use:
+#   source "$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
+# And SCRIPT_DIR will be set automatically
+source_common() {
+    if [[ -z "${SCRIPT_DIR:-}" ]]; then
+        SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[1]}")" && pwd)"
+        export SCRIPT_DIR
+    fi
 }
 
 # Calculate client memory allocation (Xms = 1/4 RAM, Xmx = 1/2 RAM)
