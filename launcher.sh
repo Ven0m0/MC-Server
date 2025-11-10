@@ -34,7 +34,7 @@ fi
 # Base JVM flags for performance
 JVM_FLAGS=(
   -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:+IgnoreUnrecognizedVMOptions --illegal-access=permit
-  -Dfile.encoding=UTF-8
+  -Dfile.encoding=UTF-8 -Djdk.util.zip.disableZip64ExtraFieldValidation=true -Djdk.nio.zipfs.allowDotZipEntry=true
   -Xlog:async -Xlog:gc*:file=/dev/null
   -XX:+UseLargePages -XX:+UseTransparentHugePages -XX:LargePageSizeInBytes=2M -XX:+UseLargePagesInMetaspace
   "-Xms${XMS}G" "-Xmx${XMX}G"
