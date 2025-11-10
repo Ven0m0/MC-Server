@@ -37,7 +37,6 @@
 - https://github.com/Fabric-Development/fabric-cli
 - https://github.com/mindstorm38/portablemc
 - https://github.com/Sushkyn/mc-launcher
-- https://github.com/krusic22/Potato-Scripts
 
 ## TWEAKS
 
