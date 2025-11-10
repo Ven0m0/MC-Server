@@ -82,7 +82,7 @@ dest_dir="$HOME/Documents/MC/Minecraft/config/Geyser-Fabric/extensions"
 tmp_jar="$dest_dir/GeyserConnect2.jar"
 final_jar="$dest_dir/GeyserConnect.jar"
 
-mkdir -p "$dest_dir"
+ensure_dir "$dest_dir"
 
 if aria2c "${ARIA2OPTS[@]}" -o "$tmp_jar" "$URL"; then
     echo "[*] Download complete: $tmp_jar"

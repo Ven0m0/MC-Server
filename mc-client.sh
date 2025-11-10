@@ -203,7 +203,7 @@ MAIN_CLASS=$(cat "$VERSION_MANIFEST" | $JSON_PROC -r '.mainClass')
 JVM_ARGS=$(cat "$VERSION_MANIFEST" | $JSON_PROC -r '.arguments.jvm[]? // empty' | grep -v '^\$' || echo "")
 
 # Detect CPU cores and RAM
-CPU_CORES=$(nproc 2>/dev/null || echo 4)
+CPU_CORES=$(get_cpu_cores)
 XMS=$(get_client_xms_gb)
 XMX=$(get_client_xmx_gb)
 

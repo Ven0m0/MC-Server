@@ -157,3 +157,8 @@ get_client_xmx_gb() {
     [[ $xmx -lt 2 ]] && xmx=2
     echo "$xmx"
 }
+
+# Get number of CPU cores
+get_cpu_cores() {
+    nproc 2>/dev/null || echo 4
+}

@@ -18,7 +18,7 @@ has_command java || { echo >&2 "No JDK found. Aborting..."; exit 1; }
 sudo tee /sys/kernel/mm/transparent_hugepage/enabled >/dev/null <<< 'madvise'
 
 # Detect CPU cores and RAM (in GB)
-CPU_CORES=$(nproc 2>/dev/null)
+CPU_CORES=$(get_cpu_cores)
 # Calculate heap sizes: leave ~2GB for OS / background (uses get_heap_size_gb from common.sh)
 XMS=$(get_heap_size_gb 2)
 XMX=$(get_heap_size_gb 2)
