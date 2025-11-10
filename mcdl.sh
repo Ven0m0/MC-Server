@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
-# Source common functions
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/lib/common.sh"
+# Source common functions (SCRIPT_DIR is auto-initialized)
+source "$(dirname -- "${BASH_SOURCE[0]}")/lib/common.sh"
 
 init_strict_mode
 
@@ -16,8 +15,7 @@ JSON_PROC=$(get_json_processor) || exit 1
 
 # Cache API responses to avoid redundant network calls
 echo "[*] Fetching Minecraft and Fabric versions..."
-# shellcheck disable=SC2046
-read -ra ARIA2_OPTS <<< $(get_aria2c_opts)
+ARIA2_OPTS=($(get_aria2c_opts_array))
 GAME_VERSIONS=$(aria2c -q -d /tmp -o - https://meta.fabricmc.net/v2/versions/game)
 MC_VERSION="${MC_VERSION:-$(echo "$GAME_VERSIONS" | $JSON_PROC -r '.[] | select(.stable == true) | .version' | head -n1)}"
 FABRIC_VERSION=$(aria2c -q -d /tmp -o - https://meta.fabricmc.net/v2/versions/installer | $JSON_PROC -r '.[0].version')

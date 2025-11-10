@@ -1,9 +1,8 @@
 #!/bin/bash
 # Simple test script to validate common.sh functions
 
-# Source the common functions
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/lib/common.sh"
+# Source the common functions (SCRIPT_DIR is auto-initialized)
+source "$(dirname -- "${BASH_SOURCE[0]}")/lib/common.sh"
 
 echo "Testing common.sh functions..."
 echo ""
@@ -42,6 +41,11 @@ echo "✓ get_cpu_cores: $cores"
 opts=$(get_aria2c_opts)
 echo "✓ get_aria2c_opts: $opts"
 [[ -n "$opts" ]] || { echo "✗ FAILED: aria2c opts should not be empty"; exit 1; }
+
+# Test get_aria2c_opts_array
+opts_array=($(get_aria2c_opts_array))
+echo "✓ get_aria2c_opts_array: ${opts_array[*]} (${#opts_array[@]} elements)"
+[[ ${#opts_array[@]} -ge 2 ]] || { echo "✗ FAILED: aria2c opts array should have at least 2 elements"; exit 1; }
 
 # Test has_command
 if has_command bash; then

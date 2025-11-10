@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# Source common functions
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/lib/common.sh"
+# Source common functions (SCRIPT_DIR is auto-initialized)
+source "$(dirname -- "${BASH_SOURCE[0]}")/lib/common.sh"
 
 init_strict_mode
 LC_COLLATE=C LC_CTYPE=C LANG=C.UTF-8
@@ -74,8 +73,8 @@ mc-repack jars -c "$config" --in "$mods_src" --out "$mods_dst"
 
 # ─── Download GeyserConnect ────────────────────────────────────────────────────
 echo "[*] Downloading latest GeyserConnect..."
-# Get aria2c options from common.sh
-read -ra ARIA2OPTS <<< "$(get_aria2c_opts) --allow-overwrite=true"
+# Get aria2c options from common.sh (using array for proper word splitting)
+ARIA2OPTS=($(get_aria2c_opts_array) --allow-overwrite=true)
 
 URL="https://download.geysermc.org/v2/projects/geyserconnect/versions/latest/builds/latest/downloads/geyserconnect"
 dest_dir="$HOME/Documents/MC/Minecraft/config/Geyser-Fabric/extensions"
