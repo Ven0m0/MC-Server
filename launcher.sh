@@ -16,6 +16,10 @@ has_command java || { echo >&2 "No JDK found. Aborting..."; exit 1; }
 # Use Transparent Huge Pages (direct redirect is more efficient than echo pipe)
 sudo tee /sys/kernel/mm/transparent_hugepage/enabled >/dev/null <<< 'madvise'
 
+powerprofilesctl set performance
+echo kyber | sudo tee /sys/block/nvme0n1/queue/scheduler
+echo performance | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_govern
+
 # Detect CPU cores and RAM (in GB)
 CPU_CORES=$(get_cpu_cores)
 # Calculate heap sizes: leave ~2GB for OS / background (uses get_heap_size_gb from common.sh)
@@ -71,7 +75,12 @@ esac
 # Optional: pin CPU cores for consistent performance
 TASKSET_CMD=(taskset -c 0-$((CPU_CORES-1)))
 
-# Launch Minecraft server
 sync; echo 3 | sudo tee /proc/sys/vm/drop_caches &>/dev/null
 read -rt 1 -- <> <(:) &>/dev/null || :
+
+# Start playit
+setsid nohub playit >/dev/null & || :
+read -rt 1 -- <> <(:) &>/dev/null || :
+
+# Launch Minecraft server
 "${TASKSET_CMD[@]}" "$JAVA_CMD" "${JVM_FLAGS[@]}" -jar "$JARNAME" "$AFTERJAR"
