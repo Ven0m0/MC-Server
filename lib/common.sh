@@ -1,4 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
+shopt -s nullglob globstar
+LC_ALL=C LANG=C
+IFS=$'\n\t'
 # Common functions and utilities for MC-Server scripts
 
 # Auto-initialize SCRIPT_DIR when this file is sourced
@@ -10,20 +13,23 @@ fi
 # Initialize strict mode for bash scripts
 init_strict_mode() {
     set -euo pipefail
+    shopt -s nullglob globstar
     IFS=$'\n\t'
+    export LC_ALL=C LANG=C LANGUAGE=C HOME="/home/${SUDO_USER:-$USER}"
+    SHELL="$(command -v bash 2>/dev/null || echo '/usr/bin/bash')"
 }
 
 # Get script's working directory and cd to it
 get_script_dir() {
     local dir
-    dir="$(cd -- "$(dirname -- "${BASH_SOURCE[1]:-}")" && pwd)"
+    dir="$(cd -- "$(dirname -- "${BASH_SOURCE[1]:-}")" && echo ${PWD})"
     echo "$dir"
 }
 
 # Change to script directory
 cd_script_dir() {
     local dir
-    dir="$(cd -- "$(dirname -- "${BASH_SOURCE[1]:-}")" && pwd)"
+    dir="$(cd -- "$(dirname -- "${BASH_SOURCE[1]:-}")" && echo ${PWD})"
     cd "$dir"
 }
 
@@ -190,3 +196,17 @@ get_client_xmx_gb() {
 get_cpu_cores() {
     nproc 2>/dev/null || echo 4
 }
+
+# Detect CPU cores and RAM (in GB)
+CPU_CORES=$(get_cpu_cores)
+# Calculate heap sizes: leave ~2GB for OS / background (uses get_heap_size_gb from common.sh)
+XMS=$(get_heap_size_gb 2)
+XMX=$(get_heap_size_gb 2)
+
+if has archlinux-java; then
+  sudo archlinux-java fix 2>/dev/null
+  JAVA_CMD="$(archlinux-java get 2>/dev/null)"
+fi
+
+
+
