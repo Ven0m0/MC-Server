@@ -15,4 +15,4 @@ optimize-command-blocks: true
 fast-biome-lookups: true
 # Fluid random ticks, like lava spreading fire, are run twice each game tick.
 # Enabling this will cancel the 'duplicate' second fluid tick, but this may cause slight behavior changes.
-cancel-duplicate-fluid-ticks: false
+cancel-duplicate-fluid-ticks: true
