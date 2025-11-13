@@ -27,16 +27,12 @@ cat >> "$config" <<'EOF'
 
 [json]
 remove_underscored = true
-
 [nbt]
 use_zopfli = false
-
 [png]
 use_zopfli = true
-
 [toml]
 strip_strings = true
-
 [jar]
 keep_dirs = false
 use_zopfli = true
