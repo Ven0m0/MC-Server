@@ -24,7 +24,6 @@ if command -v sd &>/dev/null; then
 fi
 # Append updated configuration
 cat >> "$config" <<'EOF'
-
 [json]
 remove_underscored = true
 [nbt]
