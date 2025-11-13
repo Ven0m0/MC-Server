@@ -14,7 +14,7 @@ on:
       - '**.properties'
       - '.github/workflows/mega-linter.yml'
   pull_request:
-    branches: [main, master]
+    branches: [main, master, claude/**]
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
