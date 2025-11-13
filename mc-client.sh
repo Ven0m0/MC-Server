@@ -71,7 +71,7 @@ echo "[2/5] Downloading client JAR..."
 CLIENT_JAR="$VERSIONS_DIR/$VERSION.jar"
 
 if [[ ! -f "$CLIENT_JAR" ]]; then
-    CLIENT_URL=$(cat "$VERSION_MANIFEST" | $JSON_PROC -r '.downloads.client.url')
+    CLIENT_URL=$($JSON_PROC -r '.downloads.client.url' < "$VERSION_MANIFEST")
     echo "  Downloading from Mojang servers..."
     download_file "$CLIENT_URL" "$CLIENT_JAR"
 else
@@ -80,8 +80,8 @@ fi
 
 # Download assets
 echo "[3/5] Downloading game assets..."
-ASSET_INDEX=$(cat "$VERSION_MANIFEST" | $JSON_PROC -r '.assetIndex.id')
-ASSET_INDEX_URL=$(cat "$VERSION_MANIFEST" | $JSON_PROC -r '.assetIndex.url')
+ASSET_INDEX=$($JSON_PROC -r '.assetIndex.id' < "$VERSION_MANIFEST")
+ASSET_INDEX_URL=$($JSON_PROC -r '.assetIndex.url' < "$VERSION_MANIFEST")
 ASSET_INDEX_FILE="$ASSETS_DIR/indexes/$ASSET_INDEX.json"
 
 ensure_dir "$ASSETS_DIR/indexes"
@@ -94,12 +94,12 @@ fi
 
 # Download individual assets
 echo "  Downloading asset objects..."
-ASSET_COUNT=$(cat "$ASSET_INDEX_FILE" | $JSON_PROC -r '.objects | length')
+ASSET_COUNT=$($JSON_PROC -r '.objects | length' < "$ASSET_INDEX_FILE")
 echo "  Total assets: $ASSET_COUNT"
 
 # Create temporary file for aria2c input
 ASSET_INPUT_FILE="/tmp/mc-assets-$$.txt"
-cat "$ASSET_INDEX_FILE" | $JSON_PROC -r '.objects[] | .hash' | while read -r hash; do
+$JSON_PROC -r '.objects[] | .hash' < "$ASSET_INDEX_FILE" | while read -r hash; do
     HASH_PREFIX="${hash:0:2}"
     ASSET_FILE="$ASSETS_DIR/objects/$HASH_PREFIX/$hash"
 
@@ -119,7 +119,7 @@ if [[ -f "$ASSET_INPUT_FILE" ]] && [[ -s "$ASSET_INPUT_FILE" ]]; then
         aria2c "${ARIA2_OPTS[@]}" -j 16 -i "$ASSET_INPUT_FILE" --auto-file-renaming=false --allow-overwrite=true
     else
         echo "  Warning: aria2c not found, assets download may be slow"
-        cat "$ASSET_INDEX_FILE" | $JSON_PROC -r '.objects[] | .hash' | while read -r hash; do
+        $JSON_PROC -r '.objects[] | .hash' < "$ASSET_INDEX_FILE" | while read -r hash; do
             HASH_PREFIX="${hash:0:2}"
             ASSET_FILE="$ASSETS_DIR/objects/$HASH_PREFIX/$hash"
             if [[ ! -f "$ASSET_FILE" ]]; then
@@ -137,7 +137,7 @@ fi
 echo "[4/5] Downloading libraries..."
 CLASSPATH="$CLIENT_JAR"
 
-cat "$VERSION_MANIFEST" | $JSON_PROC -c '.libraries[]' | while IFS= read -r library; do
+$JSON_PROC -c '.libraries[]' < "$VERSION_MANIFEST" | while IFS= read -r library; do
     # Check if library applies to current OS
     RULES=$(echo "$library" | $JSON_PROC -r '.rules // [] | length')
     if [[ $RULES -gt 0 ]]; then
@@ -195,10 +195,10 @@ done
 echo "[5/5] Launching Minecraft..."
 
 # Get main class
-MAIN_CLASS=$(cat "$VERSION_MANIFEST" | $JSON_PROC -r '.mainClass')
+MAIN_CLASS=$($JSON_PROC -r '.mainClass' < "$VERSION_MANIFEST")
 
 # Build JVM arguments
-JVM_ARGS=$(cat "$VERSION_MANIFEST" | $JSON_PROC -r '.arguments.jvm[]? // empty' | grep -v '^\$' || echo "")
+JVM_ARGS=$($JSON_PROC -r '.arguments.jvm[]? // empty' < "$VERSION_MANIFEST" | grep -v '^\$' || echo "")
 
 # Detect RAM and calculate memory allocation
 XMS=$(get_client_xms_gb)
@@ -210,7 +210,7 @@ if [[ -z "$JVM_ARGS" ]]; then
 fi
 
 # Game arguments
-GAME_ARGS=$(cat "$VERSION_MANIFEST" | $JSON_PROC -r '.arguments.game[]? // .minecraftArguments? // empty' | tr '\n' ' ')
+GAME_ARGS=$($JSON_PROC -r '.arguments.game[]? // .minecraftArguments? // empty' < "$VERSION_MANIFEST" | tr '\n' ' ')
 
 # Replace argument variables
 GAME_ARGS="${GAME_ARGS//\$\{auth_player_name\}/$USERNAME}"
