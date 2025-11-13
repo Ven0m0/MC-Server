@@ -15,11 +15,10 @@ on:
       - '.github/workflows/mega-linter.yml'
   pull_request:
     branches: [main, master, claude/**]
-
+  workflow_dispatch:
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
-
 jobs:
   megalinter:
     name: MegaLinter
