@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # mc-launcher.sh: auto-tuned Minecraft JVM launcher
 
-# Source common functions and JVM config
+# Source common functions
 source "$(dirname -- "${BASH_SOURCE[0]}")/lib/common.sh"
-source "$(dirname -- "${BASH_SOURCE[0]}")/lib/jvm-config.sh"
 
 init_strict_mode
 [[ $EUID -ne 0 ]] && sudo -v
@@ -25,10 +24,54 @@ XMX=$(get_heap_size_gb 2)
 JARNAME="server.jar"
 AFTERJAR="--nogui"
 
-# Detect JDK and build flags
+# Detect JDK
 : "${MC_JDK:=graalvm}"
-detect_jdk
-mapfile -t JVM_FLAGS < <(get_launcher_jvm_flags "$XMS" "$XMX" "$CPU_CORES")
+: "${JAVA_CMD:=/usr/lib/jvm/default-runtime/bin/java}"
+
+if has_command archlinux-java; then
+    sudo archlinux-java fix 2>/dev/null
+    JAVA_CMD="$(archlinux-java get 2>/dev/null)"
+fi
+
+# Base JVM flags
+JVM_FLAGS=(
+    -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions
+    -XX:+IgnoreUnrecognizedVMOptions --illegal-access=permit
+    -Dfile.encoding=UTF-8
+    -Djdk.util.zip.disableZip64ExtraFieldValidation=true
+    -Djdk.nio.zipfs.allowDotZipEntry=true
+    -Xlog:async -Xlog:gc*:file=/dev/null
+    -XX:+UseLargePages -XX:+UseTransparentHugePages
+    -XX:LargePageSizeInBytes=2M -XX:+UseLargePagesInMetaspace
+    "-Xms${XMS}G" "-Xmx${XMX}G"
+    "-XX:ConcGCThreads=$((CPU_CORES/2))" "-XX:ParallelGCThreads=${CPU_CORES}"
+    -XX:+AlwaysPreTouch -XX:+UseFastAccessorMethods -XX:+UseCompressedOops
+    -XX:-DontCompileHugeMethods -XX:+AggressiveOpts -XX:+OptimizeStringConcat
+    -XX:+UseCompactObjectHeaders -XX:+UseStringDeduplication
+    --add-modules=jdk.incubator.vector -da
+    -XX:MaxGCPauseMillis=50 -XX:InitiatingHeapOccupancyPercent=30
+    -XX:+UseCMoveUnconditionally -XX:+UseNewLongLShift
+    -XX:+UseVectorCmov -XX:+UseXmmI2D -XX:+UseXmmI2F
+)
+
+# JDK-specific optimizations
+case "$MC_JDK" in
+    graalvm)
+        JAVA_CMD="${JAVA_GRAALVM:-/usr/lib/graalvm-ce-java21/bin/java}"
+        JVM_FLAGS+=(
+            -XX:+UseG1GC -XX:+UseJVMCICompiler -XX:+TieredStopAtLevel=4
+            -XX:CompileThreshold=500 -Djdk.graal.CompilerConfiguration=enterprise
+            -Djdk.graal.UsePriorityInlining=true -Djdk.graal.Vectorization=true
+            -Djdk.graal.OptDuplication=true -Djdk.graal.TuneInlinerExploration=1
+        )
+        ;;
+    temurin|*)
+        JAVA_CMD="${JAVA_TEMURIN:-/usr/lib/jvm/java-25-temurin/bin/java}"
+        JVM_FLAGS+=(
+            -XX:+UseG1GC -XX:+TieredCompilation -XX:CompileThreshold=1000
+        )
+        ;;
+esac
 
 # CPU affinity
 TASKSET_CMD=(taskset -c 0-$((CPU_CORES-1)))
