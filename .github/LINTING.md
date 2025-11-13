@@ -45,10 +45,10 @@ The workflow is configured to **automatically fix** formatting issues:
 
 ```bash
 # Install yamllint
-pip install yamllint
+uv pip install yamllint
 
 # Install prettier and plugins
-npm install -g prettier
+bun i -g prettier
 
 # Install taplo
 cargo install taplo-cli
