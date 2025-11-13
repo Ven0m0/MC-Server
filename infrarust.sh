@@ -1,14 +1,6 @@
 #!/usr/bin/env bash
 
-rustup update
-# From source
-#curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-#git clone https://github.com/shadowner/infrarust
-#cd infrarust
-#cargo build --release
-
-# Or via cargo
-cargo install infrarust
+command -v infrarust &>/dev/null || cargo install --locked infrarust
 
 # Create systemd service directory and file in one operation
 sudo mkdir -p /etc/systemd/system
@@ -29,5 +21,4 @@ Restart=always
 WantedBy=multi-user.target
 EOF
 
-sudo systemctl enable infrarust
-sudo systemctl start infrarust
+sudo systemctl enable --now infrarust
