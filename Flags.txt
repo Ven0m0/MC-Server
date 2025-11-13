@@ -1,4 +1,5 @@
 https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html#advanced-options-for-java
+https://github.com/oracle/graal/blob/master/compiler/src/jdk.graal.compiler/src/jdk/graal/compiler/core/phases/CEOptimization.java
 
 Graalvm:
 https://www.graalvm.org/latest/reference-manual/compiler/operations/
