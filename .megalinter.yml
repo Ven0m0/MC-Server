@@ -2,42 +2,52 @@
 # MegaLinter configuration file
 # https://megalinter.io/latest/configuration/
 
-# Enable auto-fixes
 APPLY_FIXES: all
 
-# Linters configuration
+# Enable/disable linters, merged from all configs
+ENABLE: BASH,MAKEFILE,POWERSHELL,PYTHON,CSS,ENV,HTML,JSON,MARKDOWN,XML,YAML,ACTION,DOCKERFILE,EDITORCONFIG
+DISABLE_LINTERS: REPOSITORY_KICS,REPOSITORY_GRYPE,SPELL_VALE,SPELL_PROSELINT
+DISABLE_ERRORS_LINTERS: SPELL_CSPELL,SPELL_LYCHEE,BASH_EXEC,BASH_SHFMT,BASH_SHELLCHECK,YAML_YAMLLINT,YAML_V8R,YAML_PRETTIER,REPOSITORY_SEMGREP,REPOSITORY_GRYPE,REPOSITORY_DEVSKIM,PYTHON_BAN
+
 LINTERS:
-  # YAML linting
   - linter: yamllint
     variables:
       YAML_YAMLLINT_CONFIG_FILE: .yamllint.yml
       YAML_YAMLLINT_CLI_LINT_MODE: file
-
-  # YAML formatting
   - linter: prettier
     descriptor: YAML
     variables:
       YAML_PRETTIER_CONFIG_FILE: .prettierrc.yml
-      YAML_PRETTIER_FILE_EXTENSIONS: [.yml, .yaml]
-
-  # JSON linting
+      YAML_PRETTIER_FILE_EXTENSIONS: [".yml", ".yaml"]
   - linter: jsonlint
     variables:
       JSON_JSONLINT_CLI_LINT_MODE: list_of_files
-
-  # JSON formatting
   - linter: prettier
     descriptor: JSON
     variables:
       JSON_PRETTIER_CONFIG_FILE: .prettierrc.yml
-      JSON_PRETTIER_FILE_EXTENSIONS: [.json, .json5, .jsonc]
-
-  # TOML formatting
+      JSON_PRETTIER_FILE_EXTENSIONS: [".json", ".json5", ".jsonc"]
   - linter: taplo
     variables:
       TOML_TAPLO_ARGUMENTS: fmt
 
-# File extensions
+SHELLCHECK_ARGUMENTS: "-s bash -x -S warning -e SC2086"
+SHFMT_ARGUMENTS: "-ln bash -s -i 2 -bn --apply-ignore"
+SPELL_LYCHEE_DISABLE_ERRORS: true
+YAML_V8R_FILE_EXTENSIONS: [".yml", ".yaml", ".toml", ".json", ".jsonc"]
+YAML_V8R_DISABLE_ERRORS: true
+YAML_YAMLLINT_DISABLE_ERRORS: true
+YAML_PRETTIER_DISABLE_ERRORS: true
+IGNORE_GENERATED_FILES: true
+IGNORE_GITIGNORED_FILES: true
+PARALLEL: true
+PYTHON_DEFAULT_STYLE: ruff
+SHOW_ELAPSED_TIME: true
+REPORT_OUTPUT_FOLDER: megalinter-reports
+FILTER_REGEX_EXCLUDE: '(\.github/workflows)'
+FLAVOR_SUGGESTIONS: false
+
+# File extensions to lint
 fileio:
   files:
     - "**/*.yml"
@@ -48,12 +58,11 @@ fileio:
     - "**/*.toml"
     - "**/*.properties"
 
-# Exclusions
+# Exclusions (dirs and files)
 excluded_directories:
   - node_modules
   - .git
   - megalinter-reports
-
 excluded_files:
   - package-lock.json
   - yarn.lock
