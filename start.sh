@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 
 # Source common functions (SCRIPT_DIR is auto-initialized)
 source "$(dirname -- "${BASH_SOURCE[0]}")/lib/common.sh"
