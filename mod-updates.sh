@@ -2,15 +2,52 @@
 # mod-updates.sh: Unified Minecraft mod manager and update system
 # Combines mod-manager.sh and Updates.sh functionality
 
-# Source common functions
-source "$(dirname -- "${BASH_SOURCE[0]}")/lib/common.sh"
-
-init_strict_mode
-LC_ALL=C
+set -euo pipefail
 shopt -s nullglob globstar
+export LC_ALL=C LANG=C
 
-# Get JSON processor
-JSON_PROC=$(get_json_processor) || exit 1
+# ─── Utility Functions ──────────────────────────────────────────────────────────
+
+has_command() { command -v "$1" &>/dev/null; }
+
+ensure_dir() { [[ ! -d "$1" ]] && mkdir -p "$1"; }
+
+get_json_processor() {
+    if has_command jaq; then
+        echo "jaq"
+    elif has_command jq; then
+        echo "jq"
+    else
+        echo "Error: No JSON processor found. Install jq or jaq." >&2
+        return 1
+    fi
+}
+
+fetch_url() {
+    local url="$1"
+    if has_command curl; then
+        curl -sL "$url"
+    elif has_command wget; then
+        wget -qO- "$url"
+    else
+        echo "Error: No download tool found (curl or wget)" >&2
+        return 1
+    fi
+}
+
+download_file() {
+    local url="$1" output="$2"
+    if has_command aria2c; then
+        aria2c -x 16 -s 16 -o "$output" "$url"
+    elif has_command curl; then
+        curl -L -o "$output" "$url"
+    elif has_command wget; then
+        wget -O "$output" "$url"
+    else
+        echo "Error: No download tool found" >&2
+        return 1
+    fi
+}
 
 # ─── Configuration ──────────────────────────────────────────────────────────────
 
@@ -19,51 +56,50 @@ PROFILES_DIR="$CONFIG_DIR/profiles"
 CURRENT_PROFILE="$CONFIG_DIR/current_profile"
 MC_REPACK_CONFIG="${HOME}/.config/mc-repack.toml"
 
-# Colors for output
+# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# ─── Helper Functions ───────────────────────────────────────────────────────────
-
+# Output helpers
 print_header() { echo -e "${BLUE}==>${NC} $1"; }
 print_success() { echo -e "${GREEN}✓${NC} $1"; }
 print_error() { echo -e "${RED}✗${NC} $1" >&2; }
 print_info() { echo -e "${YELLOW}→${NC} $1"; }
 
+# Get JSON processor
+JSON_PROC=$(get_json_processor) || exit 1
+
 # Ensure config directories exist
 ensure_dir "$CONFIG_DIR"
 ensure_dir "$PROFILES_DIR"
 
-# ─── System Setup Functions ─────────────────────────────────────────────────────
+# ─── System Setup ───────────────────────────────────────────────────────────────
 
 setup_server() {
     print_header "Setting up Minecraft server environment"
-    local workdir=$(get_script_dir)
-    cd "$workdir" || exit 1
 
     # Accept EULA
     echo "eula=true" > eula.txt
     print_success "EULA accepted"
 
     # Fix ownership and permissions
-    if [[ -d "$workdir/world" ]]; then
+    if [[ -d world ]]; then
         print_info "Fixing ownership of server files..."
-        sudo chown -R "$(id -un):$(id -gn)" "$workdir/world" 2>/dev/null || true
+        sudo chown -R "$(id -un):$(id -gn)" world 2>/dev/null || true
     fi
 
-    sudo chmod -R 755 "$workdir"/*.sh 2>/dev/null || true
+    sudo chmod -R 755 ./*.sh 2>/dev/null || true
     print_success "Ownership and permissions fixed"
 }
 
 setup_mc_repack() {
     print_header "Configuring mc-repack"
-
     touch "$MC_REPACK_CONFIG"
 
-    # Remove old TOML sections using sd if available
+    # Remove old TOML sections
     if command -v sd &>/dev/null; then
         sd -s '^\[(json|nbt|png|toml|jar)\](\n(?!\[).*)*' '' "$MC_REPACK_CONFIG" 2>/dev/null || true
     fi
@@ -98,13 +134,8 @@ create_profile() {
     fi
 
     local profile_file="$PROFILES_DIR/$name.json"
+    [[ -f "$profile_file" ]] && { print_error "Profile '$name' already exists"; return 1; }
 
-    if [[ -f "$profile_file" ]]; then
-        print_error "Profile '$name' already exists"
-        return 1
-    fi
-
-    # Create profile JSON
     cat > "$profile_file" <<EOF
 {
   "name": "$name",
@@ -117,8 +148,7 @@ EOF
 
     echo "$name" > "$CURRENT_PROFILE"
     print_success "Created profile '$name'"
-    print_info "Minecraft: $mc_version | Loader: $mod_loader"
-    print_info "Output directory: $output_dir"
+    print_info "Minecraft: $mc_version | Loader: $mod_loader | Output: $output_dir"
 }
 
 list_profiles() {
@@ -185,37 +215,22 @@ add_modrinth_mod() {
 
     print_header "Adding Modrinth mod: $slug"
 
-    # Fetch project info
     local project_info=$(fetch_url "https://api.modrinth.com/v2/project/$slug")
-
-    if [[ -z "$project_info" ]]; then
-        print_error "Failed to fetch mod info for '$slug'"
-        return 1
-    fi
+    [[ -z "$project_info" ]] && { print_error "Failed to fetch mod info for '$slug'"; return 1; }
 
     local project_id=$(echo "$project_info" | $JSON_PROC -r '.id')
     local title=$(echo "$project_info" | $JSON_PROC -r '.title')
 
-    # Check if mod already exists
     local exists=$($JSON_PROC -r --arg id "$project_id" '.mods[] | select(.id == $id) | .id' < "$profile_file")
+    [[ -n "$exists" ]] && { print_error "Mod '$title' is already in the profile"; return 1; }
 
-    if [[ -n "$exists" ]]; then
-        print_error "Mod '$title' is already in the profile"
-        return 1
-    fi
-
-    # Add mod to profile
     local temp_file=$(mktemp)
     $JSON_PROC \
         --arg id "$project_id" \
         --arg slug "$slug" \
         --arg title "$title" \
-        '.mods += [{
-            "source": "modrinth",
-            "id": $id,
-            "slug": $slug,
-            "title": $title
-        }]' < "$profile_file" > "$temp_file"
+        '.mods += [{"source": "modrinth", "id": $id, "slug": $slug, "title": $title}]' \
+        < "$profile_file" > "$temp_file"
 
     mv "$temp_file" "$profile_file"
     print_success "Added '$title' to profile"
@@ -227,26 +242,17 @@ add_curseforge_mod() {
 
     print_header "Adding CurseForge mod: $project_id"
 
-    # Check if mod already exists
     local exists=$($JSON_PROC -r --arg id "$project_id" '.mods[] | select(.id == $id) | .id' < "$profile_file")
+    [[ -n "$exists" ]] && { print_error "Mod with ID '$project_id' already in profile"; return 1; }
 
-    if [[ -n "$exists" ]]; then
-        print_error "Mod with ID '$project_id' is already in the profile"
-        return 1
-    fi
-
-    # Add mod to profile
     local temp_file=$(mktemp)
     $JSON_PROC \
         --arg id "$project_id" \
-        '.mods += [{
-            "source": "curseforge",
-            "id": $id,
-            "title": "CurseForge Mod " + $id
-        }]' < "$profile_file" > "$temp_file"
+        '.mods += [{"source": "curseforge", "id": $id, "title": "CurseForge Mod " + $id}]' \
+        < "$profile_file" > "$temp_file"
 
     mv "$temp_file" "$profile_file"
-    print_success "Added CurseForge mod (ID: $project_id) to profile"
+    print_success "Added CurseForge mod (ID: $project_id)"
     print_info "Note: CurseForge downloads require an API key"
 }
 
@@ -257,91 +263,59 @@ list_mods() {
     print_header "Mods in profile '$profile_name':"
 
     local mod_count=$($JSON_PROC -r '.mods | length' < "$profile_file")
-
-    if [[ $mod_count -eq 0 ]]; then
-        print_info "No mods in profile. Add mods with: $0 add"
-        return
-    fi
+    [[ $mod_count -eq 0 ]] && { print_info "No mods in profile. Add with: $0 add"; return; }
 
     $JSON_PROC -r '.mods[] | "[\(.source)] \(.title) (\(.slug // .id))"' < "$profile_file" | \
-    while IFS= read -r line; do
-        echo "  $line"
-    done
+    while IFS= read -r line; do echo "  $line"; done
 }
 
 remove_mod() {
     local identifier="$1"
     local profile_file=$(get_current_profile) || return 1
 
-    if [[ -z "$identifier" ]]; then
-        print_error "Usage: $0 remove <slug|id>"
-        return 1
-    fi
+    [[ -z "$identifier" ]] && { print_error "Usage: $0 remove <slug|id>"; return 1; }
 
-    # Remove mod by slug or id
-    local temp_file=$(mktemp)
-    local removed=$($JSON_PROC -r \
-        --arg id "$identifier" \
+    local removed=$($JSON_PROC -r --arg id "$identifier" \
         '.mods[] | select(.slug == $id or .id == $id) | .title' < "$profile_file")
+    [[ -z "$removed" ]] && { print_error "Mod '$identifier' not found"; return 1; }
 
-    if [[ -z "$removed" ]]; then
-        print_error "Mod '$identifier' not found in profile"
-        return 1
-    fi
-
-    $JSON_PROC \
-        --arg id "$identifier" \
+    local temp_file=$(mktemp)
+    $JSON_PROC --arg id "$identifier" \
         '.mods |= map(select(.slug != $id and .id != $id))' < "$profile_file" > "$temp_file"
 
     mv "$temp_file" "$profile_file"
-    print_success "Removed '$removed' from profile"
+    print_success "Removed '$removed'"
 }
 
 download_modrinth_mod() {
-    local project_id="$1"
-    local mc_version="$2"
-    local mod_loader="$3"
-    local output_dir="$4"
+    local project_id="$1" mc_version="$2" mod_loader="$3" output_dir="$4"
 
-    # Fetch versions
     local versions=$(fetch_url "https://api.modrinth.com/v2/project/$project_id/version")
 
-    # Filter compatible version
     local version_file=$(echo "$versions" | $JSON_PROC -r \
         --arg mc "$mc_version" \
         --arg loader "$mod_loader" \
-        'map(select(
-            (.game_versions | index($mc)) and
-            (.loaders | map(ascii_downcase) | index($loader))
-        )) | .[0]')
+        'map(select((.game_versions | index($mc)) and (.loaders | map(ascii_downcase) | index($loader)))) | .[0]')
 
     if [[ "$version_file" == "null" ]] || [[ -z "$version_file" ]]; then
-        print_error "No compatible version found for MC $mc_version with $mod_loader"
+        print_error "No compatible version for MC $mc_version with $mod_loader"
         return 1
     fi
 
     local download_url=$(echo "$version_file" | $JSON_PROC -r '.files[0].url')
     local filename=$(echo "$version_file" | $JSON_PROC -r '.files[0].filename')
 
-    if [[ -z "$download_url" ]]; then
-        print_error "Failed to get download URL"
-        return 1
-    fi
+    [[ -z "$download_url" ]] && { print_error "Failed to get download URL"; return 1; }
 
     ensure_dir "$output_dir"
     local output_file="$output_dir/$filename"
 
-    if [[ -f "$output_file" ]]; then
-        print_info "Already downloaded: $filename"
-        return 0
-    fi
+    [[ -f "$output_file" ]] && { print_info "Already downloaded: $filename"; return 0; }
 
     print_info "Downloading $filename..."
     download_file "$download_url" "$output_file"
     print_success "Downloaded $filename"
 }
-
-# ─── Update Functions ───────────────────────────────────────────────────────────
 
 upgrade_all() {
     local profile_file=$(get_current_profile) || return 1
@@ -373,15 +347,9 @@ upgrade_all() {
         print_info "[$count/$total] $title"
 
         case "$source" in
-            modrinth)
-                download_modrinth_mod "$id" "$mc_version" "$mod_loader" "$output_dir"
-                ;;
-            curseforge)
-                print_error "CurseForge downloads not yet implemented (requires API key)"
-                ;;
-            *)
-                print_error "Unknown source: $source"
-                ;;
+            modrinth) download_modrinth_mod "$id" "$mc_version" "$mod_loader" "$output_dir";;
+            curseforge) print_error "CurseForge downloads not yet implemented";;
+            *) print_error "Unknown source: $source";;
         esac
     done
 
@@ -389,11 +357,13 @@ upgrade_all() {
     print_success "Upgrade complete!"
 }
 
+# ─── Update Operations ──────────────────────────────────────────────────────────
+
 ferium_update() {
     print_header "Running Ferium mod update..."
 
     if ! has_command ferium; then
-        print_error "Ferium not installed. Skipping ferium update."
+        print_error "Ferium not installed. Skipping."
         print_info "Install from: https://github.com/gorilla-devs/ferium"
         return 1
     fi
@@ -413,7 +383,7 @@ repack_mods() {
     print_header "Repacking mods with mc-repack..."
 
     if ! has_command mc-repack; then
-        print_error "mc-repack not installed. Skipping repack."
+        print_error "mc-repack not installed. Skipping."
         print_info "Install from: https://github.com/jascotty2/mc-repack"
         return 1
     fi
@@ -422,10 +392,7 @@ repack_mods() {
     local mods_src="${1:-$HOME/Documents/MC/Minecraft/mods}"
     local mods_dst="${2:-$HOME/Documents/MC/Minecraft/mods-$timestamp}"
 
-    if [[ ! -d "$mods_src" ]]; then
-        print_error "Mods source directory not found: $mods_src"
-        return 1
-    fi
+    [[ ! -d "$mods_src" ]] && { print_error "Source not found: $mods_src"; return 1; }
 
     print_info "Source: $mods_src"
     print_info "Destination: $mods_dst"
@@ -445,25 +412,24 @@ update_geyserconnect() {
     local tmp_jar="$dest_dir/GeyserConnect2.jar"
     local final_jar="$dest_dir/GeyserConnect.jar"
 
-    # Get aria2c options
-    local aria2_opts=($(get_aria2c_opts_array) --allow-overwrite=true)
-
     print_info "Downloading latest GeyserConnect..."
 
-    if aria2c "${aria2_opts[@]}" -o "$tmp_jar" "$url"; then
-        print_success "Download complete"
+    if has_command aria2c; then
+        aria2c -x 16 -s 16 --allow-overwrite=true -o "$tmp_jar" "$url" || \
+            { print_error "Download failed"; return 1; }
+    elif has_command curl; then
+        curl -L -o "$tmp_jar" "$url" || { print_error "Download failed"; return 1; }
     else
-        print_error "Failed to download GeyserConnect"
+        print_error "No download tool available"
         return 1
     fi
 
-    # Backup existing JAR
-    if [[ -f "$final_jar" ]]; then
-        print_info "Backing up existing GeyserConnect.jar..."
-        mv "$final_jar" "$final_jar.bak"
-    fi
+    print_success "Download complete"
 
-    # Repack if mc-repack is available
+    # Backup existing JAR
+    [[ -f "$final_jar" ]] && { print_info "Backing up existing..."; mv "$final_jar" "$final_jar.bak"; }
+
+    # Repack if available
     if has_command mc-repack; then
         print_info "Repacking GeyserConnect..."
         mc-repack jars -c "$MC_REPACK_CONFIG" --in "$tmp_jar" --out "$final_jar"
@@ -481,39 +447,22 @@ full_update() {
     print_header "Running full update workflow..."
     echo ""
 
-    # Setup environment
     setup_server
     setup_mc_repack
     echo ""
 
-    # Update mods using ferium (if available)
-    if has_command ferium; then
-        ferium_update
-        echo ""
-    fi
+    has_command ferium && { ferium_update; echo ""; }
 
-    # Upgrade mods in current profile (if profile exists)
-    if [[ -f "$CURRENT_PROFILE" ]]; then
-        upgrade_all 2>/dev/null || true
-        echo ""
-    fi
+    [[ -f "$CURRENT_PROFILE" ]] && { upgrade_all 2>/dev/null || true; echo ""; }
 
-    # Repack mods (if mc-repack available)
-    if has_command mc-repack; then
-        repack_mods
-        echo ""
-    fi
+    has_command mc-repack && { repack_mods; echo ""; }
 
-    # Update GeyserConnect (if applicable)
-    if [[ -d "$HOME/Documents/MC/Minecraft/config/Geyser-Fabric" ]]; then
-        update_geyserconnect
-        echo ""
-    fi
+    [[ -d "$HOME/Documents/MC/Minecraft/config/Geyser-Fabric" ]] && { update_geyserconnect; echo ""; }
 
     print_success "Full update workflow complete!"
 }
 
-# ─── Command Help ───────────────────────────────────────────────────────────────
+# ─── Help ───────────────────────────────────────────────────────────────────────
 
 show_help() {
     cat <<EOF
@@ -525,7 +474,6 @@ USAGE:
 COMMANDS:
     Profile Management:
         profile create <name> <mc_version> <loader> <output_dir>
-                              Create a new profile
         profile list          List all profiles
         profile switch <name> Switch to a different profile
 
@@ -553,7 +501,7 @@ EXAMPLES:
     # Setup and full update
     $0 full-update
 
-    # Create a profile and add mods
+    # Create profile and add mods
     $0 profile create fabric-mods 1.21.6 fabric ./mods
     $0 add modrinth sodium
     $0 add modrinth lithium
