@@ -69,9 +69,9 @@ list_profiles(){
     for profile in "$PROFILES_DIR"/*.json; do
         [[ ! -f "$profile" ]] && continue
         local name=$(basename "$profile" .json)
-        local mc_version=$(cat "$profile" | $JSON_PROC -r '.mc_version')
-        local mod_loader=$(cat "$profile" | $JSON_PROC -r '.mod_loader')
-        local mod_count=$(cat "$profile" | $JSON_PROC -r '.mods | length')
+        local mc_version=$($JSON_PROC -r '.mc_version' < "$profile")
+        local mod_loader=$($JSON_PROC -r '.mod_loader' < "$profile")
+        local mod_count=$($JSON_PROC -r '.mods | length' < "$profile")
         if [[ "$name" == "$current" ]]; then
             echo -e "${GREEN}* $name${NC} (MC $mc_version, $mod_loader, $mod_count mods)"
         else
@@ -115,16 +115,16 @@ add_modrinth_mod(){
     local project_id=$(echo "$project_info" | $JSON_PROC -r '.id')
     local title=$(echo "$project_info" | $JSON_PROC -r '.title')
     # Get profile details
-    local mc_version=$(cat "$profile_file" | $JSON_PROC -r '.mc_version')
-    local mod_loader=$(cat "$profile_file" | $JSON_PROC -r '.mod_loader')
+    local mc_version=$($JSON_PROC -r '.mc_version' < "$profile_file")
+    local mod_loader=$($JSON_PROC -r '.mod_loader' < "$profile_file")
     # Check if mod already exists
-    local exists=$(cat "$profile_file" | $JSON_PROC -r --arg id "$project_id" '.mods[] | select(.id == $id) | .id')
+    local exists=$($JSON_PROC -r --arg id "$project_id" '.mods[] | select(.id == $id) | .id' < "$profile_file")
     if [[ -n "$exists" ]]; then
         print_error "Mod '$title' is already in the profile"; return 1
     fi
     # Add mod to profile
     local temp_file=$(mktemp)
-    cat "$profile_file" | $JSON_PROC \
+    $JSON_PROC \
         --arg id "$project_id" \
         --arg slug "$slug" \
         --arg title "$title" \
@@ -133,7 +133,7 @@ add_modrinth_mod(){
             "id": $id,
             "slug": $slug,
             "title": $title
-        }]' > "$temp_file"
+        }]' < "$profile_file" > "$temp_file"
     mv "$temp_file" "$profile_file"
     print_success "Added '$title' to profile"
 }
@@ -143,19 +143,19 @@ add_curseforge_mod(){
     local profile_file=$(get_current_profile) || return 1
     print_header "Adding CurseForge mod: $project_id"
     # Check if mod already exists
-    local exists=$(cat "$profile_file" | $JSON_PROC -r --arg id "$project_id" '.mods[] | select(.id == $id) | .id')
+    local exists=$($JSON_PROC -r --arg id "$project_id" '.mods[] | select(.id == $id) | .id' < "$profile_file")
     if [[ -n "$exists" ]]; then
         print_error "Mod with ID '$project_id' is already in the profile"; return 1
     fi
     # Add mod to profile (CurseForge API requires API key, so we store minimal info)
     local temp_file=$(mktemp)
-    cat "$profile_file" | $JSON_PROC \
+    $JSON_PROC \
         --arg id "$project_id" \
         '.mods += [{
             "source": "curseforge",
             "id": $id,
             "title": "CurseForge Mod " + $id
-        }]' > "$temp_file"
+        }]' < "$profile_file" > "$temp_file"
     mv "$temp_file" "$profile_file"
     print_success "Added CurseForge mod (ID: $project_id) to profile"
     print_info "Note: CurseForge downloads require an API key"
@@ -165,11 +165,11 @@ list_mods(){
     local profile_file=$(get_current_profile) || return 1
     local profile_name=$(basename "$profile_file" .json)
     print_header "Mods in profile '$profile_name':"
-    local mod_count=$(cat "$profile_file" | $JSON_PROC -r '.mods | length')
+    local mod_count=$($JSON_PROC -r '.mods | length' < "$profile_file")
     if [[ $mod_count -eq 0 ]]; then
         print_info "No mods in profile. Add mods with: $0 add"; return
     fi
-    cat "$profile_file" | $JSON_PROC -r '.mods[] | "[\(.source)] \(.title) (\(.slug // .id))"' | \
+    $JSON_PROC -r '.mods[] | "[\(.source)] \(.title) (\(.slug // .id))"' < "$profile_file" | \
     while IFS= read -r line; do echo "  $line"; done
 }
 
@@ -209,17 +209,17 @@ download_modrinth_mod(){
 upgrade_all(){
     local profile_file=$(get_current_profile) || return 1
     print_header "Upgrading all mods..."
-    local mc_version=$(cat "$profile_file" | $JSON_PROC -r '.mc_version')
-    local mod_loader=$(cat "$profile_file" | $JSON_PROC -r '.mod_loader')
-    local output_dir=$(cat "$profile_file" | $JSON_PROC -r '.output_dir')
+    local mc_version=$($JSON_PROC -r '.mc_version' < "$profile_file")
+    local mod_loader=$($JSON_PROC -r '.mod_loader' < "$profile_file")
+    local output_dir=$($JSON_PROC -r '.output_dir' < "$profile_file")
     # Clean output directory
     if [[ -d "$output_dir" ]]; then
         print_info "Cleaning output directory..."; rm -f "$output_dir"/*.jar
     fi
     ensure_dir "$output_dir"
-    local total=$(cat "$profile_file" | $JSON_PROC -r '.mods | length')
+    local total=$($JSON_PROC -r '.mods | length' < "$profile_file")
     local count=0
-    cat "$profile_file" | $JSON_PROC -c '.mods[]' | while IFS= read -r mod; do
+    $JSON_PROC -c '.mods[]' < "$profile_file" | while IFS= read -r mod; do
         ((count++))
         local source=$(echo "$mod" | $JSON_PROC -r '.source')
         local title=$(echo "$mod" | $JSON_PROC -r '.title')
@@ -244,15 +244,15 @@ remove_mod(){
     fi
     # Remove mod by slug or id
     local temp_file=$(mktemp)
-    local removed=$(cat "$profile_file" | $JSON_PROC -r \
+    local removed=$($JSON_PROC -r \
         --arg id "$identifier" \
-        '.mods[] | select(.slug == $id or .id == $id) | .title')
+        '.mods[] | select(.slug == $id or .id == $id) | .title' < "$profile_file")
     if [[ -z "$removed" ]]; then
         print_error "Mod '$identifier' not found in profile"; return 1
     fi
-    cat "$profile_file" | $JSON_PROC \
+    $JSON_PROC \
         --arg id "$identifier" \
-        '.mods |= map(select(.slug != $id and .id != $id))' > "$temp_file"
+        '.mods |= map(select(.slug != $id and .id != $id))' < "$profile_file" > "$temp_file"
     mv "$temp_file" "$profile_file"
     print_success "Removed '$removed' from profile"
 }

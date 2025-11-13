@@ -38,14 +38,6 @@ get_total_ram_gb() {
     awk '/MemTotal/ {printf "%.0f\n",$2/1024/1024}' /proc/meminfo 2>/dev/null
 }
 
-# Calculate memory allocation for Minecraft (fraction of total RAM)
-# Usage: get_minecraft_memory_gb [fraction]
-# Default fraction is 3 (1/3 of total RAM)
-get_minecraft_memory_gb() {
-    local divisor="${1:-3}"
-    awk -v div="$divisor" '/MemTotal/ {print int($2/1024/1024/div)}' /proc/meminfo
-}
-
 # Calculate heap size (total RAM minus reserved for OS)
 # Usage: get_heap_size_gb [reserved_gb]
 # Default reserved is 2GB
@@ -141,38 +133,14 @@ extract_natives() {
     rm -rf "${dest_dir}/META-INF"
 }
 
-# Initialize SCRIPT_DIR and source common.sh
-# This function should be called at the start of scripts
-init_script_dir() {
-    SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[1]}")" && pwd)"
-    export SCRIPT_DIR
-}
-
 # Get aria2c download options for consistent configuration
 get_aria2c_opts() {
     echo "-x 16 -s 16"
 }
 
 # Get aria2c options as array (safely handles word splitting)
-# Usage: read -ra OPTS <<< "$(get_aria2c_opts_array)"
-# or: OPTS=($(get_aria2c_opts_array))
 get_aria2c_opts_array() {
     echo "-x" "16" "-s" "16"
-}
-
-# Source this script from another script with automatic SCRIPT_DIR setup
-# This eliminates the need for manual SCRIPT_DIR initialization
-# Usage: Instead of:
-#   SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-#   source "$SCRIPT_DIR/lib/common.sh"
-# Just use:
-#   source "$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
-# And SCRIPT_DIR will be set automatically
-source_common() {
-    if [[ -z "${SCRIPT_DIR:-}" ]]; then
-        SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[1]}")" && pwd)"
-        export SCRIPT_DIR
-    fi
 }
 
 # Calculate client memory allocation (Xms = 1/4 RAM, Xmx = 1/2 RAM)
@@ -197,16 +165,6 @@ get_cpu_cores() {
     nproc 2>/dev/null || echo 4
 }
 
-# Detect CPU cores and RAM (in GB)
-CPU_CORES=$(get_cpu_cores)
-# Calculate heap sizes: leave ~2GB for OS / background (uses get_heap_size_gb from common.sh)
-XMS=$(get_heap_size_gb 2)
-XMX=$(get_heap_size_gb 2)
-
-if has archlinux-java; then
-  sudo archlinux-java fix 2>/dev/null
-  JAVA_CMD="$(archlinux-java get 2>/dev/null)"
-fi
 
 
 
