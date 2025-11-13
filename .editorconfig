@@ -154,8 +154,8 @@ indent_size = 2
 indent_style = space
 indent_size = 2
 
-# INI files
-[**.{ini,cfg,conf,desktop}]
+# INI and Properties files
+[**.{ini,cfg,conf,desktop,properties}]
 indent_style = space
 indent_size = 2
 

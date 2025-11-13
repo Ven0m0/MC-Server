@@ -1,0 +1,59 @@
+---
+# MegaLinter configuration file
+# https://megalinter.io/latest/configuration/
+
+# Enable auto-fixes
+APPLY_FIXES: all
+
+# Linters configuration
+LINTERS:
+  # YAML linting
+  - linter: yamllint
+    variables:
+      YAML_YAMLLINT_CONFIG_FILE: .yamllint.yml
+      YAML_YAMLLINT_CLI_LINT_MODE: file
+
+  # YAML formatting
+  - linter: prettier
+    descriptor: YAML
+    variables:
+      YAML_PRETTIER_CONFIG_FILE: .prettierrc.yml
+      YAML_PRETTIER_FILE_EXTENSIONS: [.yml, .yaml]
+
+  # JSON linting
+  - linter: jsonlint
+    variables:
+      JSON_JSONLINT_CLI_LINT_MODE: list_of_files
+
+  # JSON formatting
+  - linter: prettier
+    descriptor: JSON
+    variables:
+      JSON_PRETTIER_CONFIG_FILE: .prettierrc.yml
+      JSON_PRETTIER_FILE_EXTENSIONS: [.json, .json5, .jsonc]
+
+  # TOML formatting
+  - linter: taplo
+    variables:
+      TOML_TAPLO_ARGUMENTS: fmt
+
+# File extensions
+fileio:
+  files:
+    - "**/*.yml"
+    - "**/*.yaml"
+    - "**/*.json"
+    - "**/*.json5"
+    - "**/*.jsonc"
+    - "**/*.toml"
+    - "**/*.properties"
+
+# Exclusions
+excluded_directories:
+  - node_modules
+  - .git
+  - megalinter-reports
+
+excluded_files:
+  - package-lock.json
+  - yarn.lock

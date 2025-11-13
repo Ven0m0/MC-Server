@@ -1,16 +1,114 @@
+---
 name: MegaLinter
+
 on:
-  workflow_dispatch:
+  push:
+    branches: [main, master, claude/**]
+    paths:
+      - '**.yml'
+      - '**.yaml'
+      - '**.toml'
+      - '**.json'
+      - '**.json5'
+      - '**.jsonc'
+      - '**.properties'
+      - '.github/workflows/mega-linter.yml'
+  pull_request:
+    branches: [main, master]
+
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
-permissions:
-  contents: write
-  issues: write
-  pull-requests: write
+
 jobs:
   megalinter:
-    uses: Ven0m0/.github/.github/workflows/mega-linter.yml@main
-    with:
-      exclude_dirs: '.github,.git,.cache,go,node_modules,.var,.rustup,.wine,.zim,.void-editor,.vscode,.claude'
-    secrets: inherit
+    name: MegaLinter
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: MegaLinter
+        id: ml
+        uses: oxsecurity/megalinter@v7
+        env:
+          # Apply fixes and formatting
+          APPLY_FIXES: all
+          APPLY_FIXES_EVENT: all
+          APPLY_FIXES_MODE: commit
+
+          # Enable only specific linters for config files
+          ENABLE_LINTERS: >-
+            YAML_YAMLLINT,
+            YAML_PRETTIER,
+            JSON_JSONLINT,
+            JSON_PRETTIER,
+            JSON_NPM_PACKAGE_JSON_LINT,
+            TOML_TAPLO
+
+          # YAML Configuration
+          YAML_YAMLLINT_CONFIG_FILE: .yamllint.yml
+          YAML_YAMLLINT_FILTER_REGEX_EXCLUDE: '(node_modules|\.git)'
+          YAML_PRETTIER_CONFIG_FILE: .prettierrc.yml
+          YAML_PRETTIER_FILTER_REGEX_EXCLUDE: '(node_modules|\.git)'
+
+          # JSON Configuration
+          JSON_JSONLINT_FILTER_REGEX_EXCLUDE: '(node_modules|\.git|package-lock\.json)'
+          JSON_PRETTIER_CONFIG_FILE: .prettierrc.yml
+          JSON_PRETTIER_FILTER_REGEX_EXCLUDE: '(node_modules|\.git|package-lock\.json)'
+
+          # TOML Configuration
+          TOML_TAPLO_FILTER_REGEX_EXCLUDE: '(node_modules|\.git)'
+
+          # Disable reporters we don't need
+          FILEIO_REPORTER: false
+
+          # GitHub configuration
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Archive production artifacts
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MegaLinter reports
+          path: |
+            megalinter-reports
+            mega-linter.log
+
+      - name: Create Pull Request with applied fixes
+        id: cpr
+        if: >
+          steps.ml.outputs.has_updated_sources == 1 &&
+          (env.APPLY_FIXES_EVENT == 'all' || env.APPLY_FIXES_EVENT == github.event_name) &&
+          env.APPLY_FIXES_MODE == 'pull_request' &&
+          (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "[MegaLinter] Apply linters automatic fixes"
+          title: "[MegaLinter] Apply linters automatic fixes"
+          labels: bot
+          branch: megalinter-fixes
+          delete-branch: true
+
+      - name: Create PR comment
+        if: >
+          steps.ml.outputs.has_updated_sources == 1 &&
+          (env.APPLY_FIXES_EVENT == 'all' || env.APPLY_FIXES_EVENT == github.event_name) &&
+          env.APPLY_FIXES_MODE == 'pull_request' &&
+          (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            MegaLinter has found linter fixes that can be applied.
+            Please review the changes in PR #${{ steps.cpr.outputs.pull-request-number }}

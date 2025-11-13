@@ -1,0 +1,53 @@
+---
+extends: default
+
+rules:
+  # Allow longer lines
+  line-length:
+    max: 120
+    level: warning
+
+  # Allow inline mappings
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+
+  # Allow inline sequences
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+
+  # Indentation
+  indentation:
+    spaces: 2
+    indent-sequences: true
+
+  # Allow comments without space
+  comments:
+    min-spaces-from-content: 1
+
+  # Allow empty values
+  empty-values:
+    forbid-in-block-mappings: false
+    forbid-in-flow-mappings: false
+
+  # Key ordering not enforced
+  key-ordering: disable
+
+  # Document start/end not required
+  document-start: disable
+  document-end: disable
+
+  # Allow truthy values (yes/no, on/off)
+  truthy:
+    allowed-values: ['true', 'false', 'yes', 'no', 'on', 'off']
+    check-keys: false
+
+  # Allow quoted strings
+  quoted-strings:
+    quote-type: any
+    required: false
+
+ignore: |
+  node_modules/
+  .git/
