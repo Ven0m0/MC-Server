@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-shopt -s nullglob globstar
-LC_ALL=C LANG=C
-IFS=$'\n\t'
 # Common functions and utilities for MC-Server scripts
 
 # Auto-initialize SCRIPT_DIR when this file is sourced
@@ -19,18 +16,14 @@ init_strict_mode() {
     SHELL="$(command -v bash 2>/dev/null || echo '/usr/bin/bash')"
 }
 
-# Get script's working directory and cd to it
+# Get script's working directory
 get_script_dir() {
-    local dir
-    dir="$(cd -- "$(dirname -- "${BASH_SOURCE[1]:-}")" && echo ${PWD})"
-    echo "$dir"
+    cd -- "$(dirname -- "${BASH_SOURCE[1]:-}")" && pwd
 }
 
 # Change to script directory
 cd_script_dir() {
-    local dir
-    dir="$(cd -- "$(dirname -- "${BASH_SOURCE[1]:-}")" && echo ${PWD})"
-    cd "$dir"
+    cd -- "$(dirname -- "${BASH_SOURCE[1]:-}")" || return 1
 }
 
 # Calculate total RAM in GB
@@ -48,6 +41,13 @@ get_heap_size_gb() {
     local heap=$((total_ram - reserved))
     [[ $heap -lt 1 ]] && heap=1
     echo "$heap"
+}
+
+# Calculate Minecraft memory allocation (alias for get_heap_size_gb)
+# Usage: get_minecraft_memory_gb [reserved_gb]
+# Default reserved is 3GB
+get_minecraft_memory_gb() {
+    get_heap_size_gb "${1:-3}"
 }
 
 # Check if command exists
@@ -83,6 +83,22 @@ get_json_processor() {
     fi
 }
 
+# Fetch URL to stdout
+fetch_url() {
+    local url="$1"
+
+    if has_command aria2c; then
+        aria2c -q -d /tmp -o - "$url" 2>/dev/null
+    elif has_command curl; then
+        curl -fsSL "$url"
+    elif has_command wget; then
+        wget -qO- "$url"
+    else
+        echo "Error: No download tool found (aria2c, curl, or wget)" >&2
+        return 1
+    fi
+}
+
 # Download file with aria2c or curl fallback
 download_file() {
     local url="$1"
@@ -92,7 +108,7 @@ download_file() {
     if has_command aria2c; then
         aria2c -x "$connections" -s "$connections" -o "$output" "$url"
     elif has_command curl; then
-        curl -L -o "$output" "$url"
+        curl -fsSL -o "$output" "$url"
     elif has_command wget; then
         wget -O "$output" "$url"
     else
@@ -101,25 +117,9 @@ download_file() {
     fi
 }
 
-# Fetch URL to stdout
-fetch_url() {
-    local url="$1"
-
-    if has_command aria2c; then
-        aria2c -q -d /tmp -o - "$url" 2>/dev/null
-    elif has_command curl; then
-        curl -sL "$url"
-    elif has_command wget; then
-        wget -qO- "$url"
-    else
-        echo "Error: No download tool found" >&2
-        return 1
-    fi
-}
-
 # Create directory if it doesn't exist
 ensure_dir() {
-    [[ ! -d "$1" ]] && mkdir -p "$1"
+    [[ ! -d "$1" ]] && mkdir -p "$1" || return 0
 }
 
 # Extract natives from JAR file
@@ -165,6 +165,8 @@ get_cpu_cores() {
     nproc 2>/dev/null || echo 4
 }
 
-
-
-
+# Output formatting helpers
+print_header() { echo -e "\033[0;34m==>\033[0m $1"; }
+print_success() { echo -e "\033[0;32m✓\033[0m $1"; }
+print_error() { echo -e "\033[0;31m✗\033[0m $1" >&2; }
+print_info() { echo -e "\033[1;33m→\033[0m $1"; }

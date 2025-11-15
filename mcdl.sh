@@ -14,41 +14,45 @@ init_strict_mode
 JSON_PROC=$(get_json_processor) || exit 1
 
 # Cache API responses to avoid redundant network calls
-echo "[*] Fetching Minecraft and Fabric versions..."
+print_header "Fetching Minecraft and Fabric versions..."
 ARIA2_OPTS=($(get_aria2c_opts_array))
-GAME_VERSIONS=$(aria2c -q -d /tmp -o - https://meta.fabricmc.net/v2/versions/game)
+GAME_VERSIONS=$(fetch_url "https://meta.fabricmc.net/v2/versions/game") || exit 1
 MC_VERSION="${MC_VERSION:-$(echo "$GAME_VERSIONS" | $JSON_PROC -r '.[] | select(.stable == true) | .version' | head -n1)}"
-FABRIC_VERSION=$(aria2c -q -d /tmp -o - https://meta.fabricmc.net/v2/versions/installer | $JSON_PROC -r '.[0].version')
+FABRIC_VERSION=$(fetch_url "https://meta.fabricmc.net/v2/versions/installer" | $JSON_PROC -r '.[0].version') || exit 1
 
-echo "→ Minecraft version: $MC_VERSION"
-echo "→ Fabric installer version: $FABRIC_VERSION"
+print_info "Minecraft version: $MC_VERSION"
+print_info "Fabric installer version: $FABRIC_VERSION"
 
-# Download and run Fabric installer (single approach)
-echo "[*] Downloading Fabric installer..."
-aria2c "${ARIA2_OPTS[@]}" -o fabric-installer.jar "https://maven.fabricmc.net/net/fabricmc/fabric-installer/${FABRIC_VERSION}/fabric-installer-${FABRIC_VERSION}.jar" || exit 1
+# Download and run Fabric installer
+print_header "Downloading Fabric installer..."
+download_file "https://maven.fabricmc.net/net/fabricmc/fabric-installer/${FABRIC_VERSION}/fabric-installer-${FABRIC_VERSION}.jar" "fabric-installer.jar" || exit 1
+print_success "Fabric installer downloaded"
 
-echo "[*] Installing Fabric server..."
+print_header "Installing Fabric server..."
 java -jar fabric-installer.jar server -mcversion "$MC_VERSION" -downloadMinecraft
+print_success "Fabric server installed"
 
-# 2. Resolve Loader version (cache loader versions API call)
-LOADER_VERSIONS=$(aria2c -q -d /tmp -o - https://meta.fabricmc.net/v2/versions/loader)
+# Resolve Loader version
+print_header "Resolving Fabric Loader version..."
+LOADER_VERSIONS=$(fetch_url "https://meta.fabricmc.net/v2/versions/loader") || exit 1
 if [[ ${STABLE_LOADER:-true} = true ]]; then
   LOADER="${LOADER:-$(echo "$LOADER_VERSIONS" | $JSON_PROC -r '.[] | select(.stable==true) | .version' | head -n1)}"
 else
   LOADER="${LOADER:-$(echo "$LOADER_VERSIONS" | $JSON_PROC -r '.[0].version')}"
 fi
 
-# 3. Lookup matching intermediary (mappings) version
+# Lookup matching intermediary (mappings) version
 INTERMEDIARY="$(
-  aria2c -q -d /tmp -o - "https://meta.fabricmc.net/v2/versions/loader/${MC_VERSION}/${LOADER}" \
+  fetch_url "https://meta.fabricmc.net/v2/versions/loader/${MC_VERSION}/${LOADER}" \
     | $JSON_PROC -r '.[0].intermediary'
-)"
+)" || exit 1
 
-echo "→ Fabric Loader: $LOADER (stable filter: ${STABLE_LOADER:-true})"
-echo "→ Intermediary:  $INTERMEDIARY"
+print_info "Fabric Loader: $LOADER (stable filter: ${STABLE_LOADER:-true})"
+print_info "Intermediary:  $INTERMEDIARY"
 
-# 4. Download the server-loader jar
-echo "[*] Downloading server-loader jar..."
-aria2c "${ARIA2_OPTS[@]}" "https://meta.fabricmc.net/v2/versions/loader/${MC_VERSION}/${LOADER}/${INTERMEDIARY}/server/jar"
+# Download the server-loader jar
+print_header "Downloading server-loader jar..."
+download_file "https://meta.fabricmc.net/v2/versions/loader/${MC_VERSION}/${LOADER}/${INTERMEDIARY}/server/jar" \
+  "fabric-server-mc.${MC_VERSION}-loader.${LOADER}-launcher.${INTERMEDIARY}.jar" || exit 1
 
-echo "[✔] Fabric server setup complete."
+print_success "Fabric server setup complete!"

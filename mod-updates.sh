@@ -1,44 +1,10 @@
 #!/usr/bin/env bash
 # mod-updates.sh: Unified Minecraft mod manager and update system
-set -euo pipefail; shopt -s nullglob globstar
-export LC_ALL=C LANG=C
 
-# ─── Utility Functions ──────────────────────────────────────────────────────────
-has_command(){ command -v "$1" &>/dev/null; }
-ensure_dir(){ [[ ! -d "$1" ]] && mkdir -p "$1"; }
-get_json_processor(){
-    if has_command jaq; then
-        echo "jaq"
-    elif has_command jq; then
-        echo "jq"
-    else
-        echo "Error: No JSON processor found. Install jq or jaq." >&2; return 1
-    fi
-}
+# Source common functions (SCRIPT_DIR is auto-initialized)
+source "$(dirname -- "${BASH_SOURCE[0]}")/lib/common.sh"
 
-fetch_url(){
-    local url="$1"
-    if has_command curl; then
-        curl -sL "$url"
-    elif has_command wget; then
-        wget -qO- "$url"
-    else
-        echo "Error: No download tool found (curl or wget)" >&2; return 1
-    fi
-}
-
-download_file(){
-    local url="$1" output="$2"
-    if has_command aria2c; then
-        aria2c -x 16 -s 16 -o "$output" "$url"
-    elif has_command curl; then
-        curl -L -o "$output" "$url"
-    elif has_command wget; then
-        wget -O "$output" "$url"
-    else
-        echo "Error: No download tool found" >&2; return 1
-    fi
-}
+init_strict_mode
 
 # ─── Configuration ──────────────────────────────────────────────────────────────
 
@@ -46,19 +12,6 @@ CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/mod-manager"
 PROFILES_DIR="$CONFIG_DIR/profiles"
 CURRENT_PROFILE="$CONFIG_DIR/current_profile"
 MC_REPACK_CONFIG="${HOME}/.config/mc-repack.toml"
-
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
-
-# Output helpers
-print_header(){ echo -e "${BLUE}==>${NC} $1"; }
-print_success(){ echo -e "${GREEN}✓${NC} $1"; }
-print_error(){ echo -e "${RED}✗${NC} $1" >&2; }
-print_info(){ echo -e "${YELLOW}→${NC} $1"; }
 
 # Get JSON processor
 JSON_PROC=$(get_json_processor) || exit 1
@@ -86,8 +39,8 @@ setup_server(){
 setup_mc_repack(){
     print_header "Configuring mc-repack"
     touch "$MC_REPACK_CONFIG"
-    # Remove old TOML sections TODO: sed
-    if command -v sd &>/dev/null; then
+    # Remove old TOML sections
+    if has_command sd; then
         sd -s '^\[(json|nbt|png|toml|jar)\](\n(?!\[).*)*' '' "$MC_REPACK_CONFIG" 2>/dev/null || :
     fi
     # Append optimized configuration
@@ -332,14 +285,7 @@ update_geyserconnect(){
     local tmp_jar="$dest_dir/GeyserConnect2.jar"
     local final_jar="$dest_dir/GeyserConnect.jar"
     print_info "Downloading latest GeyserConnect..."
-    if has_command aria2c; then
-        aria2c -x 16 -s 16 --allow-overwrite=true -o "$tmp_jar" "$url" || \
-            { print_error "Download failed"; return 1; }
-    elif has_command curl; then
-        curl -L -o "$tmp_jar" "$url" || { print_error "Download failed"; return 1; }
-    else
-        print_error "No download tool available"; return 1
-    fi
+    download_file "$url" "$tmp_jar" || { print_error "Download failed"; return 1; }
     print_success "Download complete"
     # Backup existing JAR
     [[ -f "$final_jar" ]] && { print_info "Backing up existing..."; mv "$final_jar" "$final_jar.bak"; }
