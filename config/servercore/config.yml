@@ -10,15 +10,15 @@ features:
   prevent-enderpearl-chunkloading: false
   # Prevents lagspikes caused by players moving into unloaded chunks.
   prevent-moving-into-unloaded-chunks: true
-  # The amount of seconds between auto-saves when /save-on is active.
-  autosave-interval-seconds: 300
+  # The amount of seconds between auto-saves when /save-on is active (optimized to 600 for better performance).
+  autosave-interval-seconds: 600
   # The fraction that decides the chance of experience orbs being able to merge with each other. (1 = 100%, 40 = 2.5%)
   # Note that just like in vanilla, experience orbs will still need to be of the same size to actually merge.
-  xp-merge-fraction: 10
-  # The radius in blocks that experience orbs will merge at.
-  xp-merge-radius: 3.0
-  # The radius in blocks that items will merge at.
-  item-merge-radius: 2.0
+  xp-merge-fraction: 1
+  # The radius in blocks that experience orbs will merge at (optimized for better entity merging).
+  xp-merge-radius: 4.0
+  # The radius in blocks that items will merge at (optimized for better entity merging).
+  item-merge-radius: 3.0
   lobotomize-villagers:
     # Makes villagers tick less often if they are stuck in a 1x1 space.
     enabled: true
@@ -30,13 +30,15 @@ features:
 dynamic:
   # Enables dynamic performance checks.
   enabled: true
-  # The average MSPT to target.
-  target-mspt: 45
+  # The average MSPT to target (optimized to 40 for better responsiveness).
+  target-mspt: 40
   # The default values for dynamic settings.
   # If left unspecified, the maximum value will be used.
   # Note: adding view / simulation distance here will override their value in server.properties.
   default-values:
     CHUNK_TICK_DISTANCE: 10
+    SIMULATION_DISTANCE: 10
+    VIEW_DISTANCE: 10
     MOBCAP_PERCENTAGE: 100
 
   # The settings that will be decreased when the server is overloaded, in the specified order.
@@ -48,43 +50,25 @@ dynamic:
   dynamic-settings:
     - setting: 'CHUNK_TICK_DISTANCE'
       max: 10
-      min: 6
-      increment: 1
-      interval: 15
-
-    - setting: 'MOBCAP_PERCENTAGE'
-      max: 100
-      min: 50
-      increment: 10
-      interval: 15
-
-    - setting: 'SIMULATION_DISTANCE'
-      max: 10
-      min: 6
-      increment: 1
-      interval: 15
-
-    - setting: 'CHUNK_TICK_DISTANCE'
-      max: 6
       min: 2
       increment: 1
       interval: 15
 
     - setting: 'MOBCAP_PERCENTAGE'
-      max: 50
+      max: 100
       min: 30
       increment: 10
       interval: 15
 
     - setting: 'SIMULATION_DISTANCE'
-      max: 6
+      max: 10
       min: 2
       increment: 1
       interval: 15
 
     - setting: 'VIEW_DISTANCE'
       max: 10
-      min: 5
+      min: 4
       increment: 1
       interval: 150
 
@@ -205,9 +189,9 @@ activation-range:
   # Allows villagers to tick regardless of the activation range when panicking.
   villager-tick-panic: true
   # The time in seconds that a villager needs to be inactive for before obtaining work immunity (if it has work tasks).
-  villager-work-immunity-after: 20
+  villager-work-immunity-after: 10
   # The amount of ticks an inactive villager will wake up for when it has work immunity.
-  villager-work-immunity-for: 20
+  villager-work-immunity-for: 10
   # A list of entity types that should be excluded from activation range checks.
   excluded-entity-types:
     - 'minecraft:hopper_minecart'

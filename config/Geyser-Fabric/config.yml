@@ -29,7 +29,7 @@ bedrock:
   server-name: "Server"
   # How much to compress network traffic to the Bedrock client. The higher the number, the more CPU usage used, but
   # the smaller the bandwidth used. Does not have any effect below -1 or above 9. Set to -1 to disable.
-  compression-level: 6
+  compression-level: 4
   # The port to broadcast to Bedrock clients with the MOTD that they should use to connect to the server.
   # DO NOT uncomment and change this unless Geyser runs on a different internal port than the one that is used to connect.
   # broadcast-port: 19132
@@ -135,17 +135,17 @@ emote-offhand-workaround: "emotes-and-offhand"
 
 # Specify how many days images will be cached to disk to save downloading them from the internet.
 # A value of 0 is disabled. (Default: 0)
-cache-images: 7
+cache-images: 30
 
 # Allows custom skulls to be displayed. Keeping them enabled may cause a performance decrease on older/weaker devices.
 allow-custom-skulls: true
 
 # The maximum number of custom skulls to be displayed per player. Increasing this may decrease performance on weaker devices.
 # Setting this to -1 will cause all custom skulls to be displayed regardless of distance or number.
-max-visible-custom-skulls: 128
+max-visible-custom-skulls: 64
 
 # The radius in blocks around the player in which custom skulls are displayed.
-custom-skull-render-distance: 8
+custom-skull-render-distance: 6
 
 # Whether to add any items and blocks which normally does not exist in Bedrock Edition.
 # This should only need to be disabled if using a proxy that does not use the "transfer packet" style of server switching.
@@ -195,7 +195,7 @@ metrics:
 # a lot of scoreboard packets per second can cause serious lag.
 # This option allows you to specify after how many Scoreboard packets per seconds
 # the Scoreboard updates will be limited to four updates per second.
-scoreboard-packet-threshold: 15
+scoreboard-packet-threshold: 20
 
 # Allow connections from ProxyPass and Waterdog.
 # See https://www.spigotmc.org/wiki/firewall-guide/ for assistance - use UDP instead of TCP.

@@ -8,7 +8,7 @@
     "comment": "Display information on the debug screen."
   },
   "zstd_compression_level": {
-    "value": 6,
+    "value": 3,
     "comment": "The zstd library supports compression levels from 1 to 22. The lower the level, the faster the speed (at the cost of compression)."
   },
   "zstd_use_dictionary": {

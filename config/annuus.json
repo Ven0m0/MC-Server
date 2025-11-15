@@ -1,4 +1,4 @@
 {
-	"chunk_compression":"best_compress",
-	"block_updates_compression":"best_compress"
+	"chunk_compression":"balanced",
+	"block_updates_compression":"balanced"
 }
