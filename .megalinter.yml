@@ -29,7 +29,7 @@ PARALLEL: true
 PYTHON_DEFAULT_STYLE: ruff
 SHOW_ELAPSED_TIME: true
 REPORT_OUTPUT_FOLDER: megalinter-reports
-FILTER_REGEX_EXCLUDE: '(\.github/workflows)'
+FILTER_REGEX_EXCLUDE: '(node_modules|\.git|\.github/workflows)'
 FLAVOR_SUGGESTIONS: false
 POST_COMMANDS:
   - command: git add -A
