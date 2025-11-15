@@ -9,7 +9,6 @@
 # Server files
 eula.txt
 world/
-server.properties.bak
 banned-*.json
 ops.json
 usercache.json
