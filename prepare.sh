@@ -20,6 +20,10 @@ if has_command paru; then
 else
     print_info "paru not found - skipping Arch Linux package installation"
 fi
+if has mise; then
+  mise use -g github:zeroBzeroT/ChunkCleaner
+  mise use -g java@oracle-graalvm
+fi
 
 # ─── Calculate Memory Allocation ────────────────────────────────────────────────
 TOTAL_RAM=$(get_total_ram_gb)
