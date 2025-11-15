@@ -26,3 +26,4 @@ fabric-installer.jar
 
 # Test outputs (keep test script)
 test_output_*.txt
+megalinter-reports/
