@@ -1,7 +1,6 @@
 ---
 extends: default
 locale: en_US.UTF-8
-
 # Ignore globs and files
 ignore: |
   node_modules/
@@ -10,8 +9,7 @@ ignore: |
   package-lock.json
   yarn.lock
 
-ignore-from-file: .gitignore
-
+ignore-from-file: [.gitignore, .yamlignore]
 yaml-files:
   - "*.yaml"
   - "*.yml"
@@ -41,7 +39,7 @@ rules:
   document-end: disable
   empty-lines:
     level: warning
-    max: 2
+    max: 1
     max-start: 0
     max-end: 0
   empty-values:
