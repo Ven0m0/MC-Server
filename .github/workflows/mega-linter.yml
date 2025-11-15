@@ -36,7 +36,7 @@ jobs:
           YAML_PRETTIER_CONFIG_FILE: .prettierrc.yml
           JSON_PRETTIER_CONFIG_FILE: .prettierrc.yml
           FILEIO_REPORTER: false
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
       - name: Archive reports
         if: success() || failure()
         uses: actions/upload-artifact@v4
