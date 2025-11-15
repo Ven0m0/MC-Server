@@ -1,6 +1,10 @@
 # Build artifacts
 *.jar
 *.log
+*.bak
+*.old
+*.tmp
+/tmp/
 
 # Server files
 eula.txt
@@ -14,15 +18,6 @@ whitelist.json
 # Mod files
 mods/
 .fabric/
-fabric-installer.jar
-
-# Config backups
-*.bak
-*.old
-
-# Temporary files
-*.tmp
-/tmp/
 
 # Test outputs (keep test script)
 test_output_*.txt
