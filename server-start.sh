@@ -1,18 +1,14 @@
 #!/usr/bin/env bash
 # server-start.sh: Unified Minecraft server launcher with playit integration
 # Consolidates launcher.sh, start.sh, and Server.sh functionality
-set -euo pipefail; shopt -s nullglob globstar
-export LC_ALL=C LANG=C
 
-# ─── Utility Functions ──────────────────────────────────────────────────────────
-has(){ command -v "$1" &>/dev/null; }
-get_cpu_cores(){ nproc 2>/dev/null || echo 4; }
-get_total_ram_gb(){ awk '/MemTotal/ {printf "%.0f\n",$2/1024/1024}' /proc/meminfo 2>/dev/null; }
-get_heap_size_gb(){
-  local reserved="${1:-2}" total_ram=$(get_total_ram_gb)
-  local heap=$((total_ram - reserved))
-  [[ $heap -lt 1 ]] && heap=1; echo "$heap"
-}
+# Source common functions (SCRIPT_DIR is auto-initialized)
+source "$(dirname -- "${BASH_SOURCE[0]}")/lib/common.sh"
+
+init_strict_mode
+
+# Alias for consistency with rest of script
+has() { has_command "$@"; }
 
 # ─── Configuration ──────────────────────────────────────────────────────────────
 # Default settings (override via environment variables)
@@ -25,15 +21,16 @@ get_heap_size_gb(){
 : "${MIN_HEAP_GB:=4}"                     # Minimum heap size
 
 # ─── Validation ─────────────────────────────────────────────────────────────────
-has java || { echo >&2 "Error: Java not found. Install Java and try again."; exit 1; }
+check_dependencies java || exit 1
 [[ ! -f "$SERVER_JAR" ]] && {
-    echo >&2 "Error: Server jar not found: ${SERVER_JAR}"
-    echo >&2 "Set SERVER_JAR environment variable or place server.jar in current directory"; exit 1
+    print_error "Server jar not found: ${SERVER_JAR}"
+    print_info "Set SERVER_JAR environment variable or place server.jar in current directory"
+    exit 1
 }
 
 # ─── System Optimizations ───────────────────────────────────────────────────────
 if [[ "$ENABLE_OPTIMIZATIONS" == "true" ]]; then
-    echo "[*] Applying system optimizations..."
+    print_header "Applying system optimizations..."
     [[ $EUID -ne 0 ]] && sudo -v
     echo madvise | sudo tee /sys/kernel/mm/transparent_hugepage/enabled &>/dev/null || :
     echo always | sudo tee /sys/kernel/mm/transparent_hugepage/shmem_enabled &>/dev/null || :
@@ -41,7 +38,7 @@ if [[ "$ENABLE_OPTIMIZATIONS" == "true" ]]; then
     has powerprofilesctl && powerprofilesctl set performance &>/dev/null || :
     echo performance | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor &>/dev/null || :
     sync; echo 3 | sudo tee /proc/sys/vm/drop_caches &>/dev/null || :
-    echo "[✓] System optimizations applied"
+    print_success "System optimizations applied"
 fi
 
 # ─── Memory Configuration ───────────────────────────────────────────────────────
@@ -50,7 +47,7 @@ HEAP_SIZE=$(get_heap_size_gb 2)
 [[ $HEAP_SIZE -lt $MIN_HEAP_GB ]] && HEAP_SIZE=$MIN_HEAP_GB
 XMS="${HEAP_SIZE}G"
 XMX="${HEAP_SIZE}G"
-echo "[*] Memory: ${XMS} - ${XMX} | CPU Cores: ${CPU_CORES}"
+print_info "Memory: ${XMS} - ${XMX} | CPU Cores: ${CPU_CORES}"
 
 # ─── JDK Detection and Configuration ────────────────────────────────────────────
 if has archlinux-java; then
@@ -76,7 +73,7 @@ case "$MC_JDK" in
     graalvm)
         JAVA_CMD="${JAVA_GRAALVM:-/usr/lib/jvm/default-runtime/bin/java}"
         [[ ! -x "$JAVA_CMD" ]] && JAVA_CMD=$(command -v java)
-        echo "[*] Using GraalVM: $JAVA_CMD"
+        print_info "Using GraalVM: $JAVA_CMD"
         JVM_FLAGS=(
             "${BASE_FLAGS[@]}" "-Xms${XMS}" "-Xmx${XMX}" "${LARGE_PAGES[@]}"
             # GraalVM JVMCI Compiler
@@ -100,7 +97,7 @@ case "$MC_JDK" in
     temurin)
         JAVA_CMD="${JAVA_TEMURIN:-/usr/lib/jvm/java-25-temurin/bin/java}"
         [[ ! -x "$JAVA_CMD" ]] && JAVA_CMD=$(command -v java)
-        echo "[*] Using Temurin: $JAVA_CMD"
+        print_info "Using Temurin: $JAVA_CMD"
         JVM_FLAGS=(
             "${BASE_FLAGS[@]}" "-Xms${XMS}" "-Xmx${XMX}" "${LARGE_PAGES[@]}"
             # HotSpot C2 Compiler
@@ -124,7 +121,7 @@ case "$MC_JDK" in
         );;
     fabric|default|*)
         JAVA_CMD="${JAVA_CMD:-$(command -v java 2>/dev/null)}"
-        echo "[*] Using Default JDK: $JAVA_CMD"
+        print_info "Using Default JDK: $JAVA_CMD"
         JVM_FLAGS=(
             # Memory
             "${BASE_FLAGS[@]}" "-Xms${XMS}" "-Xmx${XMX}" "${LARGE_PAGES[@]}"
@@ -160,11 +157,11 @@ esac
 
 # ─── Playit Integration ─────────────────────────────────────────────────────────
 if [[ "$ENABLE_PLAYIT" == "true" ]] && has playit; then
-    echo "[*] Starting playit for server hosting..."
-    { setsid nohup playit &>/dev/null & } || echo "[!] Warning: Failed to start playit"
+    print_info "Starting playit for server hosting..."
+    { setsid nohup playit &>/dev/null & } || print_error "Failed to start playit"
     read -rt 2 -- <> <(:) &>/dev/null || :
 elif [[ "$ENABLE_PLAYIT" == "true" ]]; then
-    echo "[!] Warning: playit not found. Install from: https://playit.gg"
+    print_info "playit not found. Install from: https://playit.gg"
 fi
 
 # ─── Launch Server ──────────────────────────────────────────────────────────────
@@ -172,24 +169,27 @@ LAUNCH_CMD=()
 # CPU affinity
 if has taskset && [[ "$ENABLE_OPTIMIZATIONS" == "true" ]]; then
     LAUNCH_CMD+=(taskset -c "0-$((CPU_CORES-1))")
-    echo "[*] CPU affinity: cores 0-$((CPU_CORES-1))"
+    print_info "CPU affinity: cores 0-$((CPU_CORES-1))"
 fi
 # Gamemode
 if [[ "$ENABLE_GAMEMODE" == "true" ]] && has gamemoderun; then
     LAUNCH_CMD+=(sudo gamemoderun)
-    echo "[*] Using gamemoderun"
+    print_info "Using gamemoderun"
 fi
 LAUNCH_CMD+=("$JAVA_CMD" "${JVM_FLAGS[@]}" -jar "$SERVER_JAR" --nogui)
 
-echo -e "\n─────────────────────────────────────────────────────────────"
-echo "[*] Starting Minecraft Server"
-echo "[*] JAR: ${SERVER_JAR:-none} | Memory: ${XMS:-} - ${XMX:-} | CPU Cores: ${CPU_CORES:-}"
+echo ""
+echo "─────────────────────────────────────────────────────────────"
+print_header "Starting Minecraft Server"
+echo "  JAR: ${SERVER_JAR}"
+echo "  Memory: ${XMS} - ${XMX}"
+echo "  CPU Cores: ${CPU_CORES}"
 echo "─────────────────────────────────────────────────────────────"
 echo ""
 
 # Launch
 if [[ "$USE_ALACRITTY" == "true" ]] && has alacritty; then
-    echo "[*] Launching in Alacritty..."
+    print_info "Launching in Alacritty..."
     alacritty -e bash -c "${LAUNCH_CMD[*]}"
 else
     exec "${LAUNCH_CMD[@]}"
