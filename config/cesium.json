@@ -17,7 +17,7 @@
   },
   "disable_compression": {
     "value": false,
-    "comment": "HERE BE DRAGONS!! Forcefully disable all compression. A different database is used for uncompressed data, you can\u0027t have compressed and uncompressed worlds at the same time. Compressed worlds have to be reimported."
+    "comment": "HERE BE DRAGONS!! Forcefully disable all compression. A different database is used for uncompressed data, you can't have compressed and uncompressed worlds at the same time. Compressed worlds have to be reimported."
   },
   "force_save_after_tick": {
     "value": false,
