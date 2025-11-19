@@ -2,7 +2,7 @@
 # prepare.sh: Prepare Minecraft server/client environment with AppCDS archives
 
 # Source common functions (SCRIPT_DIR is auto-initialized)
-source "$(dirname -- "${BASH_SOURCE[0]}")/lib/common.sh"
+source "$(dirname -- "${BASH_SOURCE[0]}")/../lib/common.sh"
 
 init_strict_mode
 
@@ -20,9 +20,9 @@ if has_command paru; then
 else
     print_info "paru not found - skipping Arch Linux package installation"
 fi
-if has mise; then
-  mise use -g github:zeroBzeroT/ChunkCleaner
-  mise use -g java@oracle-graalvm
+if has_command mise; then
+    mise use -g github:zeroBzeroT/ChunkCleaner
+    mise use -g java@oracle-graalvm
 fi
 
 # ─── Calculate Memory Allocation ────────────────────────────────────────────────

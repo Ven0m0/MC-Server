@@ -2,7 +2,7 @@
 # Test script to validate common.sh functions
 
 # Source the common functions (SCRIPT_DIR is auto-initialized)
-source "$(dirname -- "${BASH_SOURCE[0]}")/lib/common.sh"
+source "$(dirname -- "${BASH_SOURCE[0]}")/../lib/common.sh"
 
 echo "Testing common.sh functions..."
 echo ""

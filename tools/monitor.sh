@@ -2,39 +2,22 @@
 # Minecraft Server Monitoring and Health Check Tool
 # Monitor server health, performance, and player activity
 
-set -euo pipefail
+# Source common functions (SCRIPT_DIR is auto-initialized)
+source "$(dirname -- "${BASH_SOURCE[0]}")/../lib/common.sh"
+
+init_strict_mode
 
 # Configuration
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SERVER_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+SERVER_DIR="$SCRIPT_DIR"
 LOG_FILE="${SERVER_DIR}/logs/latest.log"
 SERVER_PORT=25565
 CHECK_INTERVAL=60  # seconds
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Color
-
-# Logging functions
-log_info() {
-    echo -e "${BLUE}[INFO]${NC} $*"
-}
-
-log_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $*"
-}
-
-log_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $*"
-}
-
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $*"
-}
+# Logging functions (wrapper around common.sh functions for consistency)
+log_info() { print_info "$*"; }
+log_success() { print_success "$*"; }
+log_warning() { print_info "$*"; }  # common.sh doesn't have print_warning
+log_error() { print_error "$*"; }
 
 # Check if server process is running
 check_process() {

@@ -2,7 +2,7 @@
 # mod-updates.sh: Unified Minecraft mod manager and update system
 
 # Source common functions (SCRIPT_DIR is auto-initialized)
-source "$(dirname -- "${BASH_SOURCE[0]}")/lib/common.sh"
+source "$(dirname -- "${BASH_SOURCE[0]}")/../lib/common.sh"
 
 init_strict_mode
 
