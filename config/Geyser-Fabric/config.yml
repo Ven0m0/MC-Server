@@ -29,7 +29,7 @@ bedrock:
   server-name: "Server"
   # How much to compress network traffic to the Bedrock client. The higher the number, the more CPU usage used, but
   # the smaller the bandwidth used. Does not have any effect below -1 or above 9. Set to -1 to disable.
-  compression-level: 4
+  compression-level: 3
   # The port to broadcast to Bedrock clients with the MOTD that they should use to connect to the server.
   # DO NOT uncomment and change this unless Geyser runs on a different internal port than the one that is used to connect.
   # broadcast-port: 19132
@@ -53,7 +53,7 @@ remote:
   # Authentication type. Can be offline, online, or floodgate (see https://github.com/GeyserMC/Geyser/wiki/Floodgate).
   # For plugin versions, it's recommended to keep the `address` field to "auto" so Floodgate support is automatically configured.
   # If Floodgate is installed and `address:` is set to "auto", then "auth-type: floodgate" will automatically be used.
-  auth-type: floodgate
+  auth-type: auto
   # Whether to enable PROXY protocol or not while connecting to the server.
   # This is useful only when:
   # 1) Your server supports PROXY protocol (it probably doesn't)
@@ -98,7 +98,7 @@ passthrough-player-counts: true
 legacy-ping-passthrough: false
 # How often to ping the remote server, in seconds. Only relevant for standalone or legacy ping passthrough.
 # Increase if you are getting BrokenPipe errors.
-ping-passthrough-interval: 3
+ping-passthrough-interval: 10
 
 # Whether to forward player ping to the server. While enabling this will allow Bedrock players to have more accurate
 # ping, it may also cause players to time out more easily.
@@ -131,21 +131,21 @@ disable-bedrock-scaffolding: false
 emote-offhand-workaround: "emotes-and-offhand"
 
 # The default locale if we dont have the one the client requested. Uncomment to not use the default system language.
-# default-locale: en_us
+default-locale: en_us
 
 # Specify how many days images will be cached to disk to save downloading them from the internet.
 # A value of 0 is disabled. (Default: 0)
-cache-images: 30
+cache-images: 7
 
 # Allows custom skulls to be displayed. Keeping them enabled may cause a performance decrease on older/weaker devices.
 allow-custom-skulls: true
 
 # The maximum number of custom skulls to be displayed per player. Increasing this may decrease performance on weaker devices.
 # Setting this to -1 will cause all custom skulls to be displayed regardless of distance or number.
-max-visible-custom-skulls: 64
+max-visible-custom-skulls: 32
 
 # The radius in blocks around the player in which custom skulls are displayed.
-custom-skull-render-distance: 6
+custom-skull-render-distance: 5
 
 # Whether to add any items and blocks which normally does not exist in Bedrock Edition.
 # This should only need to be disabled if using a proxy that does not use the "transfer packet" style of server switching.
@@ -185,7 +185,7 @@ unusable-space-block: minecraft:barrier
 # https://bstats.org/plugin/server-implementation/GeyserMC
 metrics:
   # If metrics should be enabled
-  enabled: true
+  enabled: false
   # UUID of server, don't change!
   uuid: 5cefae63-3459-4221-b2b2-0f7379988ec9
 
@@ -203,7 +203,7 @@ enable-proxy-connections: false
 
 # The internet supports a maximum MTU of 1492 but could cause issues with packet fragmentation.
 # 1400 is the default.
-mtu: 1400
+mtu: 1420
 
 # Whether to connect directly into the Java server without creating a TCP connection.
 # This should only be disabled if a plugin that interfaces with packets or the network does not work correctly with Geyser.
