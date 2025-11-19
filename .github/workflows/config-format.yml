@@ -1,0 +1,184 @@
+---
+name: Config Format & Lint
+
+on:
+  push:
+    branches:
+      - main
+      - claude/**
+    paths:
+      - '**.json'
+      - '**.yaml'
+      - '**.yml'
+      - 'scripts/format-config.sh'
+      - '.github/workflows/config-format.yml'
+  pull_request:
+    paths:
+      - '**.json'
+      - '**.yaml'
+      - '**.yml'
+      - 'scripts/format-config.sh'
+      - '.github/workflows/config-format.yml'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Operation mode'
+        required: true
+        default: 'check'
+        type: choice
+        options:
+          - check
+          - format
+          - minify
+
+jobs:
+  format-check:
+    name: Check Config Formatting
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+          # Install yq for YAML processing
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+          # Install yamlfmt for better YAML formatting
+          go install github.com/google/yamlfmt/cmd/yamlfmt@latest
+          echo "${HOME}/go/bin" >> $GITHUB_PATH
+
+      - name: Install GNU Parallel
+        run: |
+          sudo apt-get install -y parallel
+          # Disable citation notice
+          mkdir -p ~/.parallel
+          touch ~/.parallel/will-cite
+
+      - name: Check config formatting
+        id: check
+        run: |
+          MODE="${{ github.event.inputs.mode || 'check' }}"
+          echo "Running in mode: ${MODE}"
+
+          if [[ "${MODE}" == "check" ]]; then
+            ./scripts/format-config.sh --mode check --verbose
+          else
+            ./scripts/format-config.sh --mode "${MODE}" --verbose
+          fi
+
+      - name: Auto-fix formatting (on push to main/claude branches)
+        if: |
+          failure() &&
+          github.event_name == 'push' &&
+          (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/claude/'))
+        run: |
+          ./scripts/format-config.sh --mode format --verbose
+
+      - name: Commit formatting changes
+        if: |
+          failure() &&
+          github.event_name == 'push' &&
+          (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/claude/'))
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git add -A
+            git commit -m "chore: Auto-format config files [skip ci]"
+            git push
+          else
+            echo "No formatting changes needed"
+          fi
+
+      - name: Comment on PR (if formatting needed)
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '⚠️ Config files need formatting. Please run `./scripts/format-config.sh --mode format` locally and commit the changes.'
+            })
+
+  validate-json:
+    name: Validate JSON Syntax
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Validate all JSON files
+        run: |
+          echo "Validating JSON files..."
+          EXIT_CODE=0
+
+          while IFS= read -r -d '' file; do
+            echo "Checking: ${file}"
+            if ! jq empty "${file}" 2>/dev/null; then
+              echo "❌ Invalid JSON: ${file}"
+              EXIT_CODE=1
+            else
+              echo "✅ Valid: ${file}"
+            fi
+          done < <(find . -name "*.json" \
+                    -not -path "*/node_modules/*" \
+                    -not -path "*/.git/*" \
+                    -not -path "*/dist/*" \
+                    -not -path "*/build/*" \
+                    -not -name "*-lock.json" \
+                    -print0)
+
+          exit ${EXIT_CODE}
+
+  validate-yaml:
+    name: Validate YAML Syntax
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Validate all YAML files
+        run: |
+          echo "Validating YAML files..."
+          EXIT_CODE=0
+
+          while IFS= read -r -d '' file; do
+            echo "Checking: ${file}"
+            if ! yq eval . "${file}" > /dev/null 2>&1; then
+              echo "❌ Invalid YAML: ${file}"
+              EXIT_CODE=1
+            else
+              echo "✅ Valid: ${file}"
+            fi
+          done < <(find . \( -name "*.yaml" -o -name "*.yml" \) \
+                    -not -path "*/node_modules/*" \
+                    -not -path "*/.git/*" \
+                    -not -path "*/dist/*" \
+                    -not -path "*/build/*" \
+                    -print0)
+
+          exit ${EXIT_CODE}
