@@ -2,11 +2,13 @@
 # Minecraft Server Watchdog - Automatic Restart and Crash Recovery
 # Monitors server health and automatically restarts on crashes
 
-set -euo pipefail
+# Source common functions (SCRIPT_DIR is auto-initialized)
+source "$(dirname -- "${BASH_SOURCE[0]}")/../lib/common.sh"
+
+init_strict_mode
 
 # Configuration
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SERVER_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+SERVER_DIR="$SCRIPT_DIR"
 SERVER_START_SCRIPT="${SERVER_DIR}/scripts/server-start.sh"
 CHECK_INTERVAL=30  # seconds
 MAX_RESTART_ATTEMPTS=3
@@ -18,35 +20,28 @@ LOG_FILE="${SERVER_DIR}/logs/watchdog.log"
 RESTART_COUNT=0
 LAST_RESTART_TIME=0
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# Logging functions
+# Logging functions with file output
 log_info() {
     local msg="[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] $*"
-    echo -e "${BLUE}${msg}${NC}"
+    print_info "$msg"
     echo "$msg" >> "$LOG_FILE"
 }
 
 log_success() {
     local msg="[$(date '+%Y-%m-%d %H:%M:%S')] [SUCCESS] $*"
-    echo -e "${GREEN}${msg}${NC}"
+    print_success "$msg"
     echo "$msg" >> "$LOG_FILE"
 }
 
 log_warning() {
     local msg="[$(date '+%Y-%m-%d %H:%M:%S')] [WARNING] $*"
-    echo -e "${YELLOW}${msg}${NC}"
+    print_info "$msg"
     echo "$msg" >> "$LOG_FILE"
 }
 
 log_error() {
     local msg="[$(date '+%Y-%m-%d %H:%M:%S')] [ERROR] $*"
-    echo -e "${RED}${msg}${NC}"
+    print_error "$msg"
     echo "$msg" >> "$LOG_FILE"
 }
 

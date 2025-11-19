@@ -3,7 +3,7 @@
 # Consolidates launcher.sh, start.sh, and Server.sh functionality
 
 # Source common functions (SCRIPT_DIR is auto-initialized)
-source "$(dirname -- "${BASH_SOURCE[0]}")/lib/common.sh"
+source "$(dirname -- "${BASH_SOURCE[0]}")/../lib/common.sh"
 
 init_strict_mode
 
@@ -51,21 +51,23 @@ print_info "Memory: ${XMS} - ${XMX} | CPU Cores: ${CPU_CORES}"
 
 # ─── JDK Detection and Configuration ────────────────────────────────────────────
 if has archlinux-java; then
-  sudo archlinux-java fix 2>/dev/null || :
-  SEL_JAVA="$(archlinux-java get 2>/dev/null)"
-  JAVA_CMD="${SEL_JAVA:-/usr/lib/jvm/default-runtime/bin/java}"
+    sudo archlinux-java fix 2>/dev/null || :
+    SEL_JAVA="$(archlinux-java get 2>/dev/null)"
+    JAVA_CMD="${SEL_JAVA:-/usr/lib/jvm/default-runtime/bin/java}"
 elif has mise; then
-  JAVA_CMD="$(mise which java 2>/dev/null)"
+    JAVA_CMD="$(mise which java 2>/dev/null)"
 elif [[ -d "${HOME}/.local/share/mise/installs/java/oracle-graalvm-latest" ]]; then
-  JAVA_CMD="${HOME}/.local/share/mise/installs/java/oracle-graalvm-latest/bin/java"
+    JAVA_CMD="${HOME}/.local/share/mise/installs/java/oracle-graalvm-latest/bin/java"
 elif [[ -d "${HOME}/.local/share/mise/installs/java/temurin-latest" ]]; then
-  JAVA_CMD="${HOME}/.local/share/mise/installs/java/temurin-latest/bin/java"
+    JAVA_CMD="${HOME}/.local/share/mise/installs/java/temurin-latest/bin/java"
 fi
-BASE_FLAGS=(-XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:+IgnoreUnrecognizedVMOptions -Dfile.encoding=UTF-8
--Dawt.useSystemAAFontSettings=on -Dswing.aatext=true --illegal-access=permit -Xlog:async,gc*:file=/dev/null
--Djdk.util.zip.disableZip64ExtraFieldValidation=true -Djdk.nio.zipfs.allowDotZipEntry=true
--XX:+AlwaysPreTouch -XX:+AlwaysActAsServerClassMachine -XX:+DisableExplicitGC -XX:+UseCompressedOops
--XX:-DontCompileHugeMethods -XX:+OptimizeStringConcat -XX:+OptimizeFill
+BASE_FLAGS=(
+    -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:+IgnoreUnrecognizedVMOptions
+    -Dfile.encoding=UTF-8 -Dawt.useSystemAAFontSettings=on -Dswing.aatext=true --illegal-access=permit
+    -Xlog:async,gc*:file=/dev/null -Djdk.util.zip.disableZip64ExtraFieldValidation=true
+    -Djdk.nio.zipfs.allowDotZipEntry=true -XX:+AlwaysPreTouch -XX:+AlwaysActAsServerClassMachine
+    -XX:+DisableExplicitGC -XX:+UseCompressedOops -XX:-DontCompileHugeMethods
+    -XX:+OptimizeStringConcat -XX:+OptimizeFill
 )
 LARGE_PAGES=(-XX:+UseLargePages -XX:LargePageSizeInBytes=2M -XX:+UseLargePagesInMetaspace -XX:+UseTransparentHugePages)
 
@@ -88,8 +90,8 @@ case "$MC_JDK" in
             -XX:G1NewSizePercent=30 -XX:G1ReservePercent=15
             -XX:G1HeapRegionSize=16M -XX:G1MixedGCCountTarget=4
             # Optimizations
-            -XX:+AggressiveOpts 
-             -XX:+UseCompactObjectHeaders
+            -XX:+AggressiveOpts
+            -XX:+UseCompactObjectHeaders
             -XX:+UseStringDeduplication --add-modules=jdk.incubator.vector -da
             -XX:+UseCMoveUnconditionally -XX:+UseNewLongLShift
             -XX:+UseVectorCmov -XX:+UseXmmI2D -XX:+UseXmmI2F -XX:+UseFastAccessorMethods

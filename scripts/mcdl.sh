@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Source common functions (SCRIPT_DIR is auto-initialized)
-source "$(dirname -- "${BASH_SOURCE[0]}")/lib/common.sh"
+source "$(dirname -- "${BASH_SOURCE[0]}")/../lib/common.sh"
 
 init_strict_mode
 
@@ -15,10 +15,9 @@ JSON_PROC=$(get_json_processor) || exit 1
 
 # Cache API responses to avoid redundant network calls
 print_header "Fetching Minecraft and Fabric versions..."
-ARIA2_OPTS=($(get_aria2c_opts_array))
 GAME_VERSIONS=$(fetch_url "https://meta.fabricmc.net/v2/versions/game") || exit 1
-MC_VERSION="${MC_VERSION:-$(echo "$GAME_VERSIONS" | $JSON_PROC -r '.[] | select(.stable == true) | .version' | head -n1)}"
-FABRIC_VERSION=$(fetch_url "https://meta.fabricmc.net/v2/versions/installer" | $JSON_PROC -r '.[0].version') || exit 1
+MC_VERSION="${MC_VERSION:-$(echo "$GAME_VERSIONS" | "$JSON_PROC" -r '.[] | select(.stable == true) | .version' | head -n1)}"
+FABRIC_VERSION=$(fetch_url "https://meta.fabricmc.net/v2/versions/installer" | "$JSON_PROC" -r '.[0].version') || exit 1
 
 print_info "Minecraft version: $MC_VERSION"
 print_info "Fabric installer version: $FABRIC_VERSION"
@@ -36,15 +35,15 @@ print_success "Fabric server installed"
 print_header "Resolving Fabric Loader version..."
 LOADER_VERSIONS=$(fetch_url "https://meta.fabricmc.net/v2/versions/loader") || exit 1
 if [[ ${STABLE_LOADER:-true} = true ]]; then
-  LOADER="${LOADER:-$(echo "$LOADER_VERSIONS" | $JSON_PROC -r '.[] | select(.stable==true) | .version' | head -n1)}"
+    LOADER="${LOADER:-$(echo "$LOADER_VERSIONS" | "$JSON_PROC" -r '.[] | select(.stable==true) | .version' | head -n1)}"
 else
-  LOADER="${LOADER:-$(echo "$LOADER_VERSIONS" | $JSON_PROC -r '.[0].version')}"
+    LOADER="${LOADER:-$(echo "$LOADER_VERSIONS" | "$JSON_PROC" -r '.[0].version')}"
 fi
 
 # Lookup matching intermediary (mappings) version
 INTERMEDIARY="$(
-  fetch_url "https://meta.fabricmc.net/v2/versions/loader/${MC_VERSION}/${LOADER}" \
-    | $JSON_PROC -r '.[0].intermediary'
+    fetch_url "https://meta.fabricmc.net/v2/versions/loader/${MC_VERSION}/${LOADER}" \
+        | "$JSON_PROC" -r '.[0].intermediary'
 )" || exit 1
 
 print_info "Fabric Loader: $LOADER (stable filter: ${STABLE_LOADER:-true})"

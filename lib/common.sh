@@ -12,7 +12,9 @@ init_strict_mode() {
     set -euo pipefail
     shopt -s nullglob globstar
     IFS=$'\n\t'
-    export LC_ALL=C LANG=C LANGUAGE=C HOME="/home/${SUDO_USER:-$USER}"
+    export LC_ALL=C LANG=C LANGUAGE=C
+    local user="${SUDO_USER:-${USER:-$(whoami)}}"
+    export HOME="/home/${user}"
     SHELL="$(command -v bash 2>/dev/null || echo '/usr/bin/bash')"
 }
 
