@@ -59,7 +59,7 @@ player-link:
   enable-global-linking: true
 
 metrics:
-  enabled: true
+  enabled: false
   uuid: c14b51fe-0c79-4507-9e42-5f52d157ba03
 
 # Do not change this
