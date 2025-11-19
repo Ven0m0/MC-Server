@@ -3,7 +3,7 @@
 //
 // This file controls the spawn filtering rules for mob-filter.  For details, see the docs at:
 //   https://github.com/pcal43/mob-filter/blob/main/CONFIG.md
-//
+// Schema: https://github.com/pcal43/mob-filter/blob/main/docs/mobfilter.schema.json
 // Note that this file isn't parsed with a true json5 parser; rather it's parsed with google's gson
 // in lenient mode:
 //   https://javadoc.io/doc/com.google.code.gson/gson/latest/com.google.gson/com/google/gson/JsonParser.html
@@ -16,6 +16,15 @@
           "what" : "DISALLOW_SPAWN",
           "when" : {
               "entityId" : [ "minecraft:bat" ],
+          }
+      },
+      {
+          "name" : "No nether roof spawns",
+          "what" : "DISALLOW_SPAWN",
+          "when" : {
+              "entityId" : ["minecraft:ghast", "minecraft:magma_cube"],
+              "dimensionId" : ["minecraft:the_nether"],
+              "blockY" : [ 128, "MAX" ],
           }
       }
   ],
