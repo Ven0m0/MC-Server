@@ -14,7 +14,7 @@ features:
   autosave-interval-seconds: 600
   # The fraction that decides the chance of experience orbs being able to merge with each other. (1 = 100%, 40 = 2.5%)
   # Note that just like in vanilla, experience orbs will still need to be of the same size to actually merge.
-  xp-merge-fraction: 1
+  xp-merge-fraction: 2
   # The radius in blocks that experience orbs will merge at (optimized for better entity merging).
   xp-merge-radius: 4.0
   # The radius in blocks that items will merge at (optimized for better entity merging).
@@ -24,7 +24,6 @@ features:
     enabled: true
     # Decides the interval in between villager ticks when lobotomized.
     tick-interval: 20
-
 
 # Automatically modifies dynamic settings based on the server performance.
 dynamic:
