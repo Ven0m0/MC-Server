@@ -16,13 +16,10 @@ init_strict_mode(){
 
 # Get script's working directory
 get_script_dir(){ cd -- "$(dirname -- "${BASH_SOURCE[1]:-}")" && pwd; }
-
 # Change to script directory
 cd_script_dir(){ cd -- "$(dirname -- "${BASH_SOURCE[1]:-}")" || return 1; }
-
 # Calculate total RAM in GB
 get_total_ram_gb(){ awk '/MemTotal/ {printf "%.0f\n",$2/1024/1024}' /proc/meminfo 2>/dev/null; }
-
 # Calculate heap size (total RAM minus reserved for OS)
 # Usage: get_heap_size_gb [reserved_gb]
 # Default reserved is 2GB
@@ -36,10 +33,8 @@ get_heap_size_gb(){
 # Usage: get_minecraft_memory_gb [reserved_gb]
 # Default reserved is 3GB
 get_minecraft_memory_gb(){ get_heap_size_gb "${1:-3}"; }
-
 # Check if command exists
 has_command(){ command -v "$1" &>/dev/null; }
-
 # Check if required commands are available
 check_dependencies(){
     local missing=()
@@ -51,7 +46,6 @@ check_dependencies(){
         echo "Please install them before continuing." >&2; return 1
     fi
 }
-
 # Detect JSON processor (prefer jaq over jq)
 get_json_processor(){
     if has_command jaq; then
@@ -62,7 +56,6 @@ get_json_processor(){
         echo "Error: No JSON processor found. Please install jq or jaq." >&2; return 1
     fi
 }
-
 # Fetch URL to stdout
 fetch_url(){
     local url="$1"
@@ -89,10 +82,8 @@ download_file(){
         echo "Error: No download tool found (aria2c, curl, or wget)" >&2; return 1
     fi
 }
-
 # Create directory if it doesn't exist
 ensure_dir(){ [[ ! -d "$1" ]] && mkdir -p "$1" || return 0; }
-
 # Extract natives from JAR file
 extract_natives(){
     local jar_file="$1"  dest_dir="$2"
@@ -101,12 +92,10 @@ extract_natives(){
     # Remove META-INF directory
     rm -rf "${dest_dir}/META-INF"
 }
-
 # Get aria2c download options for consistent configuration
 get_aria2c_opts(){ echo "-x 16 -s 16"; }
 # Get aria2c options as array (safely handles word splitting)
 get_aria2c_opts_array(){ echo "-x" "16" "-s" "16"; }
-
 # Calculate client memory allocation (Xms = 1/4 RAM, Xmx = 1/2 RAM)
 get_client_xms_gb(){
     local total_ram=$(get_total_ram_gb)
@@ -120,10 +109,8 @@ get_client_xmx_gb(){
     [[ $xmx -lt 2 ]] && xmx=2
     echo "$xmx"
 }
-
 # Get number of CPU cores
 get_cpu_cores(){ nproc 2>/dev/null || echo 4; }
-
 # Output formatting helpers
 print_header(){ echo -e "\033[0;34m==>\033[0m $1"; }
 print_success(){ echo -e "\033[0;32m✓\033[0m $1"; }
