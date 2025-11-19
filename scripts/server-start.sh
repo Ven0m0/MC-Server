@@ -193,6 +193,12 @@ echo ""
 if [[ "$USE_ALACRITTY" == "true" ]] && has alacritty; then
     print_info "Launching in Alacritty..."
     alacritty -e bash -c "${LAUNCH_CMD[*]}"
+elif command -v rio &>/dev/null; then
+  print_info "Launching in Rio..."
+  rio -e bash -c "${LAUNCH_CMD[*]}"
+elif command -v ghostty &>/dev/null; then
+  print_info "Launching in Ghostty..."
+  ghostty -e bash -c "${LAUNCH_CMD[*]}"
 else
-    exec "${LAUNCH_CMD[@]}"
+  exec "${LAUNCH_CMD[@]}"
 fi
