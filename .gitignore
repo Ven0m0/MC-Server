@@ -9,15 +9,49 @@
 # Server files
 eula.txt
 world/
+world_*/
 banned-*.json
 ops.json
 usercache.json
 whitelist.json
+server.log*
+debug.log*
 
 # Mod files
 mods/
 .fabric/
+versions/
+libraries/
+assets/
+
+# Backup files (keep backup scripts and structure)
+backups/*.tar.gz
+backups/*.zip
+backups/*.7z
+backups/worlds/
+backups/temp/
+!backups/.gitkeep
+!backups/README.md
+
+# Crash reports and logs
+crash-reports/
+logs/
 
 # Test outputs (keep test script)
 test_output_*.txt
 megalinter-reports/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local configuration overrides
+local.properties
+.env
