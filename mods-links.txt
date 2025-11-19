@@ -1,0 +1,2 @@
+https://modrinth.com/plugin/geyser
+https://modrinth.com/plugin/geyser-recipe-fix
