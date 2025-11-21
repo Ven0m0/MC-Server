@@ -102,9 +102,11 @@ sudo apt install -y netcat-openbsd
 Located in `scripts/` directory:
 
 ### `server-start.sh`
+
 Main server launcher with advanced optimizations
 
 **Features:**
+
 - Auto-detection of CPU cores and RAM
 - GraalVM or Eclipse Temurin JDK support
 - Optimized G1GC garbage collection settings
@@ -113,6 +115,7 @@ Main server launcher with advanced optimizations
 - Playit.gg tunnel support
 
 **Usage:**
+
 ```bash
 ./scripts/server-start.sh
 
@@ -122,24 +125,29 @@ MC_JDK=temurin ./scripts/server-start.sh
 ```
 
 ### `mcdl.sh`
+
 Fabric server downloader and installer
 
 **Usage:**
+
 ```bash
 ./scripts/mcdl.sh [version]    # Downloads specified version
 ./scripts/mcdl.sh              # Downloads latest version
 ```
 
 ### `mod-updates.sh`
+
 Comprehensive mod manager with Modrinth and CurseForge support
 
 **Features:**
+
 - Profile-based mod organization
 - Automatic version compatibility checking
 - Parallel mod downloading
 - Configuration management
 
 **Usage:**
+
 ```bash
 # Create profile
 ./scripts/mod-updates.sh profile create my-mods 1.21.5 fabric ./mods
@@ -156,18 +164,22 @@ Comprehensive mod manager with Modrinth and CurseForge support
 ```
 
 ### `mc-client.sh`
+
 Minecraft Java Edition client launcher
 
 **Usage:**
+
 ```bash
 ./scripts/mc-client.sh 1.21.5 YourUsername
 MC_DIR=/custom/path ./scripts/mc-client.sh 1.21.5 Player
 ```
 
 ### `prepare.sh`
+
 Initial server preparation (EULA acceptance, directory setup)
 
 ### `infrarust.sh`
+
 Infrarust proxy tunnel configuration
 
 ## 🛠️ Management Tools
@@ -179,6 +191,7 @@ Located in `tools/` directory:
 Automated backup solution for worlds, configurations, and mods.
 
 **Features:**
+
 - Automated world backups with server notifications
 - Configuration and mod backups
 - Automatic backup rotation (keeps last N backups)
@@ -186,6 +199,7 @@ Automated backup solution for worlds, configurations, and mods.
 - Compression support
 
 **Usage:**
+
 ```bash
 # Full backup
 ./tools/backup.sh backup
@@ -206,6 +220,7 @@ Automated backup solution for worlds, configurations, and mods.
 ```
 
 **Automated Backups:**
+
 ```bash
 # Add to crontab for daily backups at 4 AM
 0 4 * * * cd /path/to/MC-Server && ./tools/backup.sh backup all
@@ -216,6 +231,7 @@ Automated backup solution for worlds, configurations, and mods.
 Real-time server health monitoring and performance tracking.
 
 **Features:**
+
 - Process and port status checking
 - Memory and CPU usage tracking
 - Disk space monitoring
@@ -224,6 +240,7 @@ Real-time server health monitoring and performance tracking.
 - TPS monitoring (with Spark plugin)
 
 **Usage:**
+
 ```bash
 # Show status
 ./tools/monitor.sh status
@@ -246,6 +263,7 @@ Real-time server health monitoring and performance tracking.
 Automatic server monitoring with crash recovery and restart capabilities.
 
 **Features:**
+
 - Automatic restart on crashes
 - Configurable restart attempts and cooldowns
 - Emergency backup before restart
@@ -253,6 +271,7 @@ Automatic server monitoring with crash recovery and restart capabilities.
 - Scheduled restarts with player warnings
 
 **Usage:**
+
 ```bash
 # Start watchdog monitor (run in screen/tmux)
 ./tools/watchdog.sh monitor
@@ -274,6 +293,7 @@ Automatic server monitoring with crash recovery and restart capabilities.
 ```
 
 **Run as Background Service:**
+
 ```bash
 # Using screen
 screen -dmS watchdog bash -c "cd /path/to/MC-Server && ./tools/watchdog.sh monitor"
@@ -287,6 +307,7 @@ tmux new-session -d -s watchdog "cd /path/to/MC-Server && ./tools/watchdog.sh mo
 Automated log rotation, compression, and archiving.
 
 **Features:**
+
 - Automatic log rotation based on size
 - Compression of old logs
 - Age-based cleanup
@@ -294,6 +315,7 @@ Automated log rotation, compression, and archiving.
 - Log viewing and searching
 
 **Usage:**
+
 ```bash
 # Full maintenance
 ./tools/logrotate.sh maintenance
@@ -318,6 +340,7 @@ Automated log rotation, compression, and archiving.
 ```
 
 **Automated Log Rotation:**
+
 ```bash
 # Add to crontab for weekly log maintenance
 0 3 * * 0 cd /path/to/MC-Server && ./tools/logrotate.sh maintenance
@@ -328,19 +351,23 @@ Automated log rotation, compression, and archiving.
 ### Environment Variables
 
 **Server Launcher (`server-start.sh`)**:
+
 - `MC_JDK` - JDK selection: `graalvm` or `temurin` (default: auto-detect)
 - `JAVA_GRAALVM` - Path to GraalVM installation
 - `JAVA_TEMURIN` - Path to Temurin installation
 
 **Client Launcher (`mc-client.sh`)**:
+
 - `MC_DIR` - Minecraft directory (default: `~/.minecraft`)
 
 **Mod Manager (`mod-updates.sh`)**:
+
 - `XDG_CONFIG_HOME` - Config directory (default: `~/.config`)
 
 ### Server Properties
 
 Edit `server.properties` to configure:
+
 - Server port, IP binding
 - Max players, view distance
 - Game mode, difficulty
@@ -349,6 +376,7 @@ Edit `server.properties` to configure:
 ### Plugin Configuration
 
 All plugin configs are in `config/` directory:
+
 - **ServerCore** (`config/servercore/`) - Performance optimization settings
 - **Geyser** (`config/Geyser-Fabric/`) - Bedrock Edition support
 - **Floodgate** (`config/floodgate/`) - Bedrock authentication
@@ -417,15 +445,18 @@ MC-Server/
 ## 🔧 Maintenance Tasks
 
 ### Daily
+
 - Monitor server status: `./tools/monitor.sh status`
 - Check for errors: `./tools/monitor.sh errors`
 
 ### Weekly
+
 - Create backup: `./tools/backup.sh backup`
 - Rotate logs: `./tools/logrotate.sh maintenance`
 - Update mods: `./scripts/mod-updates.sh upgrade`
 
 ### Monthly
+
 - Clean old backups: `./tools/backup.sh cleanup`
 - Clean old logs: `./tools/logrotate.sh clean 30`
 - Review server performance and adjust configs

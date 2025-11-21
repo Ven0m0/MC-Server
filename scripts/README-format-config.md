@@ -84,11 +84,13 @@ Pretty-prints JSON and YAML files with proper indentation:
 ```
 
 **Before:**
+
 ```json
-{"key1":true,"key2":"value","nested":{"item":123}}
+{ "key1": true, "key2": "value", "nested": { "item": 123 } }
 ```
 
 **After:**
+
 ```json
 {
   "key1": true,
@@ -108,6 +110,7 @@ Removes all unnecessary whitespace to reduce file size:
 ```
 
 **Before:**
+
 ```json
 {
   "key1": true,
@@ -116,8 +119,9 @@ Removes all unnecessary whitespace to reduce file size:
 ```
 
 **After:**
+
 ```json
-{"key1":true,"key2":"value"}
+{ "key1": true, "key2": "value" }
 ```
 
 ### Check Mode (CI/CD)
@@ -160,6 +164,7 @@ You can manually trigger the workflow with different modes:
 The script automatically excludes:
 
 ### Directories
+
 - `.git`
 - `node_modules`
 - `dist`, `build`
@@ -167,6 +172,7 @@ The script automatically excludes:
 - `vendor`, `target`, `.gradle`
 
 ### Files
+
 - `*.min.json`, `*.min.yml`, `*.min.yaml` (already minified)
 - `*-lock.json`, `package-lock.json`, `yarn.lock` (lock files)
 
@@ -205,6 +211,7 @@ Add to `.git/hooks/pre-commit`:
 If you see warnings about YAML formatting being skipped:
 
 1. Install mikefarah/yq (recommended):
+
    ```bash
    wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
    chmod +x /usr/local/bin/yq
@@ -230,6 +237,7 @@ For large repositories:
 ## Inspiration
 
 This script incorporates concepts from:
+
 - [Ven0m0/Linux-OS minify.sh](https://github.com/Ven0m0/Linux-OS/blob/main/Cachyos/Scripts/other/minify.sh)
 - Production-ready error handling and reporting
 - Multi-tool fallback support

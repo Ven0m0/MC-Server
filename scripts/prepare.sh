@@ -16,24 +16,24 @@ print_info "Total RAM: ${TOTAL_RAM}G | Server heap: ${SERVER_HEAP}G | Client hea
 
 # Generate AppCDS Archive for Server
 if [[ -f server.jar ]]; then
-    print_info "Generating AppCDS archive for server..."
-    java -Xms"${SERVER_HEAP}G" -Xmx"${SERVER_HEAP}G" \
-        -XX:ArchiveClassesAtExit=minecraft_server.jsa \
-        -jar server.jar --nogui || print_error "Server AppCDS generation failed"
-    [[ -f minecraft_server.jsa ]] && print_success "Server AppCDS archive created"
+  print_info "Generating AppCDS archive for server..."
+  java -Xms"${SERVER_HEAP}G" -Xmx"${SERVER_HEAP}G" \
+    -XX:ArchiveClassesAtExit=minecraft_server.jsa \
+    -jar server.jar --nogui || print_error "Server AppCDS generation failed"
+  [[ -f minecraft_server.jsa ]] && print_success "Server AppCDS archive created"
 else
-    print_error "server.jar not found - skipping server preparation"
+  print_error "server.jar not found - skipping server preparation"
 fi
 
 # Generate AppCDS Archive for Client
 if [[ -f client.jar ]]; then
-    print_info "Generating AppCDS archive for client..."
-    java -Xms"${CLIENT_HEAP}G" -Xmx"${CLIENT_HEAP}G" \
-        -XX:ArchiveClassesAtExit=minecraft_client.jsa \
-        -jar client.jar || print_error "Client AppCDS generation failed"
-    [[ -f minecraft_client.jsa ]] && print_success "Client AppCDS archive created"
+  print_info "Generating AppCDS archive for client..."
+  java -Xms"${CLIENT_HEAP}G" -Xmx"${CLIENT_HEAP}G" \
+    -XX:ArchiveClassesAtExit=minecraft_client.jsa \
+    -jar client.jar || print_error "Client AppCDS generation failed"
+  [[ -f minecraft_client.jsa ]] && print_success "Client AppCDS archive created"
 else
-    print_info "client.jar not found - skipping client preparation"
+  print_info "client.jar not found - skipping client preparation"
 fi
 
 print_success "Preparation complete!"

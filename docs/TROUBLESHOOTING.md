@@ -17,11 +17,13 @@ Common issues and solutions for Minecraft server management.
 ### Issue: EULA not accepted
 
 **Error Message:**
+
 ```
 You need to agree to the EULA in order to run the server
 ```
 
 **Solution:**
+
 ```bash
 # Run prepare script
 ./scripts/prepare.sh
@@ -33,11 +35,13 @@ echo "eula=true" > eula.txt
 ### Issue: Port already in use
 
 **Error Message:**
+
 ```
 Failed to bind to port 25565
 ```
 
 **Solution:**
+
 ```bash
 # Check what's using the port
 sudo lsof -i :25565
@@ -54,11 +58,13 @@ nano server.properties
 ### Issue: Out of memory
 
 **Error Message:**
+
 ```
 java.lang.OutOfMemoryError: Java heap space
 ```
 
 **Solution:**
+
 ```bash
 # Check available RAM
 free -h
@@ -73,11 +79,13 @@ export MAX_RAM="8G"
 ### Issue: Java version mismatch
 
 **Error Message:**
+
 ```
 Unsupported class file major version
 ```
 
 **Solution:**
+
 ```bash
 # Check Java version (needs 21+)
 java -version
@@ -93,11 +101,13 @@ sudo update-alternatives --config java
 ### Issue: Missing fabric-server-launch.jar
 
 **Error Message:**
+
 ```
 Error: Unable to access jarfile fabric-server-launch.jar
 ```
 
 **Solution:**
+
 ```bash
 # Re-download Fabric server
 ./scripts/mcdl.sh
@@ -111,11 +121,13 @@ wget https://meta.fabricmc.net/v2/versions/loader/1.21.5/0.16.2/1.0.1/server/jar
 ### Issue: Server lag / Low TPS
 
 **Symptoms:**
+
 - TPS below 20
 - Player movement lag
 - Block break/place delay
 
 **Diagnosis:**
+
 ```bash
 # Check server status
 ./tools/monitor.sh status
@@ -130,6 +142,7 @@ tail -f logs/latest.log | grep -i "tps\|mspt"
 **Solutions:**
 
 1. **Check system resources:**
+
 ```bash
 # CPU usage
 top -p $(pgrep -f fabric-server-launch)
@@ -142,6 +155,7 @@ iotop -o
 ```
 
 2. **Reduce view distance:**
+
 ```properties
 # In server.properties
 view-distance=8
@@ -149,20 +163,23 @@ simulation-distance=6
 ```
 
 3. **Optimize ServerCore settings:**
+
 ```yaml
 # In config/servercore/config.yml
 dynamic:
   enabled: true
-  target_mspt: 40  # Lower for better performance
+  target_mspt: 40 # Lower for better performance
 ```
 
 4. **Clear entities:**
+
 ```
 # In server console
 /kill @e[type=!player]
 ```
 
 5. **Pre-generate chunks:**
+
 ```
 # Install Chunky mod, then in console
 /chunky radius 5000
@@ -172,6 +189,7 @@ dynamic:
 ### Issue: High memory usage
 
 **Solution:**
+
 ```bash
 # Adjust GC settings in scripts/server-start.sh
 # Add these flags:
@@ -184,6 +202,7 @@ dynamic:
 ### Issue: CPU at 100%
 
 **Diagnosis:**
+
 ```bash
 # Check what's causing high CPU
 top
@@ -194,6 +213,7 @@ jstack $(pgrep -f fabric-server-launch) > threads.txt
 ```
 
 **Solutions:**
+
 1. Reduce mob spawning in ServerCore config
 2. Limit redstone contraptions
 3. Use optimization mods (Lithium, Krypton)
@@ -204,6 +224,7 @@ jstack $(pgrep -f fabric-server-launch) > threads.txt
 ### Issue: Can't connect to server
 
 **Diagnosis:**
+
 ```bash
 # Check if server is running
 ./tools/monitor.sh status
@@ -218,6 +239,7 @@ nc -zv <server-ip> 25565
 **Solutions:**
 
 1. **Check firewall:**
+
 ```bash
 # UFW
 sudo ufw allow 25565/tcp
@@ -227,12 +249,14 @@ sudo iptables -A INPUT -p tcp --dport 25565 -j ACCEPT
 ```
 
 2. **Check server binding:**
+
 ```properties
 # In server.properties
 server-ip=0.0.0.0  # Listen on all interfaces
 ```
 
 3. **Verify online mode:**
+
 ```properties
 # In server.properties
 online-mode=true  # Set to false only for offline/LAN
@@ -241,6 +265,7 @@ online-mode=true  # Set to false only for offline/LAN
 ### Issue: Bedrock players can't connect
 
 **Diagnosis:**
+
 ```bash
 # Check Geyser status
 tail -f logs/latest.log | grep -i geyser
@@ -252,11 +277,13 @@ nc -zvu localhost 19132
 **Solutions:**
 
 1. **Open Bedrock port:**
+
 ```bash
 sudo ufw allow 19132/udp
 ```
 
 2. **Check Geyser config:**
+
 ```yaml
 # In config/Geyser-Fabric/config.yml
 bedrock:
@@ -265,6 +292,7 @@ bedrock:
 ```
 
 3. **Verify Floodgate:**
+
 ```yaml
 # In config/floodgate/config.yml
 enabled: true
@@ -275,6 +303,7 @@ enabled: true
 **Solutions:**
 
 1. **Increase timeout settings:**
+
 ```properties
 # In server.properties
 network-compression-threshold=256
@@ -282,6 +311,7 @@ max-tick-time=60000
 ```
 
 2. **Check network:**
+
 ```bash
 # Test ping
 ping <server-ip>
@@ -295,6 +325,7 @@ traceroute <server-ip>
 ### Issue: Server crashes randomly
 
 **Diagnosis:**
+
 ```bash
 # Check crash reports
 ls -lt crash-reports/ | head -5
@@ -310,23 +341,27 @@ ls -lt | grep ".dump"
 **Solutions:**
 
 1. **Enable watchdog:**
+
 ```bash
 # Start watchdog service
 ./tools/watchdog.sh monitor
 ```
 
 2. **Increase memory:**
+
 ```bash
 # Edit server start script or export:
 export MAX_RAM="8G"
 ```
 
 3. **Update mods:**
+
 ```bash
 ./scripts/mod-updates.sh upgrade
 ```
 
 4. **Check mod compatibility:**
+
 ```bash
 # Remove mods one by one to identify culprit
 mv mods/suspicious-mod.jar mods-disabled/
@@ -335,6 +370,7 @@ mv mods/suspicious-mod.jar mods-disabled/
 ### Issue: Server won't restart after crash
 
 **Solution:**
+
 ```bash
 # Check if process is stuck
 ps aux | grep fabric-server-launch
@@ -349,11 +385,13 @@ pkill -9 -f fabric-server-launch
 ### Issue: World corruption
 
 **Symptoms:**
+
 - Chunks not loading
 - "Saving chunks" stuck
 - Error messages about region files
 
 **Solution:**
+
 ```bash
 # Restore from backup
 ./tools/backup.sh list
@@ -368,6 +406,7 @@ pkill -9 -f fabric-server-launch
 ### Issue: Backup failed
 
 **Diagnosis:**
+
 ```bash
 # Check disk space
 df -h
@@ -382,6 +421,7 @@ ls -la backups/
 **Solutions:**
 
 1. **Free up disk space:**
+
 ```bash
 # Clean old logs
 ./tools/logrotate.sh clean 7
@@ -391,6 +431,7 @@ ls -la backups/
 ```
 
 2. **Fix permissions:**
+
 ```bash
 chmod -R u+w backups/
 ```
@@ -398,6 +439,7 @@ chmod -R u+w backups/
 ### Issue: Restore failed
 
 **Solution:**
+
 ```bash
 # Verify backup integrity
 tar -tzf backups/worlds/world_20250119_120000.tar.gz
@@ -420,11 +462,13 @@ tar -xzf backups/worlds/world_20250119_120000.tar.gz
 ### Issue: Mod dependency missing
 
 **Error Message:**
+
 ```
 Mod X requires mod Y version Z
 ```
 
 **Solution:**
+
 ```bash
 # Check mod dependencies
 ./scripts/mod-updates.sh list
@@ -439,11 +483,13 @@ Mod X requires mod Y version Z
 ### Issue: Mod version incompatible
 
 **Error Message:**
+
 ```
 Incompatible mod set!
 ```
 
 **Solution:**
+
 ```bash
 # Remove incompatible mod
 rm mods/incompatible-mod.jar
@@ -455,11 +501,13 @@ rm mods/incompatible-mod.jar
 ### Issue: Mod conflicts
 
 **Symptoms:**
+
 - Server crash on startup
 - Mixins failing
 - Class conflicts
 
 **Solution:**
+
 ```bash
 # Binary search for conflicting mod
 # 1. Disable half of mods
@@ -480,6 +528,7 @@ mv mods-test/mod1.jar mods-test/mod2.jar ... mods/
 ### Issue: Monitor script shows "Server not running" but it is
 
 **Solution:**
+
 ```bash
 # Update PID file
 pgrep -f fabric-server-launch > .server.pid
@@ -491,6 +540,7 @@ pgrep -f fabric-server-launch > .server.pid
 ### Issue: Backup script can't send server commands
 
 **Solution:**
+
 ```bash
 # Start server in screen/tmux
 screen -dmS minecraft ./scripts/server-start.sh
@@ -502,6 +552,7 @@ tmux new-session -d -s minecraft ./scripts/server-start.sh
 ### Issue: Watchdog not restarting server
 
 **Diagnosis:**
+
 ```bash
 # Check watchdog log
 tail -f logs/watchdog.log
@@ -511,6 +562,7 @@ grep "restart" logs/watchdog.log
 ```
 
 **Solution:**
+
 ```bash
 # Increase max attempts
 ./tools/watchdog.sh monitor --max-attempts 5
@@ -525,6 +577,7 @@ grep "restart" logs/watchdog.log
 ### Issue: Log rotation not working
 
 **Solution:**
+
 ```bash
 # Check permissions
 ls -la logs/

@@ -7,24 +7,24 @@ on:
       - main
       - claude/**
     paths:
-      - '**.json'
-      - '**.yaml'
-      - '**.yml'
-      - 'scripts/format-config.sh'
-      - '.github/workflows/config-format.yml'
+      - "**.json"
+      - "**.yaml"
+      - "**.yml"
+      - "scripts/format-config.sh"
+      - ".github/workflows/config-format.yml"
   pull_request:
     paths:
-      - '**.json'
-      - '**.yaml'
-      - '**.yml'
-      - 'scripts/format-config.sh'
-      - '.github/workflows/config-format.yml'
+      - "**.json"
+      - "**.yaml"
+      - "**.yml"
+      - "scripts/format-config.sh"
+      - ".github/workflows/config-format.yml"
   workflow_dispatch:
     inputs:
       mode:
-        description: 'Operation mode'
+        description: "Operation mode"
         required: true
-        default: 'check'
+        default: "check"
         type: choice
         options:
           - check

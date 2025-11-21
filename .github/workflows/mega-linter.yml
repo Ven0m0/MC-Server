@@ -3,7 +3,17 @@ name: MegaLinter
 on:
   push:
     branches: [main, master, claude/**]
-    paths: ['**.yml', '**.yaml', '**.toml', '**.json', '**.json5', '**.jsonc', '**.properties', '.github/workflows/mega-linter.yml']
+    paths:
+      [
+        "**.yml",
+        "**.yaml",
+        "**.toml",
+        "**.json",
+        "**.json5",
+        "**.jsonc",
+        "**.properties",
+        ".github/workflows/mega-linter.yml"
+      ]
   pull_request:
     branches: [main, master, claude/**]
   workflow_dispatch:
