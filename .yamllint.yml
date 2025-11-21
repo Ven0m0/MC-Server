@@ -1,6 +1,5 @@
 ---
 extends: default
-locale: en_US.UTF-8
 # Ignore globs and files
 ignore: |
   node_modules/
@@ -8,8 +7,6 @@ ignore: |
   megalinter-reports/
   package-lock.json
   yarn.lock
-
-ignore-from-file: [.gitignore, .yamlignore]
 yaml-files:
   - "*.yaml"
   - "*.yml"

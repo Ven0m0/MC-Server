@@ -1,0 +1,318 @@
+---
+name: Image Optimization
+
+on:
+  push:
+    branches:
+      - main
+      - claude/**
+    paths:
+      - "**.png"
+      - "**.jpg"
+      - "**.jpeg"
+      - "**.gif"
+      - "**.svg"
+      - "**.webp"
+      - ".github/workflows/image-optimization.yml"
+  pull_request:
+    paths:
+      - "**.png"
+      - "**.jpg"
+      - "**.jpeg"
+      - "**.gif"
+      - "**.svg"
+      - "**.webp"
+      - ".github/workflows/image-optimization.yml"
+  workflow_dispatch:
+    inputs:
+      aggressive:
+        description: "Use aggressive optimization (may reduce quality slightly)"
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  optimize-images:
+    name: Optimize Image Files
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install image optimization tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            optipng \
+            jpegoptim \
+            gifsicle \
+            pngquant \
+            webp
+
+          # Install svgo for SVG optimization
+          sudo npm install -g svgo
+
+      - name: Find and optimize PNG files
+        id: optimize-png
+        run: |
+          echo "Optimizing PNG files..."
+          FOUND_FILES=0
+          OPTIMIZED_FILES=0
+
+          while IFS= read -r -d '' file; do
+            FOUND_FILES=$((FOUND_FILES + 1))
+            BEFORE_SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file")
+            echo "Optimizing: $file ($(numfmt --to=iec-i --suffix=B $BEFORE_SIZE))"
+
+            # Use optipng with moderate optimization (level 2)
+            # Add -o7 for aggressive optimization
+            if [[ "${{ github.event.inputs.aggressive }}" == "true" ]]; then
+              optipng -o7 -strip all "$file"
+              pngquant --quality=80-95 --ext .png --force "$file" || true
+            else
+              optipng -o2 -strip all "$file"
+            fi
+
+            AFTER_SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file")
+            SAVED=$((BEFORE_SIZE - AFTER_SIZE))
+            if [[ $SAVED -gt 0 ]]; then
+              OPTIMIZED_FILES=$((OPTIMIZED_FILES + 1))
+              echo "✓ Saved $(numfmt --to=iec-i --suffix=B $SAVED)"
+            else
+              echo "✓ Already optimized"
+            fi
+          done < <(find . \( -name "*.png" -o -name "*.PNG" \) \
+                    -not -path "*/node_modules/*" \
+                    -not -path "*/.git/*" \
+                    -not -path "*/dist/*" \
+                    -not -path "*/build/*" \
+                    -print0)
+
+          echo "png_found=$FOUND_FILES" >> $GITHUB_OUTPUT
+          echo "png_optimized=$OPTIMIZED_FILES" >> $GITHUB_OUTPUT
+
+      - name: Find and optimize JPEG files
+        id: optimize-jpeg
+        run: |
+          echo "Optimizing JPEG files..."
+          FOUND_FILES=0
+          OPTIMIZED_FILES=0
+
+          while IFS= read -r -d '' file; do
+            FOUND_FILES=$((FOUND_FILES + 1))
+            BEFORE_SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file")
+            echo "Optimizing: $file ($(numfmt --to=iec-i --suffix=B $BEFORE_SIZE))"
+
+            # Use jpegoptim with quality preservation
+            if [[ "${{ github.event.inputs.aggressive }}" == "true" ]]; then
+              jpegoptim --max=85 --strip-all "$file"
+            else
+              jpegoptim --max=92 --strip-all "$file"
+            fi
+
+            AFTER_SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file")
+            SAVED=$((BEFORE_SIZE - AFTER_SIZE))
+            if [[ $SAVED -gt 0 ]]; then
+              OPTIMIZED_FILES=$((OPTIMIZED_FILES + 1))
+              echo "✓ Saved $(numfmt --to=iec-i --suffix=B $SAVED)"
+            else
+              echo "✓ Already optimized"
+            fi
+          done < <(find . \( -name "*.jpg" -o -name "*.jpeg" -o -name "*.JPG" -o -name "*.JPEG" \) \
+                    -not -path "*/node_modules/*" \
+                    -not -path "*/.git/*" \
+                    -not -path "*/dist/*" \
+                    -not -path "*/build/*" \
+                    -print0)
+
+          echo "jpeg_found=$FOUND_FILES" >> $GITHUB_OUTPUT
+          echo "jpeg_optimized=$OPTIMIZED_FILES" >> $GITHUB_OUTPUT
+
+      - name: Find and optimize GIF files
+        id: optimize-gif
+        run: |
+          echo "Optimizing GIF files..."
+          FOUND_FILES=0
+          OPTIMIZED_FILES=0
+
+          while IFS= read -r -d '' file; do
+            FOUND_FILES=$((FOUND_FILES + 1))
+            BEFORE_SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file")
+            echo "Optimizing: $file ($(numfmt --to=iec-i --suffix=B $BEFORE_SIZE))"
+
+            # Use gifsicle for GIF optimization
+            if [[ "${{ github.event.inputs.aggressive }}" == "true" ]]; then
+              gifsicle --batch --optimize=3 --lossy=80 "$file"
+            else
+              gifsicle --batch --optimize=2 "$file"
+            fi
+
+            AFTER_SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file")
+            SAVED=$((BEFORE_SIZE - AFTER_SIZE))
+            if [[ $SAVED -gt 0 ]]; then
+              OPTIMIZED_FILES=$((OPTIMIZED_FILES + 1))
+              echo "✓ Saved $(numfmt --to=iec-i --suffix=B $SAVED)"
+            else
+              echo "✓ Already optimized"
+            fi
+          done < <(find . \( -name "*.gif" -o -name "*.GIF" \) \
+                    -not -path "*/node_modules/*" \
+                    -not -path "*/.git/*" \
+                    -not -path "*/dist/*" \
+                    -not -path "*/build/*" \
+                    -print0)
+
+          echo "gif_found=$FOUND_FILES" >> $GITHUB_OUTPUT
+          echo "gif_optimized=$OPTIMIZED_FILES" >> $GITHUB_OUTPUT
+
+      - name: Find and optimize SVG files
+        id: optimize-svg
+        run: |
+          echo "Optimizing SVG files..."
+          FOUND_FILES=0
+          OPTIMIZED_FILES=0
+
+          while IFS= read -r -d '' file; do
+            FOUND_FILES=$((FOUND_FILES + 1))
+            BEFORE_SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file")
+            echo "Optimizing: $file ($(numfmt --to=iec-i --suffix=B $BEFORE_SIZE))"
+
+            # Use svgo for SVG optimization
+            svgo --quiet --multipass "$file"
+
+            AFTER_SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file")
+            SAVED=$((BEFORE_SIZE - AFTER_SIZE))
+            if [[ $SAVED -gt 0 ]]; then
+              OPTIMIZED_FILES=$((OPTIMIZED_FILES + 1))
+              echo "✓ Saved $(numfmt --to=iec-i --suffix=B $SAVED)"
+            else
+              echo "✓ Already optimized"
+            fi
+          done < <(find . \( -name "*.svg" -o -name "*.SVG" \) \
+                    -not -path "*/node_modules/*" \
+                    -not -path "*/.git/*" \
+                    -not -path "*/dist/*" \
+                    -not -path "*/build/*" \
+                    -print0)
+
+          echo "svg_found=$FOUND_FILES" >> $GITHUB_OUTPUT
+          echo "svg_optimized=$OPTIMIZED_FILES" >> $GITHUB_OUTPUT
+
+      - name: Find and optimize WebP files
+        id: optimize-webp
+        run: |
+          echo "Optimizing WebP files..."
+          FOUND_FILES=0
+          OPTIMIZED_FILES=0
+
+          while IFS= read -r -d '' file; do
+            FOUND_FILES=$((FOUND_FILES + 1))
+            BEFORE_SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file")
+            echo "Optimizing: $file ($(numfmt --to=iec-i --suffix=B $BEFORE_SIZE))"
+
+            # Re-encode WebP with better compression
+            TEMP_FILE="${file}.tmp"
+            if [[ "${{ github.event.inputs.aggressive }}" == "true" ]]; then
+              cwebp -q 80 -m 6 "$file" -o "$TEMP_FILE" && mv "$TEMP_FILE" "$file"
+            else
+              cwebp -q 90 -m 4 "$file" -o "$TEMP_FILE" && mv "$TEMP_FILE" "$file"
+            fi
+
+            AFTER_SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file")
+            SAVED=$((BEFORE_SIZE - AFTER_SIZE))
+            if [[ $SAVED -gt 0 ]]; then
+              OPTIMIZED_FILES=$((OPTIMIZED_FILES + 1))
+              echo "✓ Saved $(numfmt --to=iec-i --suffix=B $SAVED)"
+            else
+              echo "✓ Already optimized"
+            fi
+          done < <(find . \( -name "*.webp" -o -name "*.WEBP" \) \
+                    -not -path "*/node_modules/*" \
+                    -not -path "*/.git/*" \
+                    -not -path "*/dist/*" \
+                    -not -path "*/build/*" \
+                    -print0)
+
+          echo "webp_found=$FOUND_FILES" >> $GITHUB_OUTPUT
+          echo "webp_optimized=$OPTIMIZED_FILES" >> $GITHUB_OUTPUT
+
+      - name: Generate optimization summary
+        run: |
+          echo "## Image Optimization Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Format | Files Found | Files Optimized |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------------|-----------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| PNG    | ${{ steps.optimize-png.outputs.png_found }} | ${{ steps.optimize-png.outputs.png_optimized }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| JPEG   | ${{ steps.optimize-jpeg.outputs.jpeg_found }} | ${{ steps.optimize-jpeg.outputs.jpeg_optimized }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| GIF    | ${{ steps.optimize-gif.outputs.gif_found }} | ${{ steps.optimize-gif.outputs.gif_optimized }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| SVG    | ${{ steps.optimize-svg.outputs.svg_found }} | ${{ steps.optimize-svg.outputs.svg_optimized }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| WebP   | ${{ steps.optimize-webp.outputs.webp_found }} | ${{ steps.optimize-webp.outputs.webp_optimized }} |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Commit optimized images (on push to main/claude branches)
+        if: |
+          github.event_name == 'push' &&
+          (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/claude/'))
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git add -A
+            git commit -m "chore: Optimize image files [skip ci]
+
+          - PNG: ${{ steps.optimize-png.outputs.png_optimized }}/${{ steps.optimize-png.outputs.png_found }} files optimized
+          - JPEG: ${{ steps.optimize-jpeg.outputs.jpeg_optimized }}/${{ steps.optimize-jpeg.outputs.jpeg_found }} files optimized
+          - GIF: ${{ steps.optimize-gif.outputs.gif_optimized }}/${{ steps.optimize-gif.outputs.gif_found }} files optimized
+          - SVG: ${{ steps.optimize-svg.outputs.svg_optimized }}/${{ steps.optimize-svg.outputs.svg_found }} files optimized
+          - WebP: ${{ steps.optimize-webp.outputs.webp_optimized }}/${{ steps.optimize-webp.outputs.webp_found }} files optimized"
+            git push
+          else
+            echo "No images to optimize or already optimized"
+          fi
+
+      - name: Comment on PR (if images were optimized)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pngOptimized = parseInt('${{ steps.optimize-png.outputs.png_optimized }}');
+            const jpegOptimized = parseInt('${{ steps.optimize-jpeg.outputs.jpeg_optimized }}');
+            const gifOptimized = parseInt('${{ steps.optimize-gif.outputs.gif_optimized }}');
+            const svgOptimized = parseInt('${{ steps.optimize-svg.outputs.svg_optimized }}');
+            const webpOptimized = parseInt('${{ steps.optimize-webp.outputs.webp_optimized }}');
+
+            const totalOptimized = pngOptimized + jpegOptimized + gifOptimized + svgOptimized + webpOptimized;
+
+            if (totalOptimized > 0) {
+              let comment = '## 🖼️ Image Optimization Results\n\n';
+              comment += 'The following images were optimized:\n\n';
+              comment += '| Format | Optimized Files |\n';
+              comment += '|--------|----------------|\n';
+              if (pngOptimized > 0) comment += `| PNG | ${pngOptimized} |\n`;
+              if (jpegOptimized > 0) comment += `| JPEG | ${jpegOptimized} |\n`;
+              if (gifOptimized > 0) comment += `| GIF | ${gifOptimized} |\n`;
+              if (svgOptimized > 0) comment += `| SVG | ${svgOptimized} |\n`;
+              if (webpOptimized > 0) comment += `| WebP | ${webpOptimized} |\n`;
+              comment += '\n**Total optimized:** ' + totalOptimized + ' files\n\n';
+              comment += '💡 _Tip: Optimized images are committed automatically to improve repository efficiency._';
+
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            } else {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: '✅ All images are already optimized!'
+              });
+            }

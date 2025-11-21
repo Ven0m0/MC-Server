@@ -17,6 +17,7 @@ Complete step-by-step guide for setting up and configuring your Minecraft server
 ### System Requirements
 
 **Minimum Requirements:**
+
 - CPU: 2 cores
 - RAM: 4GB
 - Disk: 10GB free space
@@ -24,6 +25,7 @@ Complete step-by-step guide for setting up and configuring your Minecraft server
 - Java: OpenJDK 21+
 
 **Recommended Requirements:**
+
 - CPU: 4+ cores
 - RAM: 8GB+
 - Disk: 20GB+ SSD
@@ -89,6 +91,7 @@ chmod +x scripts/*.sh tools/*.sh
 ```
 
 This will download:
+
 - Fabric loader
 - Fabric installer
 - Minecraft server JAR
@@ -101,6 +104,7 @@ This will download:
 ```
 
 This script:
+
 - Accepts the Minecraft EULA
 - Creates necessary directories
 - Sets up initial configuration
@@ -112,6 +116,7 @@ This script:
 ```
 
 First start will:
+
 - Generate world
 - Create configuration files
 - Initialize all plugins

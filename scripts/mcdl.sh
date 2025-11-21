@@ -19,7 +19,7 @@ print_info "Minecraft: $MC_VERSION | Fabric installer: $FABRIC_VERSION | Loader:
 # Download and run Fabric installer
 print_info "Downloading Fabric installer..."
 download_file "https://maven.fabricmc.net/net/fabricmc/fabric-installer/${FABRIC_VERSION}/fabric-installer-${FABRIC_VERSION}.jar" \
-    "fabric-installer.jar"
+  "fabric-installer.jar"
 
 print_info "Installing Fabric server..."
 java -jar fabric-installer.jar server -mcversion "$MC_VERSION" -downloadMinecraft
