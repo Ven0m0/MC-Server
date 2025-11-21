@@ -1,10 +1,50 @@
 #!/usr/bin/env bash
 # server-start.sh: Simplified Minecraft server launcher
 
-# Source common functions
-source "$(dirname -- "${BASH_SOURCE[0]}")/../lib/common.sh"
+# Initialize strict mode
+set -euo pipefail
+shopt -s nullglob globstar
+IFS=$'\n\t'
+export LC_ALL=C LANG=C
+user="${SUDO_USER:-${USER:-$(id -un)}}"
+export HOME="/home/${user}"
+SHELL="$(command -v bash 2>/dev/null || echo '/usr/bin/bash')"
 
-init_strict_mode
+# Check if command exists
+has_command() { command -v "$1" &>/dev/null; }
+
+# Check if required commands are available
+check_dependencies() {
+  local missing=()
+  for cmd in "$@"; do
+    has_command "$cmd" || missing+=("$cmd")
+  done
+  if [[ ${#missing[@]} -gt 0 ]]; then
+    echo "Error: Missing required dependencies: ${missing[*]}" >&2
+    echo "Please install them before continuing." >&2
+    return 1
+  fi
+}
+
+# Calculate total RAM in GB
+get_total_ram_gb() { awk '/MemTotal/ {printf "%.0f\n",$2/1024/1024}' /proc/meminfo 2>/dev/null; }
+
+# Calculate heap size (total RAM minus reserved for OS)
+get_heap_size_gb() {
+  local reserved="${1:-2}"
+  local total_ram=$(get_total_ram_gb)
+  local heap=$((total_ram - reserved))
+  [[ $heap -lt 1 ]] && heap=1
+  echo "$heap"
+}
+
+# Get number of CPU cores
+get_cpu_cores() { nproc 2>/dev/null || echo 4; }
+
+# Output formatting helpers
+print_header() { echo -e "\033[0;34m==>\033[0m $1"; }
+print_error() { echo -e "\033[0;31m✗\033[0m $1" >&2; }
+print_info() { echo -e "\033[1;33m→\033[0m $1"; }
 
 # Configuration
 : "${SERVER_JAR:=server.jar}"
