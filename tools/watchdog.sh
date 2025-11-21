@@ -1,9 +1,18 @@
 #!/usr/bin/env bash
 # Simplified Minecraft server watchdog
 
-source "$(dirname -- "${BASH_SOURCE[0]}")/../lib/common.sh"
+# Initialize strict mode
+set -euo pipefail
+shopt -s nullglob globstar
+IFS=$'\n\t'
+export LC_ALL=C LANG=C
+user="${SUDO_USER:-${USER:-$(id -un)}}"
+export HOME="/home/${user}"
+SHELL="$(command -v bash 2>/dev/null || echo '/usr/bin/bash')"
 
-init_strict_mode
+# Initialize SCRIPT_DIR
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+export SCRIPT_DIR
 
 # Configuration
 SERVER_START_SCRIPT="${SCRIPT_DIR}/scripts/server-start.sh"

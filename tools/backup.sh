@@ -1,9 +1,24 @@
 #!/usr/bin/env bash
 # Simplified Minecraft server backup tool
 
-source "$(dirname -- "${BASH_SOURCE[0]}")/../lib/common.sh"
+# Initialize strict mode
+set -euo pipefail
+shopt -s nullglob globstar
+IFS=$'\n\t'
+export LC_ALL=C LANG=C
+user="${SUDO_USER:-${USER:-$(id -un)}}"
+export HOME="/home/${user}"
+SHELL="$(command -v bash 2>/dev/null || echo '/usr/bin/bash')"
 
-init_strict_mode
+# Initialize SCRIPT_DIR
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+export SCRIPT_DIR
+
+# Output formatting helpers
+print_header() { echo -e "\033[0;34m==>\033[0m $1"; }
+print_success() { echo -e "\033[0;32m✓\033[0m $1"; }
+print_error() { echo -e "\033[0;31m✗\033[0m $1" >&2; }
+print_info() { echo -e "\033[1;33m→\033[0m $1"; }
 
 # Configuration
 BACKUP_DIR="${SCRIPT_DIR}/backups"

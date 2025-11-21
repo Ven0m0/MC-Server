@@ -1,11 +1,1 @@
-{
-  "forceEnableSepalsPoi": false,
-  "enableSepalsVillager": true,
-  "enableSepalsFrogLookAt": true,
-  "enableSepalsFrogAttackableSensor": true,
-  "enableSepalsLivingTargetCache": true,
-  "nearestLivingEntitiesSensorUseQuickSort": true,
-  "enableSepalsBiasedLongJumpTask": true,
-  "enableSepalsEntitiesCramming": true,
-  "enableSepalsItemMerge": true
-}
+{"enableSepalsBiasedLongJumpTask":true,"enableSepalsEntitiesCramming":true,"enableSepalsFrogAttackableSensor":true,"enableSepalsFrogLookAt":true,"enableSepalsItemMerge":true,"enableSepalsLivingTargetCache":true,"enableSepalsVillager":true,"forceEnableSepalsPoi":false,"nearestLivingEntitiesSensorUseQuickSort":true}

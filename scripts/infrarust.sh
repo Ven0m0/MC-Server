@@ -1,8 +1,37 @@
 #!/usr/bin/env bash
 # infrarust.sh: Install and configure Infrarust Minecraft proxy service
-source "$(dirname -- "${BASH_SOURCE[0]}")/../lib/common.sh"
 
-init_strict_mode
+# Initialize strict mode
+set -euo pipefail
+shopt -s nullglob globstar
+IFS=$'\n\t'
+export LC_ALL=C LANG=C
+user="${SUDO_USER:-${USER:-$(id -un)}}"
+export HOME="/home/${user}"
+SHELL="$(command -v bash 2>/dev/null || echo '/usr/bin/bash')"
+
+# Check if command exists
+has_command() { command -v "$1" &>/dev/null; }
+
+# Check if required commands are available
+check_dependencies() {
+  local missing=()
+  for cmd in "$@"; do
+    has_command "$cmd" || missing+=("$cmd")
+  done
+  if [[ ${#missing[@]} -gt 0 ]]; then
+    echo "Error: Missing required dependencies: ${missing[*]}" >&2
+    echo "Please install them before continuing." >&2
+    return 1
+  fi
+}
+
+# Output formatting helpers
+print_header() { echo -e "\033[0;34m==>\033[0m $1"; }
+print_success() { echo -e "\033[0;32m✓\033[0m $1"; }
+print_error() { echo -e "\033[0;31m✗\033[0m $1" >&2; }
+print_info() { echo -e "\033[1;33m→\033[0m $1"; }
+
 print_header "Setting up Infrarust Minecraft Proxy"
 # Check and install infrarust if needed
 if ! has_command infrarust; then
