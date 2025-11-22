@@ -91,6 +91,7 @@ JVM_FLAGS=(
   -XX:+ParallelRefProcEnabled
   "-XX:ParallelGCThreads=${CPU_CORES}"
   -Dfile.encoding=UTF-8
+  -Djava.awt.headless=true
 )
 
 # Playit Integration

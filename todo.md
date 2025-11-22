@@ -1,3 +1,3 @@
 # Todo
 
-JAVA_OPTS="-Djava.awt.headless=true"
+All tasks completed!
