@@ -1,4 +1,3 @@
----
 extends: default
 # Ignore globs and files
 ignore: |
@@ -11,7 +10,6 @@ yaml-files:
   - "*.yaml"
   - "*.yml"
   - ".yamllint"
-
 rules:
   anchors: enable
   # Allow longer lines, warn if >120

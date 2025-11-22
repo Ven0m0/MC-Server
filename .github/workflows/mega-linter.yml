@@ -1,19 +1,8 @@
----
 name: MegaLinter
 on:
   push:
     branches: [main, master, claude/**]
-    paths:
-      [
-        "**.yml",
-        "**.yaml",
-        "**.toml",
-        "**.json",
-        "**.json5",
-        "**.jsonc",
-        "**.properties",
-        ".github/workflows/mega-linter.yml"
-      ]
+    paths: ["**.yml", "**.yaml", "**.toml", "**.json", "**.json5", "**.jsonc", "**.properties", ".github/workflows/mega-linter.yml"]
   pull_request:
     branches: [main, master, claude/**]
   workflow_dispatch:
@@ -58,10 +47,8 @@ jobs:
       - name: Create PR with fixes
         id: cpr
         if: >
-          steps.ml.outputs.has_updated_sources == 1 &&
-          (env.APPLY_FIXES_EVENT == 'all' || env.APPLY_FIXES_EVENT == github.event_name) &&
-          env.APPLY_FIXES_MODE == 'pull_request' &&
-          (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
+          steps.ml.outputs.has_updated_sources == 1 && (env.APPLY_FIXES_EVENT == 'all' || env.APPLY_FIXES_EVENT == github.event_name) && env.APPLY_FIXES_MODE == 'pull_request' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
+
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -72,10 +59,8 @@ jobs:
           delete-branch: true
       - name: Comment on PR
         if: >
-          steps.ml.outputs.has_updated_sources == 1 &&
-          (env.APPLY_FIXES_EVENT == 'all' || env.APPLY_FIXES_EVENT == github.event_name) &&
-          env.APPLY_FIXES_MODE == 'pull_request' &&
-          (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
+          steps.ml.outputs.has_updated_sources == 1 && (env.APPLY_FIXES_EVENT == 'all' || env.APPLY_FIXES_EVENT == github.event_name) && env.APPLY_FIXES_MODE == 'pull_request' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
+
         uses: peter-evans/create-or-update-comment@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}

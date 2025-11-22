@@ -1,6 +1,8 @@
 # 🎮 Minecraft Server Management Suite
 
-A professional, production-ready Minecraft server management toolkit with automated setup, comprehensive monitoring, backup solutions, and performance optimization.
+A professional, production-ready Minecraft server management toolkit with
+automated setup, comprehensive monitoring, backup solutions, and performance
+optimization.
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Fabric](https://img.shields.io/badge/Fabric-1.21.5-green.svg)](https://fabricmc.net/)
@@ -20,13 +22,13 @@ A professional, production-ready Minecraft server management toolkit with automa
 
 ## 📋 Table of Contents
 
-- [Quick Start](#-quick-start)
-- [Installation](#-installation)
-- [Server Scripts](#-server-scripts)
-- [Management Tools](#-management-tools)
-- [Configuration](#-configuration)
-- [Documentation](#-documentation)
-- [Directory Structure](#-directory-structure)
+- [Quick Start](#quick-start)
+- [Installation](#installation)
+- [Server Scripts](#server-scripts)
+- [Management Tools](#management-tools)
+- [Configuration](#configuration)
+- [Documentation](#documentation)
+- [Directory Structure](#directory-structure)
 
 ## 🚀 Quick Start
 
@@ -61,7 +63,7 @@ cd MC-Server
 
 # Rotate logs
 ./tools/logrotate.sh maintenance
-```
+```text
 
 ## 📦 Installation
 
@@ -81,7 +83,7 @@ sudo apt install -y openjdk-21-jdk curl wget unzip screen
 
 # Optional: Install GraalVM for better performance
 # Download from https://www.graalvm.org/downloads/
-```
+```text
 
 ### Optional Dependencies
 
@@ -95,7 +97,7 @@ cargo install jaq
 
 # Network utilities
 sudo apt install -y netcat-openbsd
-```
+```text
 
 ## 🎮 Server Scripts
 
@@ -122,7 +124,7 @@ Main server launcher with advanced optimizations
 # Use specific JDK
 MC_JDK=graalvm ./scripts/server-start.sh
 MC_JDK=temurin ./scripts/server-start.sh
-```
+```text
 
 ### `mcdl.sh`
 
@@ -133,7 +135,7 @@ Fabric server downloader and installer
 ```bash
 ./scripts/mcdl.sh [version]    # Downloads specified version
 ./scripts/mcdl.sh              # Downloads latest version
-```
+```text
 
 ### `mod-updates.sh`
 
@@ -161,7 +163,7 @@ Comprehensive mod manager with Modrinth and CurseForge support
 
 # List mods
 ./scripts/mod-updates.sh list
-```
+```text
 
 ### `mc-client.sh`
 
@@ -172,7 +174,7 @@ Minecraft Java Edition client launcher
 ```bash
 ./scripts/mc-client.sh 1.21.5 YourUsername
 MC_DIR=/custom/path ./scripts/mc-client.sh 1.21.5 Player
-```
+```text
 
 ### `prepare.sh`
 
@@ -217,14 +219,14 @@ Automated backup solution for worlds, configurations, and mods.
 
 # Clean old backups
 ./tools/backup.sh cleanup --max-backups 10
-```
+```text
 
 **Automated Backups:**
 
 ```bash
 # Add to crontab for daily backups at 4 AM
 0 4 * * * cd /path/to/MC-Server && ./tools/backup.sh backup all
-```
+```text
 
 ### `monitor.sh` - Server Monitoring
 
@@ -256,7 +258,7 @@ Real-time server health monitoring and performance tracking.
 
 # Check errors
 ./tools/monitor.sh errors
-```
+```text
 
 ### `watchdog.sh` - Auto-Restart & Crash Recovery
 
@@ -290,7 +292,7 @@ Automatic server monitoring with crash recovery and restart capabilities.
 
 # Check status
 ./tools/watchdog.sh status
-```
+```text
 
 **Run as Background Service:**
 
@@ -300,7 +302,7 @@ screen -dmS watchdog bash -c "cd /path/to/MC-Server && ./tools/watchdog.sh monit
 
 # Using tmux
 tmux new-session -d -s watchdog "cd /path/to/MC-Server && ./tools/watchdog.sh monitor"
-```
+```text
 
 ### `logrotate.sh` - Log Management
 
@@ -337,14 +339,14 @@ Automated log rotation, compression, and archiving.
 
 # Search logs
 ./tools/logrotate.sh search "error" latest.log
-```
+```text
 
 **Automated Log Rotation:**
 
 ```bash
 # Add to crontab for weekly log maintenance
 0 3 * * 0 cd /path/to/MC-Server && ./tools/logrotate.sh maintenance
-```
+```text
 
 ## ⚙️ Configuration
 
@@ -394,7 +396,7 @@ Detailed documentation available in `docs/`:
 
 ## 📁 Directory Structure
 
-```
+```text
 MC-Server/
 ├── scripts/                    # Server management scripts
 │   ├── server-start.sh         # Main server launcher
@@ -440,7 +442,7 @@ MC-Server/
 ├── config.yaml                 # Infrarust config
 ├── gamemode.ini                # GameMode settings
 └── README.md                   # This file
-```
+```text
 
 ## 🔧 Maintenance Tasks
 

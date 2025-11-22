@@ -1,6 +1,5 @@
 # The main configuration file for ServerCore.
 # Most of these settings can be reloaded without restarting using /servercore reload.
-
 # Most miscellaneous feature toggles.
 features:
   # Reverts enderpearl behavior to pre-1.21.2. The following will change when this setting is enabled:
@@ -24,7 +23,6 @@ features:
     enabled: true
     # Decides the interval in between villager ticks when lobotomized.
     tick-interval: 20
-
 # Automatically modifies dynamic settings based on the server performance.
 dynamic:
   # Enables dynamic performance checks.
@@ -39,7 +37,6 @@ dynamic:
     SIMULATION_DISTANCE: 10
     VIEW_DISTANCE: 10
     MOBCAP_PERCENTAGE: 100
-
   # The settings that will be decreased when the server is overloaded, in the specified order.
   # You can remove settings from the list that you don't want to be dynamically adjusted.
   # ► max = The maximum value the server will increase the setting to.
@@ -52,25 +49,21 @@ dynamic:
       min: 2
       increment: 1
       interval: 15
-
     - setting: "MOBCAP_PERCENTAGE"
       max: 100
       min: 30
       increment: 10
       interval: 15
-
     - setting: "SIMULATION_DISTANCE"
       max: 10
       min: 2
       increment: 1
       interval: 15
-
     - setting: "VIEW_DISTANCE"
       max: 10
       min: 4
       increment: 1
       interval: 150
-
 # A special mobcap that only affects the breeding of animals and villagers.
 breeding-cap:
   # Enables breeding caps.
@@ -83,7 +76,6 @@ breeding-cap:
     limit: 32
     range: 64
     unlimited-height: false
-
   # The breeding cap for animals.
   # Note that this cap only checks for animals of the same type.
   # If the limit is 32 you can still breed 32 cows and 32 pigs next to each other.
@@ -91,7 +83,6 @@ breeding-cap:
     limit: 32
     range: 64
     unlimited-height: false
-
 # Gives more control over mob spawning.
 mob-spawning:
   # Mobcap settings for zombie reinforcements.
@@ -101,22 +92,18 @@ mob-spawning:
   zombie-reinforcements:
     enforce-mobcap: false
     additional-capacity: 32
-
   # Mobcap settings for zombified piglin spawning from nether portal random ticks.
   nether-portal-randomticks:
     enforce-mobcap: false
     additional-capacity: 32
-
   # Mobcap settings for mobs spawned from monster spawners.
   monster-spawners:
     enforce-mobcap: false
     additional-capacity: 32
-
   # Mobcap settings for silverfish spawned from the infested potion effect.
   infested:
     enforce-mobcap: false
     additional-capacity: 32
-
   # A list of mob categories with their respective mobcap and spawn interval.
   # ► category = The vanilla spawn category.
   # ► mobcap = The maximum amount of entities in the same category that can spawn near a player.
@@ -125,31 +112,24 @@ mob-spawning:
     - category: "MONSTER"
       mobcap: 70
       spawn-interval: 1
-
     - category: "CREATURE"
       mobcap: 10
       spawn-interval: 400
-
     - category: "AMBIENT"
       mobcap: 15
       spawn-interval: 1
-
     - category: "AXOLOTLS"
       mobcap: 5
       spawn-interval: 1
-
     - category: "UNDERGROUND_WATER_CREATURE"
       mobcap: 5
       spawn-interval: 1
-
     - category: "WATER_CREATURE"
       mobcap: 5
       spawn-interval: 1
-
     - category: "WATER_AMBIENT"
       mobcap: 20
       spawn-interval: 1
-
 # Settings for commands and their formatting.
 commands:
   # Enables the /servercore status command.
@@ -164,7 +144,6 @@ commands:
     secondary: "green"
     # The tertiary color is mostly used for text in titles.
     tertiary: "aqua"
-
 # Activation range can drastically reduce the amount of lag caused by ticking entities.
 # It does this by cleverly skipping certain entity ticks based on the distance to players and other factors, like immunity checks.
 # Immunity checks determine whether an entity should be ticked even when it's outside the activation range, like for example when it is falling or takes damage.
@@ -204,7 +183,6 @@ activation-range:
     wakeup-interval: -1
     extra-height-up: false
     extra-height-down: false
-
   # A list of custom activation types.
   # ► name = The name of the activation type.
   # ► entity-matcher = A list of conditions to filter entities. Only one of these conditions needs to be met for an entity to match.
@@ -221,7 +199,6 @@ activation-range:
       extra-height-down: false
       entity-matcher:
         - "typeof:raider"
-
     - name: "water"
       activation-range: 16
       tick-interval: 20
@@ -230,7 +207,6 @@ activation-range:
       extra-height-down: false
       entity-matcher:
         - "typeof:water_animal"
-
     - name: "villager"
       activation-range: 16
       tick-interval: 20
@@ -239,7 +215,6 @@ activation-range:
       extra-height-down: false
       entity-matcher:
         - "typeof:villager"
-
     - name: "zombie"
       activation-range: 16
       tick-interval: 20
@@ -249,7 +224,6 @@ activation-range:
       entity-matcher:
         - "minecraft:zombie"
         - "minecraft:husk"
-
     - name: "monster-below"
       activation-range: 32
       tick-interval: 20
@@ -261,7 +235,6 @@ activation-range:
         - "minecraft:slime"
         - "minecraft:magma_cube"
         - "minecraft:hoglin"
-
     - name: "flying-monster"
       activation-range: 48
       tick-interval: 20
@@ -271,7 +244,6 @@ activation-range:
       entity-matcher:
         - "minecraft:ghast"
         - "minecraft:phantom"
-
     - name: "monster"
       activation-range: 32
       tick-interval: 20
@@ -280,7 +252,6 @@ activation-range:
       extra-height-down: false
       entity-matcher:
         - "typeof:monster"
-
     - name: "animal"
       activation-range: 16
       tick-interval: 20
@@ -290,7 +261,6 @@ activation-range:
       entity-matcher:
         - "typeof:animal"
         - "typeof:ambient"
-
     - name: "creature"
       activation-range: 24
       tick-interval: 20

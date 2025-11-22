@@ -1,6 +1,4 @@
----
 name: Image Optimization
-
 on:
   push:
     branches:
@@ -30,7 +28,6 @@ on:
         required: false
         default: false
         type: boolean
-
 jobs:
   optimize-images:
     name: Optimize Image Files
@@ -38,13 +35,11 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Install image optimization tools
         run: |
           sudo apt-get update
@@ -57,7 +52,6 @@ jobs:
 
           # Install svgo for SVG optimization
           sudo npm install -g svgo
-
       - name: Find and optimize PNG files
         id: optimize-png
         run: |
@@ -96,7 +90,6 @@ jobs:
 
           echo "png_found=$FOUND_FILES" >> $GITHUB_OUTPUT
           echo "png_optimized=$OPTIMIZED_FILES" >> $GITHUB_OUTPUT
-
       - name: Find and optimize JPEG files
         id: optimize-jpeg
         run: |
@@ -133,7 +126,6 @@ jobs:
 
           echo "jpeg_found=$FOUND_FILES" >> $GITHUB_OUTPUT
           echo "jpeg_optimized=$OPTIMIZED_FILES" >> $GITHUB_OUTPUT
-
       - name: Find and optimize GIF files
         id: optimize-gif
         run: |
@@ -170,7 +162,6 @@ jobs:
 
           echo "gif_found=$FOUND_FILES" >> $GITHUB_OUTPUT
           echo "gif_optimized=$OPTIMIZED_FILES" >> $GITHUB_OUTPUT
-
       - name: Find and optimize SVG files
         id: optimize-svg
         run: |
@@ -203,7 +194,6 @@ jobs:
 
           echo "svg_found=$FOUND_FILES" >> $GITHUB_OUTPUT
           echo "svg_optimized=$OPTIMIZED_FILES" >> $GITHUB_OUTPUT
-
       - name: Find and optimize WebP files
         id: optimize-webp
         run: |
@@ -241,7 +231,6 @@ jobs:
 
           echo "webp_found=$FOUND_FILES" >> $GITHUB_OUTPUT
           echo "webp_optimized=$OPTIMIZED_FILES" >> $GITHUB_OUTPUT
-
       - name: Generate optimization summary
         run: |
           echo "## Image Optimization Summary" >> $GITHUB_STEP_SUMMARY
@@ -253,7 +242,6 @@ jobs:
           echo "| GIF    | ${{ steps.optimize-gif.outputs.gif_found }} | ${{ steps.optimize-gif.outputs.gif_optimized }} |" >> $GITHUB_STEP_SUMMARY
           echo "| SVG    | ${{ steps.optimize-svg.outputs.svg_found }} | ${{ steps.optimize-svg.outputs.svg_optimized }} |" >> $GITHUB_STEP_SUMMARY
           echo "| WebP   | ${{ steps.optimize-webp.outputs.webp_found }} | ${{ steps.optimize-webp.outputs.webp_optimized }} |" >> $GITHUB_STEP_SUMMARY
-
       - name: Commit optimized images (on push to main/claude branches)
         if: |
           github.event_name == 'push' &&
@@ -275,7 +263,6 @@ jobs:
           else
             echo "No images to optimize or already optimized"
           fi
-
       - name: Comment on PR (if images were optimized)
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7

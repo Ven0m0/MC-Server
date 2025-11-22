@@ -1,6 +1,4 @@
----
 name: Config Format & Lint
-
 on:
   push:
     branches:
@@ -30,7 +28,6 @@ on:
           - check
           - format
           - minify
-
 jobs:
   format-check:
     name: Check Config Formatting
@@ -38,13 +35,11 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -57,14 +52,12 @@ jobs:
           # Install yamlfmt for better YAML formatting
           go install github.com/google/yamlfmt/cmd/yamlfmt@latest
           echo "${HOME}/go/bin" >> $GITHUB_PATH
-
       - name: Install GNU Parallel
         run: |
           sudo apt-get install -y parallel
           # Disable citation notice
           mkdir -p ~/.parallel
           touch ~/.parallel/will-cite
-
       - name: Check config formatting
         id: check
         run: |
@@ -76,7 +69,6 @@ jobs:
           else
             ./scripts/format-config.sh --mode "${MODE}" --verbose
           fi
-
       - name: Auto-fix formatting (on push to main/claude branches)
         if: |
           failure() &&
@@ -84,7 +76,6 @@ jobs:
           (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/claude/'))
         run: |
           ./scripts/format-config.sh --mode format --verbose
-
       - name: Commit formatting changes
         if: |
           failure() &&
@@ -101,7 +92,6 @@ jobs:
           else
             echo "No formatting changes needed"
           fi
-
       - name: Comment on PR (if formatting needed)
         if: failure() && github.event_name == 'pull_request'
         uses: actions/github-script@v7
@@ -113,18 +103,14 @@ jobs:
               repo: context.repo.repo,
               body: '⚠️ Config files need formatting. Please run `./scripts/format-config.sh --mode format` locally and commit the changes.'
             })
-
   validate-json:
     name: Validate JSON Syntax
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
-
       - name: Validate all JSON files
         run: |
           echo "Validating JSON files..."
@@ -147,20 +133,16 @@ jobs:
                     -print0)
 
           exit ${EXIT_CODE}
-
   validate-yaml:
     name: Validate YAML Syntax
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Install yq
         run: |
           sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
           sudo chmod +x /usr/local/bin/yq
-
       - name: Validate all YAML files
         run: |
           echo "Validating YAML files..."

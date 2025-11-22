@@ -5,6 +5,12 @@ paraMax = 4
 #Modifies entity movement processing: true for synchronous movement (vanilla mechanics intact, less performance), false for asynchronous movement (better performance, may break mechanics).
 enableEntityMoveSync = true
 #List of entity class for sync processing. Keep movement sync for critical entities.
-synchronizedEntities = ["minecraft:item", "minecraft:experience_orb", "minecraft:tnt", "minecraft:arrow", "minecraft:trident"]
+synchronizedEntities = [
+  "minecraft:item",
+  "minecraft:experience_orb",
+  "minecraft:tnt",
+  "minecraft:arrow",
+  "minecraft:trident",
+]
 #Enables parallel processing of entity spawns. Warning, incompatible with VMP mod && Carpet mod lagFreeSpawning rule.
 enableAsyncSpawn = false

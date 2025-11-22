@@ -77,7 +77,7 @@ cleanup_old_backups() {
     local count=$(find "${BACKUP_DIR}/${dir}" -name "*.tar.gz" 2>/dev/null | wc -l)
     if [[ $count -gt $MAX_BACKUPS ]]; then
       find "${BACKUP_DIR}/${dir}" -name "*.tar.gz" -type f -printf '%T@ %p\n' \
-        | sort -n | head -n -${MAX_BACKUPS} | cut -d' ' -f2- | xargs rm -f
+        | sort -n | head -n -"${MAX_BACKUPS}" | cut -d' ' -f2- | xargs rm -f
     fi
   done
 
