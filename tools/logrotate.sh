@@ -15,10 +15,10 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 export SCRIPT_DIR
 
 # Output formatting helpers
-print_header() { echo -e "\033[0;34m==>\033[0m $1"; }
-print_success() { echo -e "\033[0;32m✓\033[0m $1"; }
-print_error() { echo -e "\033[0;31m✗\033[0m $1" >&2; }
-print_info() { echo -e "\033[1;33m→\033[0m $1"; }
+print_header(){ echo -e "\033[0;34m==>\033[0m $1"; }
+print_success(){ echo -e "\033[0;32m✓\033[0m $1"; }
+print_error(){ echo -e "\033[0;31m✗\033[0m $1" >&2; }
+print_info(){ echo -e "\033[1;33m→\033[0m $1"; }
 
 # Configuration
 LOGS_DIR="${SCRIPT_DIR}/logs"
@@ -31,49 +31,35 @@ LOG_SIZE_LIMIT_MB=100
 mkdir -p "$ARCHIVE_DIR"
 
 # Rotate log file
-rotate_log() {
+rotate_log(){
   local log_file="$1"
   [[ ! -f $log_file ]] && return 1
-
   local size_mb=$(du -m "$log_file" 2>/dev/null | cut -f1)
-  [[ $size_mb -eq 0 ]] && return 0
-
+  (( size_mb == 0 )) && return 0
   print_info "Rotating $(basename "$log_file") (${size_mb}MB)..."
-
-  local timestamp=$(date +%Y%m%d_%H%M%S)
-  local name=$(basename "$log_file" .log)
-  local archived="${ARCHIVE_DIR}/${name}_${timestamp}.log"
-
+  local timestamp=$(date +%Y%m%d_%H%M%S) name=$(basename "$log_file" .log) archived="${ARCHIVE_DIR}/${name}_${timestamp}.log"
   cp "$log_file" "$archived"
   gzip "$archived"
   : >"$log_file"
-
   print_success "Rotated: ${name}_${timestamp}.log.gz"
 }
 
 # Rotate all logs
-rotate_all() {
+rotate_all(){
   print_header "Rotating logs"
-
   [[ -f "${LOGS_DIR}/latest.log" ]] && rotate_log "${LOGS_DIR}/latest.log"
   [[ -f "${LOGS_DIR}/debug.log" ]] && rotate_log "${LOGS_DIR}/debug.log"
-
-  # Rotate large logs
   find "$LOGS_DIR" -maxdepth 1 -name "*.log" -type f | while read -r log; do
     local size_mb=$(du -m "$log" 2>/dev/null | cut -f1)
-    [[ $size_mb -gt $LOG_SIZE_LIMIT_MB ]] && rotate_log "$log"
+    (( size_mb > LOG_SIZE_LIMIT_MB )) && rotate_log "$log"
   done
-
   print_success "Rotation complete"
 }
 
 # Compress old logs
-compress_old() {
+compress_old(){
   print_header "Compressing old logs"
-
   local count=0
-
-  # Compress in logs directory
   find "$LOGS_DIR" -maxdepth 1 -name "*.log" -type f -mtime +1 | while read -r log; do
     local name=$(basename "$log")
     [[ $name != "latest.log" && $name != "debug.log" && $name != "watchdog.log" ]] && {
@@ -82,130 +68,98 @@ compress_old() {
       ((count++))
     }
   done
-
-  # Compress in archive
   find "$ARCHIVE_DIR" -name "*.log" -type f | while read -r log; do
     print_info "Compressing: $(basename "$log")"
     gzip "$log"
     ((count++))
   done
-
-  [[ $count -gt 0 ]] && print_success "Compressed $count files" || print_info "Nothing to compress"
+  (( count > 0 )) && print_success "Compressed $count files" || print_info "Nothing to compress"
 }
 
 # Clean old logs
-clean_old() {
+clean_old(){
   print_header "Cleaning logs older than ${MAX_LOG_AGE_DAYS} days"
-
   local count=0
-
   find "$LOGS_DIR" -maxdepth 1 \( -name "*.log.gz" -o -name "*.log" \) -type f -mtime +${MAX_LOG_AGE_DAYS} | while read -r log; do
     print_info "Deleting: $(basename "$log")"
     rm -f "$log"
     ((count++))
   done
-
   find "$ARCHIVE_DIR" -name "*.log.gz" -type f -mtime +${MAX_LOG_AGE_DAYS} | while read -r log; do
     print_info "Deleting: $(basename "$log")"
     rm -f "$log"
     ((count++))
   done
-
-  [[ $count -gt 0 ]] && print_success "Deleted $count files" || print_info "Nothing to clean"
+  (( count > 0 )) && print_success "Deleted $count files" || print_info "Nothing to clean"
 }
 
 # Limit archived logs
-limit_archives() {
+limit_archives(){
   print_header "Limiting archives to ${MAX_ARCHIVED_LOGS}"
-
   local count=$(find "$ARCHIVE_DIR" -name "*.log.gz" -type f | wc -l)
-  [[ $count -le $MAX_ARCHIVED_LOGS ]] && {
-    print_info "Archive count ($count) OK"
-    return 0
-  }
-
+  (( count <= MAX_ARCHIVED_LOGS )) && { print_info "Archive count ($count) OK"; return 0; }
   print_info "Removing oldest archives..."
   find "$ARCHIVE_DIR" -name "*.log.gz" -type f -printf '%T@ %p\n' \
     | sort -n | head -n -${MAX_ARCHIVED_LOGS} | cut -d' ' -f2- | while read -r log; do
     rm -f "$log"
   done
-
   print_success "Archives cleaned"
 }
 
 # Show statistics
-show_stats() {
+show_stats(){
   echo ""
   echo "═══════════════════════════════════════════"
   echo "        Log Management Statistics"
   echo "═══════════════════════════════════════════"
   echo ""
-
-  if [[ -d $LOGS_DIR ]]; then
+  [[ -d $LOGS_DIR ]] && {
     local count=$(find "$LOGS_DIR" -maxdepth 1 -name "*.log*" -type f | wc -l)
     local size=$(du -sh "$LOGS_DIR" 2>/dev/null | cut -f1)
     echo "Current Logs:"
     echo "  Count: $count"
     echo "  Size: $size"
     echo ""
-
     echo "Active Logs:"
     for log in latest.log debug.log watchdog.log; do
       [[ -f "${LOGS_DIR}/${log}" ]] && {
-        local s=$(du -h "${LOGS_DIR}/${log}" 2>/dev/null | cut -f1)
-        local lines=$(wc -l <"${LOGS_DIR}/${log}")
+        local s=$(du -h "${LOGS_DIR}/${log}" 2>/dev/null | cut -f1) lines=$(wc -l <"${LOGS_DIR}/${log}")
         echo "  ${log}: ${s} (${lines} lines)"
       }
     done
     echo ""
-  fi
-
-  if [[ -d $ARCHIVE_DIR ]]; then
+  }
+  [[ -d $ARCHIVE_DIR ]] && {
     local count=$(find "$ARCHIVE_DIR" -name "*.log.gz" -type f | wc -l)
     local size=$(du -sh "$ARCHIVE_DIR" 2>/dev/null | cut -f1)
     echo "Archives:"
     echo "  Count: $count"
     echo "  Size: $size"
     echo ""
-  fi
-
+  }
   echo "═══════════════════════════════════════════"
 }
 
 # View log
-view_log() {
-  local log="${1:-latest.log}"
-  local lines="${2:-50}"
-  local path="${LOGS_DIR}/${log}"
-
-  [[ ! -f $path ]] && {
-    print_error "Log not found: $log"
-    return 1
-  }
-
+view_log(){
+  local log="${1:-latest.log}" lines="${2:-50}" path="${LOGS_DIR}/${log}"
+  [[ ! -f $path ]] && { print_error "Log not found: $log"; return 1; }
   print_info "Last $lines lines of $log:"
   echo ""
   tail -n "$lines" "$path"
 }
 
 # Search logs
-search_log() {
-  local pattern="$1"
-  local log="${2:-latest.log}"
-  local path="${LOGS_DIR}/${log}"
-
-  [[ ! -f $path ]] && {
-    print_error "Log not found: $log"
-    return 1
-  }
-
+search_log(){
+  local pattern="$1" log="${2:-latest.log}" path="${LOGS_DIR}/${log}"
+  [[ ! -f $path ]] && { print_error "Log not found: $log"; return 1; }
   print_info "Searching for '$pattern' in $log:"
   echo ""
   grep --color=auto -i "$pattern" "$path" || print_info "No matches"
 }
 
 # Full maintenance
-full_maintenance() {
+full_maintenance(){
   print_header "Full log maintenance"
   echo ""
   rotate_all
@@ -220,7 +174,7 @@ full_maintenance() {
 }
 
 # Show usage
-show_usage() {
+show_usage(){
   cat <<EOF
 Minecraft Server Log Management
 
