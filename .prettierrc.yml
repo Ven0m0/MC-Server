@@ -1,4 +1,3 @@
----
 # Prettier configuration for YAML, JSON, TOML formatting
 
 # Basic formatting
@@ -12,26 +11,21 @@ trailingComma: none
 bracketSpacing: true
 arrowParens: avoid
 endOfLine: lf
-
 # YAML specific
 proseWrap: preserve
-
 # Override for specific file types
 overrides:
   - files: "*.toml"
     options:
       printWidth: 100
-
   - files: ["*.json", "*.json5", "*.jsonc"]
     options:
       printWidth: 120
       trailingComma: none
-
   - files: ["*.yml", "*.yaml"]
     options:
       printWidth: 120
       proseWrap: preserve
-
   - files: "package.json"
     options:
       printWidth: 120

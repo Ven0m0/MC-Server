@@ -94,7 +94,7 @@ check_dependencies() {
   fi
 
   # Optional but recommended tools
-  if [[ "${missing_deps[*]}" ]]; then
+  if [[ -n "${missing_deps[*]}" ]]; then
     error_exit "Missing required dependencies: ${missing_deps[*]}\nPlease install them and try again."
   fi
 

@@ -218,6 +218,7 @@ If you see warnings about YAML formatting being skipped:
    ```
 
 2. Or install yamlfmt:
+
    ```bash
    go install github.com/google/yamlfmt/cmd/yamlfmt@latest
    ```

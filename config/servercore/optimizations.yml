@@ -1,6 +1,5 @@
 # Allows you to toggle specific optimizations that don't have full vanilla parity.
 # These settings will only take effect after server restarts.
-
 # Prevents many different lagspikes caused by loading chunks synchronously.
 # This for example causes maps to only update loaded chunks, which depending on the viewdistance can be a smaller radius than vanilla.
 reduce-sync-loads: true

@@ -10,7 +10,13 @@ allow_mods = ['OptiFine', 'Minecraft Transit Railway 3']
 # The value of this option is ignored due to automatic quirk detection
 # being enabled, but this usually does not matter
 automatic_minecraft_quirks_detection = true
-work_around_minecraft_quirks = ['grayscale_images_gamma_miscorrection', 'restrictive_banner_layer_texture_format_check', 'bad_entity_eye_layer_texture_transparency_blending', 'java8_zip_parsing', 'ogg_obfuscation_incompatibility']
+work_around_minecraft_quirks = [
+  'grayscale_images_gamma_miscorrection',
+  'restrictive_banner_layer_texture_format_check',
+  'bad_entity_eye_layer_texture_transparency_blending',
+  'java8_zip_parsing',
+  'ogg_obfuscation_incompatibility',
+]
 
 automatic_asset_types_mask_detection = true
 
