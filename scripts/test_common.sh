@@ -11,59 +11,51 @@ export HOME="/home/${user}"
 SHELL="$(command -v bash 2>/dev/null || echo '/usr/bin/bash')"
 
 # Check if command exists
-has_command() { command -v "$1" &>/dev/null; }
+has_command(){ command -v "$1" &>/dev/null; }
 
 # Detect JSON processor (prefer jaq over jq)
-get_json_processor() {
-  if has_command jaq; then
-    echo "jaq"
-  elif has_command jq; then
-    echo "jq"
-  else
-    echo "Error: No JSON processor found. Please install jq or jaq." >&2
-    return 1
-  fi
+get_json_processor(){
+  has_command jaq && { echo "jaq"; return; }
+  has_command jq && { echo "jq"; return; }
+  echo "Error: No JSON processor found. Please install jq or jaq." >&2
+  return 1
 }
 
 # Calculate total RAM in GB
-get_total_ram_gb() { awk '/MemTotal/ {printf "%.0f\n",$2/1024/1024}' /proc/meminfo 2>/dev/null; }
+get_total_ram_gb(){ awk '/MemTotal/ {printf "%.0f\n",$2/1024/1024}' /proc/meminfo 2>/dev/null; }
 
 # Calculate heap size (total RAM minus reserved for OS)
-get_heap_size_gb() {
-  local reserved="${1:-2}"
-  local total_ram=$(get_total_ram_gb)
-  local heap=$((total_ram - reserved))
-  [[ $heap -lt 1 ]] && heap=1
+get_heap_size_gb(){
+  local reserved="${1:-2}" total_ram=$(get_total_ram_gb) heap=$((total_ram - reserved))
+  (( heap < 1 )) && heap=1
   echo "$heap"
 }
 
 # Calculate Minecraft memory allocation
-get_minecraft_memory_gb() { get_heap_size_gb "${1:-3}"; }
+get_minecraft_memory_gb(){ get_heap_size_gb "${1:-3}"; }
 
 # Calculate client memory allocation
-get_client_xms_gb() {
-  local total_ram=$(get_total_ram_gb)
-  local xms=$((total_ram / 4))
-  [[ $xms -lt 1 ]] && xms=1
+get_client_xms_gb(){
+  local total_ram=$(get_total_ram_gb) xms=$((total_ram / 4))
+  (( xms < 1 )) && xms=1
   echo "$xms"
 }
 
-get_client_xmx_gb() {
-  local total_ram=$(get_total_ram_gb)
-  local xmx=$((total_ram / 2))
-  [[ $xmx -lt 2 ]] && xmx=2
+get_client_xmx_gb(){
+  local total_ram=$(get_total_ram_gb) xmx=$((total_ram / 2))
+  (( xmx < 2 )) && xmx=2
   echo "$xmx"
 }
 
 # Get number of CPU cores
-get_cpu_cores() { nproc 2>/dev/null || echo 4; }
+get_cpu_cores(){ nproc 2>/dev/null || echo 4; }
 
 # Get aria2c download options
-get_aria2c_opts() { echo "-x 16 -s 16"; }
-get_aria2c_opts_array() { echo "-x" "16" "-s" "16"; }
+get_aria2c_opts(){ echo "-x 16 -s 16"; }
+get_aria2c_opts_array(){ echo "-x" "16" "-s" "16"; }
 
 # Create directory if it doesn't exist
-ensure_dir() { [[ ! -d $1 ]] && mkdir -p "$1" || return 0; }
+ensure_dir(){ [[ ! -d $1 ]] && mkdir -p "$1" || return 0; }
 
 echo "Testing common.sh functions..."
 echo ""

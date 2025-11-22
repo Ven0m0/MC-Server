@@ -11,53 +11,39 @@ export HOME="/home/${user}"
 SHELL="$(command -v bash 2>/dev/null || echo '/usr/bin/bash')"
 
 # Check if command exists
-has_command() { command -v "$1" &>/dev/null; }
+has_command(){ command -v "$1" &>/dev/null; }
 
 # Detect JSON processor (prefer jaq over jq)
-get_json_processor() {
-  if has_command jaq; then
-    echo "jaq"
-  elif has_command jq; then
-    echo "jq"
-  else
-    echo "Error: No JSON processor found. Please install jq or jaq." >&2
-    return 1
-  fi
+get_json_processor(){
+  has_command jaq && { echo "jaq"; return; }
+  has_command jq && { echo "jq"; return; }
+  echo "Error: No JSON processor found. Please install jq or jaq." >&2
+  return 1
 }
 
 # Fetch URL to stdout
-fetch_url() {
+fetch_url(){
   local url="$1"
-  if has_command aria2c; then
-    aria2c -q -d /tmp -o - "$url" 2>/dev/null
-  elif has_command curl; then
-    curl -fsSL "$url"
-  elif has_command wget; then
-    wget -qO- "$url"
-  else
-    echo "Error: No download tool found (aria2c, curl, or wget)" >&2
-    return 1
-  fi
+  has_command aria2c && { aria2c -q -d /tmp -o - "$url" 2>/dev/null; return; }
+  has_command curl && { curl -fsSL "$url"; return; }
+  has_command wget && { wget -qO- "$url"; return; }
+  echo "Error: No download tool found (aria2c, curl, or wget)" >&2
+  return 1
 }
 
 # Download file with aria2c or curl fallback
-download_file() {
+download_file(){
   local url="$1" output="$2" connections="${3:-8}"
-  if has_command aria2c; then
-    aria2c -x "$connections" -s "$connections" -o "$output" "$url"
-  elif has_command curl; then
-    curl -fsL -o "$output" "$url"
-  elif has_command wget; then
-    wget -qO "$output" "$url"
-  else
-    echo "Error: No download tool found (aria2c, curl, or wget)" >&2
-    return 1
-  fi
+  has_command aria2c && { aria2c -x "$connections" -s "$connections" -o "$output" "$url"; return; }
+  has_command curl && { curl -fsL -o "$output" "$url"; return; }
+  has_command wget && { wget -qO "$output" "$url"; return; }
+  echo "Error: No download tool found (aria2c, curl, or wget)" >&2
+  return 1
 }
 
 # Output formatting helpers
-print_info() { echo -e "\033[1;33m→\033[0m $1"; }
-print_success() { echo -e "\033[0;32m✓\033[0m $1"; }
+print_info(){ echo -e "\033[1;33m→\033[0m $1"; }
+print_success(){ echo -e "\033[0;32m✓\033[0m $1"; }
 
 # Get JSON processor
 JSON_PROC=$(get_json_processor) || exit 1
