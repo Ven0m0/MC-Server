@@ -25,7 +25,7 @@ jobs:
           fetch-depth: 0
       - name: MegaLinter
         id: ml
-        uses: oxsecurity/megalinter@v7
+        uses: oxsecurity/megalinter@v9
         env:
           APPLY_FIXES: all
           APPLY_FIXES_EVENT: all
