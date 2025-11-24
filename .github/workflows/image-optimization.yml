@@ -265,7 +265,7 @@ jobs:
           fi
       - name: Comment on PR (if images were optimized)
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const pngOptimized = parseInt('${{ steps.optimize-png.outputs.png_optimized }}');
