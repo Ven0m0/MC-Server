@@ -305,6 +305,8 @@ echo ""
 echo "Starting Minecraft $VERSION..."
 echo ""
 
+# TODO: JAVA_OPTS="-XX:+ShowCodeDetailsInExceptionMessages" 
+
 # Launch the game
 java \
   -Xms${XMS}G \
