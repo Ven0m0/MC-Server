@@ -305,12 +305,14 @@ echo ""
 echo "Starting Minecraft $VERSION..."
 echo ""
 
-# TODO: JAVA_OPTS="-XX:+ShowCodeDetailsInExceptionMessages" 
+# Enable detailed exception messages for better debugging
+JAVA_OPTS="-XX:+ShowCodeDetailsInExceptionMessages"
 
 # Launch the game
 java \
   -Xms${XMS}G \
   -Xmx${XMX}G \
+  $JAVA_OPTS \
   -XX:+UnlockExperimentalVMOptions \
   -XX:+UseG1GC \
   -XX:G1NewSizePercent=20 \
