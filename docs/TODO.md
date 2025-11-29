@@ -4,7 +4,8 @@
 
 **Status**: Implemented in `tools/world-optimize.sh`
 
-The chunk cleaner has been implemented with additional world optimization features:
+The chunk cleaner has been implemented with additional world optimization
+features:
 
 - Automatic ChunkCleaner download and installation
 - Chunk cleaning based on inhabited ticks (configurable)

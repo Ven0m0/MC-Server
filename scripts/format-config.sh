@@ -57,7 +57,7 @@ declare -i TOTAL_SIZE_AFTER=0
 #   $1 - Color code
 #   $2 - Message
 #######################################
-print_msg(){
+print_msg() {
   echo -e "${1}${2}${NC}"
 }
 
@@ -66,8 +66,8 @@ print_msg(){
 # Arguments:
 #   $1 - Error message
 #######################################
-error_exit(){
-  print_msg "${RED}" "ERROR: $1" >&2
+error_exit() {
+  print_msg "$RED" "ERROR: $1" >&2
   exit 1
 }
 
@@ -78,14 +78,14 @@ error_exit(){
 # Returns:
 #   0 if exists, 1 otherwise
 #######################################
-command_exists(){
+command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
 #######################################
 # Check required dependencies
 #######################################
-check_dependencies(){
+check_dependencies() {
   local missing_deps=()
 
   # Check for jq (required for JSON)
@@ -102,15 +102,15 @@ check_dependencies(){
   if ! command_exists yamlfmt; then
     if command_exists yq; then
       if ! yq --version 2>&1 | grep -q "mikefarah"; then
-        print_msg "${YELLOW}" "Warning: Found old Python-based yq. Install mikefarah/yq or yamlfmt for YAML formatting."
+        print_msg "$YELLOW" "Warning: Found old Python-based yq. Install mikefarah/yq or yamlfmt for YAML formatting."
       fi
     else
-      print_msg "${YELLOW}" "Warning: Neither 'yq' nor 'yamlfmt' found. YAML formatting will be skipped."
+      print_msg "$YELLOW" "Warning: Neither 'yq' nor 'yamlfmt' found. YAML formatting will be skipped."
     fi
   fi
 
   if ! command_exists parallel && ! command_exists rust-parallel; then
-    print_msg "${YELLOW}" "Warning: No parallel processing tool found. Will use sequential processing."
+    print_msg "$YELLOW" "Warning: No parallel processing tool found. Will use sequential processing."
   fi
 }
 
@@ -119,7 +119,7 @@ check_dependencies(){
 # Returns:
 #   Array of find arguments to exclude directories and patterns
 #######################################
-build_exclusions(){
+build_exclusions() {
   local -a exclusions=()
 
   # Exclude directories
@@ -129,7 +129,7 @@ build_exclusions(){
 
   # Exclude file patterns
   for pattern in "${EXCLUDE_PATTERNS[@]}"; do
-    exclusions+=(-name "${pattern}" -prune -o)
+    exclusions+=(-name "$pattern" -prune -o)
   done
 
   echo "${exclusions[@]}"
@@ -142,7 +142,7 @@ build_exclusions(){
 # Returns:
 #   File size in bytes
 #######################################
-get_file_size(){
+get_file_size() {
   stat -f%z "$1" 2>/dev/null || stat -c%s "$1" 2>/dev/null || echo 0
 }
 
@@ -153,61 +153,61 @@ get_file_size(){
 # Returns:
 #   0 on success, 1 on failure
 #######################################
-format_json(){
+format_json() {
   local file="$1"
   local temp_file="${file}.tmp"
 
   if [[ ${DRY_RUN} == true ]]; then
-    if jq empty "${file}" 2>/dev/null; then
-      print_msg "${BLUE}" "[DRY RUN] Would format: ${file}"
+    if jq empty "$file" 2>/dev/null; then
+      print_msg "$BLUE" "[DRY RUN] Would format: ${file}"
       return 0
     else
-      print_msg "${RED}" "[DRY RUN] Invalid JSON: ${file}"
+      print_msg "$RED" "[DRY RUN] Invalid JSON: ${file}"
       return 1
     fi
   fi
 
   local size_before
-  size_before=$(get_file_size "${file}")
+  size_before=$(get_file_size "$file")
 
   # Validate and format based on mode
   if [[ ${MODE} == "minify" ]]; then
     # Minify: remove whitespace
-    if jq -c . "${file}" >"${temp_file}" 2>/dev/null; then
-      mv "${temp_file}" "${file}"
+    if jq -c . "$file" >"$temp_file" 2>/dev/null; then
+      mv "$temp_file" "$file"
       local size_after
-      size_after=$(get_file_size "${file}")
+      size_after=$(get_file_size "$file")
       TOTAL_SIZE_BEFORE=$((TOTAL_SIZE_BEFORE + size_before))
       TOTAL_SIZE_AFTER=$((TOTAL_SIZE_AFTER + size_after))
-      print_msg "${GREEN}" "✓ Minified: ${file} (${size_before}B → ${size_after}B)"
+      print_msg "$GREEN" "✓ Minified: ${file} (${size_before}B → ${size_after}B)"
       return 0
     fi
   elif [[ ${MODE} == "check" ]]; then
     # Check only: validate JSON
-    if jq empty "${file}" 2>/dev/null; then
+    if jq empty "$file" 2>/dev/null; then
       # Check if formatted correctly (2-space indent)
-      if jq --indent 2 . "${file}" | diff -q - "${file}" >/dev/null 2>&1; then
-        print_msg "${GREEN}" "✓ Valid: ${file}"
+      if jq --indent 2 . "$file" | diff -q - "$file" >/dev/null 2>&1; then
+        print_msg "$GREEN" "✓ Valid: ${file}"
         return 0
       else
-        print_msg "${YELLOW}" "⚠ Needs formatting: ${file}"
+        print_msg "$YELLOW" "⚠ Needs formatting: ${file}"
         return 1
       fi
     fi
   else
     # Format: pretty print with 2-space indent
-    if jq --indent 2 . "${file}" >"${temp_file}" 2>/dev/null; then
-      mv "${temp_file}" "${file}"
+    if jq --indent 2 . "$file" >"$temp_file" 2>/dev/null; then
+      mv "$temp_file" "$file"
       local size_after
-      size_after=$(get_file_size "${file}")
-      print_msg "${GREEN}" "✓ Formatted: ${file}"
+      size_after=$(get_file_size "$file")
+      print_msg "$GREEN" "✓ Formatted: ${file}"
       return 0
     fi
   fi
 
   # If we got here, something failed
-  rm -f "${temp_file}"
-  print_msg "${RED}" "✗ Failed: ${file}"
+  rm -f "$temp_file"
+  print_msg "$RED" "✗ Failed: ${file}"
   return 1
 }
 
@@ -218,64 +218,64 @@ format_json(){
 # Returns:
 #   0 on success, 1 on failure
 #######################################
-format_yaml(){
+format_yaml() {
   local file="$1"
   local temp_file="${file}.tmp"
 
   if [[ ${DRY_RUN} == true ]]; then
-    print_msg "${BLUE}" "[DRY RUN] Would format: ${file}"
+    print_msg "$BLUE" "[DRY RUN] Would format: ${file}"
     return 0
   fi
 
   local size_before
-  size_before=$(get_file_size "${file}")
+  size_before=$(get_file_size "$file")
 
   # Try yamlfmt first (best formatter)
   if command_exists yamlfmt; then
     if [[ ${MODE} == "check" ]]; then
-      if yamlfmt -lint "${file}" 2>/dev/null; then
-        print_msg "${GREEN}" "✓ Valid: ${file}"
+      if yamlfmt -lint "$file" 2>/dev/null; then
+        print_msg "$GREEN" "✓ Valid: ${file}"
         return 0
       else
-        print_msg "${YELLOW}" "⚠ Needs formatting: ${file}"
+        print_msg "$YELLOW" "⚠ Needs formatting: ${file}"
         return 1
       fi
     else
-      if yamlfmt "${file}" 2>/dev/null; then
+      if yamlfmt "$file" 2>/dev/null; then
         local size_after
-        size_after=$(get_file_size "${file}")
-        print_msg "${GREEN}" "✓ Formatted: ${file}"
+        size_after=$(get_file_size "$file")
+        print_msg "$GREEN" "✓ Formatted: ${file}"
         return 0
       fi
     fi
   # Try yq as fallback (check if it's mikefarah/yq, not python yq)
   elif command_exists yq && yq --version 2>&1 | grep -q "mikefarah"; then
     if [[ ${MODE} == "check" ]]; then
-      if yq eval . "${file}" >/dev/null 2>&1; then
-        print_msg "${GREEN}" "✓ Valid: ${file}"
+      if yq eval . "$file" >/dev/null 2>&1; then
+        print_msg "$GREEN" "✓ Valid: ${file}"
         return 0
       else
-        print_msg "${RED}" "✗ Invalid YAML: ${file}"
+        print_msg "$RED" "✗ Invalid YAML: ${file}"
         return 1
       fi
     else
-      if yq eval . "${file}" >"${temp_file}" 2>/dev/null; then
-        mv "${temp_file}" "${file}"
-        print_msg "${GREEN}" "✓ Formatted: ${file}"
+      if yq eval . "$file" >"$temp_file" 2>/dev/null; then
+        mv "$temp_file" "$file"
+        print_msg "$GREEN" "✓ Formatted: ${file}"
         return 0
       fi
     fi
   else
     # No proper YAML formatter available, skip silently in format mode
     if [[ ${MODE} == "check" ]]; then
-      print_msg "${YELLOW}" "⚠ Skipped (no YAML formatter): ${file}"
+      print_msg "$YELLOW" "⚠ Skipped (no YAML formatter): ${file}"
     fi
     return 0
   fi
 
   # If we got here, something failed
-  rm -f "${temp_file}"
-  print_msg "${RED}" "✗ Failed: ${file}"
+  rm -f "$temp_file"
+  print_msg "$RED" "✗ Failed: ${file}"
   return 1
 }
 
@@ -284,28 +284,28 @@ format_yaml(){
 # Arguments:
 #   $1 - File path
 #######################################
-process_file(){
+process_file() {
   local file="$1"
 
-  [[ ${VERBOSE} == true ]] && print_msg "${BLUE}" "Processing: ${file}"
+  [[ ${VERBOSE} == true ]] && print_msg "$BLUE" "Processing: ${file}"
 
-  case "${file}" in
+  case "$file" in
   *.json)
-    if format_json "${file}"; then
+    if format_json "$file"; then
       ((PROCESSED_FILES++)) || true
     else
       ((FAILED_FILES++)) || true
     fi
     ;;
   *.yaml | *.yml)
-    if format_yaml "${file}"; then
+    if format_yaml "$file"; then
       ((PROCESSED_FILES++)) || true
     else
       ((FAILED_FILES++)) || true
     fi
     ;;
   *)
-    [[ ${VERBOSE} == true ]] && print_msg "${YELLOW}" "Skipped (unknown type): ${file}"
+    [[ ${VERBOSE} == true ]] && print_msg "$YELLOW" "Skipped (unknown type): ${file}"
     ;;
   esac
 }
@@ -315,14 +315,14 @@ process_file(){
 # Arguments:
 #   $1 - Target directory (optional, defaults to PROJECT_ROOT)
 #######################################
-process_directory(){
+process_directory() {
   local target_dir="${1:-${PROJECT_ROOT}}"
 
-  print_msg "${BLUE}" "Processing config files in: ${target_dir}"
-  print_msg "${BLUE}" "Mode: ${MODE}"
+  print_msg "$BLUE" "Processing config files in: ${target_dir}"
+  print_msg "$BLUE" "Mode: ${MODE}"
 
   # Build find command with exclusions
-  local -a find_cmd=(find "${target_dir}")
+  local -a find_cmd=(find "$target_dir")
   local exclusions
   read -ra exclusions <<<"$(build_exclusions)"
   find_cmd+=("${exclusions[@]}")
@@ -335,26 +335,26 @@ process_directory(){
   mapfile -t files < <("${find_cmd[@]}")
 
   if [[ ${#files[@]} -eq 0 ]]; then
-    print_msg "${YELLOW}" "No config files found."
+    print_msg "$YELLOW" "No config files found."
     return 0
   fi
 
-  print_msg "${BLUE}" "Found ${#files[@]} config file(s)"
+  print_msg "$BLUE" "Found ${#files[@]} config file(s)"
 
   # Process files (with or without parallelization)
   if command_exists parallel && [[ ${#files[@]} -gt 3 ]]; then
     # GNU parallel
-    printf '%s\n' "${files[@]}" | parallel -j "${PARALLEL_JOBS}" "$(declare -f process_file format_json format_yaml get_file_size print_msg); $(declare -p MODE DRY_RUN VERBOSE GREEN RED YELLOW BLUE NC); process_file {}"
+    printf '%s\n' "${files[@]}" | parallel -j "$PARALLEL_JOBS" "$(declare -f process_file format_json format_yaml get_file_size print_msg); $(declare -p MODE DRY_RUN VERBOSE GREEN RED YELLOW BLUE NC); process_file {}"
     # Note: parallel processing doesn't update counters in parent shell
     PROCESSED_FILES=${#files[@]}
   elif command_exists rust-parallel && [[ ${#files[@]} -gt 3 ]]; then
     # Rust parallel
-    printf '%s\n' "${files[@]}" | rust-parallel -j "${PARALLEL_JOBS}" bash -c "$(declare -f process_file format_json format_yaml get_file_size print_msg); $(declare -p MODE DRY_RUN VERBOSE GREEN RED YELLOW BLUE NC); process_file {}"
+    printf '%s\n' "${files[@]}" | rust-parallel -j "$PARALLEL_JOBS" bash -c "$(declare -f process_file format_json format_yaml get_file_size print_msg); $(declare -p MODE DRY_RUN VERBOSE GREEN RED YELLOW BLUE NC); process_file {}"
     PROCESSED_FILES=${#files[@]}
   else
     # Sequential processing
     for file in "${files[@]}"; do
-      process_file "${file}"
+      process_file "$file"
     done
   fi
 }
@@ -362,7 +362,7 @@ process_directory(){
 #######################################
 # Print usage information
 #######################################
-usage(){
+usage() {
   cat <<EOF
 Config Format/Lint/Autofix Script
 
@@ -396,7 +396,7 @@ EOF
 #######################################
 # Parse command line arguments
 #######################################
-parse_args(){
+parse_args() {
   while [[ $# -gt 0 ]]; do
     case $1 in
     -m | --mode)
@@ -441,42 +441,42 @@ parse_args(){
 #######################################
 # Print summary statistics
 #######################################
-print_summary(){
+print_summary() {
   echo
-  print_msg "${BLUE}" "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  print_msg "${BLUE}" "Summary"
-  print_msg "${BLUE}" "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  print_msg "${GREEN}" "Processed: ${PROCESSED_FILES} file(s)"
+  print_msg "$BLUE" "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  print_msg "$BLUE" "Summary"
+  print_msg "$BLUE" "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  print_msg "$GREEN" "Processed: ${PROCESSED_FILES} file(s)"
 
   if [[ ${FAILED_FILES} -gt 0 ]]; then
-    print_msg "${RED}" "Failed: ${FAILED_FILES} file(s)"
+    print_msg "$RED" "Failed: ${FAILED_FILES} file(s)"
   fi
 
   if [[ ${MODE} == "minify" && ${TOTAL_SIZE_BEFORE} -gt 0 ]]; then
     local saved=$((TOTAL_SIZE_BEFORE - TOTAL_SIZE_AFTER))
     local percent=$((saved * 100 / TOTAL_SIZE_BEFORE))
-    print_msg "${GREEN}" "Size before: ${TOTAL_SIZE_BEFORE} bytes"
-    print_msg "${GREEN}" "Size after: ${TOTAL_SIZE_AFTER} bytes"
-    print_msg "${GREEN}" "Saved: ${saved} bytes (${percent}%)"
+    print_msg "$GREEN" "Size before: ${TOTAL_SIZE_BEFORE} bytes"
+    print_msg "$GREEN" "Size after: ${TOTAL_SIZE_AFTER} bytes"
+    print_msg "$GREEN" "Saved: ${saved} bytes (${percent}%)"
   fi
 
-  print_msg "${BLUE}" "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  print_msg "$BLUE" "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 }
 
 #######################################
 # Main function
 #######################################
-main(){
-  local TARGET_DIR="${PROJECT_ROOT}"
+main() {
+  local TARGET_DIR="$PROJECT_ROOT"
 
   parse_args "$@"
 
-  print_msg "${GREEN}" "Config Format/Lint/Autofix Script"
+  print_msg "$GREEN" "Config Format/Lint/Autofix Script"
   echo
 
   check_dependencies
 
-  process_directory "${TARGET_DIR}"
+  process_directory "$TARGET_DIR"
 
   print_summary
 

@@ -15,11 +15,11 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 export SCRIPT_DIR
 
 # Output formatting helpers
-print_header(){ echo -e "\033[0;34m==>\033[0m $1"; }
-print_success(){ echo -e "\033[0;32m✓\033[0m $1"; }
-print_error(){ echo -e "\033[0;31m✗\033[0m $1" >&2; }
-print_info(){ echo -e "\033[1;33m→\033[0m $1"; }
-print_warning(){ echo -e "\033[1;33m⚠\033[0m $1"; }
+print_header() { echo -e "\033[0;34m==>\033[0m $1"; }
+print_success() { echo -e "\033[0;32m✓\033[0m $1"; }
+print_error() { echo -e "\033[0;31m✗\033[0m $1" >&2; }
+print_info() { echo -e "\033[1;33m→\033[0m $1"; }
+print_warning() { echo -e "\033[1;33m⚠\033[0m $1"; }
 
 # Configuration
 CHUNK_CLEANER_VERSION="1.0.0"
@@ -32,8 +32,8 @@ CREATE_BACKUP=true
 WORLD_DIR="${SCRIPT_DIR}/world"
 
 # Download ChunkCleaner if not present
-download_chunk_cleaner(){
-  if [[ -f "${CHUNK_CLEANER_BIN}" ]]; then
+download_chunk_cleaner() {
+  if [[ -f "$CHUNK_CLEANER_BIN" ]]; then
     print_info "ChunkCleaner already installed"
     return 0
   fi
@@ -41,12 +41,12 @@ download_chunk_cleaner(){
   print_info "Downloading ChunkCleaner v${CHUNK_CLEANER_VERSION}..."
 
   if command -v wget &>/dev/null; then
-    wget -q --show-progress -O "${CHUNK_CLEANER_BIN}" "${CHUNK_CLEANER_URL}" || {
+    wget -q --show-progress -O "$CHUNK_CLEANER_BIN" "$CHUNK_CLEANER_URL" || {
       print_error "Failed to download ChunkCleaner"
       return 1
     }
   elif command -v curl &>/dev/null; then
-    curl -L -o "${CHUNK_CLEANER_BIN}" "${CHUNK_CLEANER_URL}" || {
+    curl -L -o "$CHUNK_CLEANER_BIN" "$CHUNK_CLEANER_URL" || {
       print_error "Failed to download ChunkCleaner"
       return 1
     }
@@ -55,13 +55,13 @@ download_chunk_cleaner(){
     return 1
   fi
 
-  chmod +x "${CHUNK_CLEANER_BIN}"
+  chmod +x "$CHUNK_CLEANER_BIN"
   print_success "ChunkCleaner installed successfully"
 }
 
 # Create backup before optimization
-create_backup(){
-  [[ "${CREATE_BACKUP}" != "true" ]] && return 0
+create_backup() {
+  [[ "$CREATE_BACKUP" != "true" ]] && return 0
 
   print_info "Creating backup before optimization..."
   "${SCRIPT_DIR}/tools/backup.sh" backup world >/dev/null 2>&1 || {
@@ -71,11 +71,11 @@ create_backup(){
 }
 
 # Clean chunks using ChunkCleaner
-clean_chunks(){
+clean_chunks() {
   local world_path="${1:-${WORLD_DIR}}"
   local min_ticks="${2:-${MIN_INHABITED_TICKS}}"
 
-  [[ ! -d "${world_path}" ]] && {
+  [[ ! -d "$world_path" ]] && {
     print_error "World directory not found: ${world_path}"
     return 1
   }
@@ -88,44 +88,44 @@ clean_chunks(){
   download_chunk_cleaner || return 1
 
   # Process each dimension
-  for dimension_path in "${world_path}" "${world_path}_nether" "${world_path}_the_end"; do
-    [[ ! -d "${dimension_path}" ]] && continue
+  for dimension_path in "$world_path" "${world_path}_nether" "${world_path}_the_end"; do
+    [[ ! -d "$dimension_path" ]] && continue
 
-    local dim_name=$(basename "${dimension_path}")
+    local dim_name=$(basename "$dimension_path")
     local region_dir=""
 
     # Determine region directory based on dimension
-    if [[ "${dim_name}" == "world" ]]; then
+    if [[ "$dim_name" == "world" ]]; then
       region_dir="${dimension_path}/region"
-    elif [[ "${dim_name}" == "world_nether" ]]; then
+    elif [[ "$dim_name" == "world_nether" ]]; then
       region_dir="${dimension_path}/DIM-1/region"
-    elif [[ "${dim_name}" == "world_the_end" ]]; then
+    elif [[ "$dim_name" == "world_the_end" ]]; then
       region_dir="${dimension_path}/DIM1/region"
     fi
 
-    [[ ! -d "${region_dir}" ]] && continue
+    [[ ! -d "$region_dir" ]] && continue
 
     print_info "Processing ${dim_name}..."
 
     local backup_region="${region_dir}_backup_$(date +%Y%m%d_%H%M%S)"
 
-    if [[ "${DRY_RUN}" == "true" ]]; then
+    if [[ "$DRY_RUN" == "true" ]]; then
       print_info "[DRY RUN] Would clean chunks in: ${region_dir}"
-      local chunk_count=$(find "${region_dir}" -name "*.mca" 2>/dev/null | wc -l)
+      local chunk_count=$(find "$region_dir" -name "*.mca" 2>/dev/null | wc -l)
       print_info "[DRY RUN] Found ${chunk_count} region files"
     else
-      "${CHUNK_CLEANER_BIN}" \
-        -path "${region_dir}" \
-        -newPath "${backup_region}" \
-        -minInhabitedTicks "${min_ticks}" || {
+      "$CHUNK_CLEANER_BIN" \
+        -path "$region_dir" \
+        -newPath "$backup_region" \
+        -minInhabitedTicks "$min_ticks" || {
         print_error "ChunkCleaner failed for ${dim_name}"
         continue
       }
 
       # Calculate space saved
-      if [[ -d "${backup_region}" ]]; then
-        local old_size=$(du -sb "${backup_region}" 2>/dev/null | cut -f1)
-        local new_size=$(du -sb "${region_dir}" 2>/dev/null | cut -f1)
+      if [[ -d "$backup_region" ]]; then
+        local old_size=$(du -sb "$backup_region" 2>/dev/null | cut -f1)
+        local new_size=$(du -sb "$region_dir" 2>/dev/null | cut -f1)
         local saved=$((old_size - new_size))
         local saved_mb=$((saved / 1024 / 1024))
         print_success "${dim_name}: Saved ${saved_mb}MB (backup: ${backup_region})"
@@ -135,7 +135,7 @@ clean_chunks(){
 }
 
 # Clean old player data
-clean_player_data(){
+clean_player_data() {
   local world_path="${1:-${WORLD_DIR}}"
   local days="${2:-${PLAYER_INACTIVITY_DAYS}}"
 
@@ -151,20 +151,20 @@ clean_player_data(){
   local total_size=0
 
   while IFS= read -r -d '' player_file; do
-    if [[ "${DRY_RUN}" == "true" ]]; then
-      print_info "[DRY RUN] Would remove: $(basename "${player_file}")"
+    if [[ "$DRY_RUN" == "true" ]]; then
+      print_info "[DRY RUN] Would remove: $(basename "$player_file")"
       ((count++))
     else
-      local size=$(stat -f%z "${player_file}" 2>/dev/null || stat -c%s "${player_file}" 2>/dev/null || echo 0)
+      local size=$(stat -f%z "$player_file" 2>/dev/null || stat -c%s "$player_file" 2>/dev/null || echo 0)
       total_size=$((total_size + size))
-      rm -f "${player_file}"
+      rm -f "$player_file"
       ((count++))
     fi
   done < <(find "${world_path}/playerdata" -name "*.dat" -type f -mtime "+${days}" -print0 2>/dev/null)
 
   if [[ $count -gt 0 ]]; then
     local size_mb=$((total_size / 1024 / 1024))
-    if [[ "${DRY_RUN}" == "true" ]]; then
+    if [[ "$DRY_RUN" == "true" ]]; then
       print_info "[DRY RUN] Would remove ${count} player data files"
     else
       print_success "Removed ${count} player data files (${size_mb}MB)"
@@ -175,7 +175,7 @@ clean_player_data(){
 }
 
 # Clean old statistics
-clean_statistics(){
+clean_statistics() {
   local world_path="${1:-${WORLD_DIR}}"
   local days="${2:-${PLAYER_INACTIVITY_DAYS}}"
 
@@ -191,20 +191,20 @@ clean_statistics(){
   local total_size=0
 
   while IFS= read -r -d '' stat_file; do
-    if [[ "${DRY_RUN}" == "true" ]]; then
-      print_info "[DRY RUN] Would remove: $(basename "${stat_file}")"
+    if [[ "$DRY_RUN" == "true" ]]; then
+      print_info "[DRY RUN] Would remove: $(basename "$stat_file")"
       ((count++))
     else
-      local size=$(stat -f%z "${stat_file}" 2>/dev/null || stat -c%s "${stat_file}" 2>/dev/null || echo 0)
+      local size=$(stat -f%z "$stat_file" 2>/dev/null || stat -c%s "$stat_file" 2>/dev/null || echo 0)
       total_size=$((total_size + size))
-      rm -f "${stat_file}"
+      rm -f "$stat_file"
       ((count++))
     fi
   done < <(find "${world_path}/stats" -name "*.json" -type f -mtime "+${days}" -print0 2>/dev/null)
 
   if [[ $count -gt 0 ]]; then
     local size_mb=$((total_size / 1024 / 1024))
-    if [[ "${DRY_RUN}" == "true" ]]; then
+    if [[ "$DRY_RUN" == "true" ]]; then
       print_info "[DRY RUN] Would remove ${count} statistics files"
     else
       print_success "Removed ${count} statistics files (${size_mb}MB)"
@@ -215,7 +215,7 @@ clean_statistics(){
 }
 
 # Clean advancements
-clean_advancements(){
+clean_advancements() {
   local world_path="${1:-${WORLD_DIR}}"
   local days="${2:-${PLAYER_INACTIVITY_DAYS}}"
 
@@ -231,20 +231,20 @@ clean_advancements(){
   local total_size=0
 
   while IFS= read -r -d '' adv_file; do
-    if [[ "${DRY_RUN}" == "true" ]]; then
-      print_info "[DRY RUN] Would remove: $(basename "${adv_file}")"
+    if [[ "$DRY_RUN" == "true" ]]; then
+      print_info "[DRY RUN] Would remove: $(basename "$adv_file")"
       ((count++))
     else
-      local size=$(stat -f%z "${adv_file}" 2>/dev/null || stat -c%s "${adv_file}" 2>/dev/null || echo 0)
+      local size=$(stat -f%z "$adv_file" 2>/dev/null || stat -c%s "$adv_file" 2>/dev/null || echo 0)
       total_size=$((total_size + size))
-      rm -f "${adv_file}"
+      rm -f "$adv_file"
       ((count++))
     fi
   done < <(find "${world_path}/advancements" -name "*.json" -type f -mtime "+${days}" -print0 2>/dev/null)
 
   if [[ $count -gt 0 ]]; then
     local size_kb=$((total_size / 1024))
-    if [[ "${DRY_RUN}" == "true" ]]; then
+    if [[ "$DRY_RUN" == "true" ]]; then
       print_info "[DRY RUN] Would remove ${count} advancement files"
     else
       print_success "Removed ${count} advancement files (${size_kb}KB)"
@@ -255,17 +255,17 @@ clean_advancements(){
 }
 
 # Clean session lock files
-clean_session_locks(){
+clean_session_locks() {
   local world_path="${1:-${WORLD_DIR}}"
 
   print_header "Session Lock Cleanup"
 
   local count=0
-  for dimension_path in "${world_path}" "${world_path}_nether" "${world_path}_the_end"; do
-    [[ ! -d "${dimension_path}" ]] && continue
+  for dimension_path in "$world_path" "${world_path}_nether" "${world_path}_the_end"; do
+    [[ ! -d "$dimension_path" ]] && continue
 
     if [[ -f "${dimension_path}/session.lock" ]]; then
-      if [[ "${DRY_RUN}" == "true" ]]; then
+      if [[ "$DRY_RUN" == "true" ]]; then
         print_info "[DRY RUN] Would remove: ${dimension_path}/session.lock"
       else
         rm -f "${dimension_path}/session.lock"
@@ -275,7 +275,7 @@ clean_session_locks(){
   done
 
   if [[ $count -gt 0 ]]; then
-    if [[ "${DRY_RUN}" == "true" ]]; then
+    if [[ "$DRY_RUN" == "true" ]]; then
       print_info "[DRY RUN] Would remove ${count} session.lock files"
     else
       print_success "Removed ${count} session.lock files"
@@ -286,7 +286,7 @@ clean_session_locks(){
 }
 
 # Optimize region files (remove empty chunks)
-optimize_regions(){
+optimize_regions() {
   local world_path="${1:-${WORLD_DIR}}"
 
   print_header "Region File Optimization"
@@ -295,38 +295,38 @@ optimize_regions(){
   local total_before=0
   local total_after=0
 
-  for dimension_path in "${world_path}" "${world_path}_nether" "${world_path}_the_end"; do
-    [[ ! -d "${dimension_path}" ]] && continue
+  for dimension_path in "$world_path" "${world_path}_nether" "${world_path}_the_end"; do
+    [[ ! -d "$dimension_path" ]] && continue
 
-    local dim_name=$(basename "${dimension_path}")
+    local dim_name=$(basename "$dimension_path")
     local region_dir=""
 
-    if [[ "${dim_name}" == "world" ]]; then
+    if [[ "$dim_name" == "world" ]]; then
       region_dir="${dimension_path}/region"
-    elif [[ "${dim_name}" == "world_nether" ]]; then
+    elif [[ "$dim_name" == "world_nether" ]]; then
       region_dir="${dimension_path}/DIM-1/region"
-    elif [[ "${dim_name}" == "world_the_end" ]]; then
+    elif [[ "$dim_name" == "world_the_end" ]]; then
       region_dir="${dimension_path}/DIM1/region"
     fi
 
-    [[ ! -d "${region_dir}" ]] && continue
+    [[ ! -d "$region_dir" ]] && continue
 
-    local before=$(du -sb "${region_dir}" 2>/dev/null | cut -f1)
+    local before=$(du -sb "$region_dir" 2>/dev/null | cut -f1)
     total_before=$((total_before + before))
 
     # Find and report small/potentially empty region files
     local small_count=0
     while IFS= read -r region_file; do
-      local size=$(stat -f%z "${region_file}" 2>/dev/null || stat -c%s "${region_file}" 2>/dev/null || echo 0)
-      if [[ $size -lt 8192 ]]; then  # Less than 8KB is likely empty or nearly empty
+      local size=$(stat -f%z "$region_file" 2>/dev/null || stat -c%s "$region_file" 2>/dev/null || echo 0)
+      if [[ $size -lt 8192 ]]; then # Less than 8KB is likely empty or nearly empty
         ((small_count++))
-        if [[ "${DRY_RUN}" == "true" ]]; then
-          print_info "[DRY RUN] Small region file: $(basename "${region_file}") (${size} bytes)"
+        if [[ "$DRY_RUN" == "true" ]]; then
+          print_info "[DRY RUN] Small region file: $(basename "$region_file") (${size} bytes)"
         fi
       fi
-    done < <(find "${region_dir}" -name "*.mca" -type f 2>/dev/null)
+    done < <(find "$region_dir" -name "*.mca" -type f 2>/dev/null)
 
-    local after=$(du -sb "${region_dir}" 2>/dev/null | cut -f1)
+    local after=$(du -sb "$region_dir" 2>/dev/null | cut -f1)
     total_after=$((total_after + after))
 
     if [[ $small_count -gt 0 ]]; then
@@ -338,31 +338,31 @@ optimize_regions(){
 }
 
 # Show world statistics
-show_stats(){
+show_stats() {
   local world_path="${1:-${WORLD_DIR}}"
 
   print_header "World Statistics"
 
-  for dimension_path in "${world_path}" "${world_path}_nether" "${world_path}_the_end"; do
-    [[ ! -d "${dimension_path}" ]] && continue
+  for dimension_path in "$world_path" "${world_path}_nether" "${world_path}_the_end"; do
+    [[ ! -d "$dimension_path" ]] && continue
 
-    local dim_name=$(basename "${dimension_path}")
+    local dim_name=$(basename "$dimension_path")
     echo ""
     echo "=== ${dim_name} ==="
 
     # Region files
     local region_dir=""
-    if [[ "${dim_name}" == "world" ]]; then
+    if [[ "$dim_name" == "world" ]]; then
       region_dir="${dimension_path}/region"
-    elif [[ "${dim_name}" == "world_nether" ]]; then
+    elif [[ "$dim_name" == "world_nether" ]]; then
       region_dir="${dimension_path}/DIM-1/region"
-    elif [[ "${dim_name}" == "world_the_end" ]]; then
+    elif [[ "$dim_name" == "world_the_end" ]]; then
       region_dir="${dimension_path}/DIM1/region"
     fi
 
-    if [[ -d "${region_dir}" ]]; then
-      local region_count=$(find "${region_dir}" -name "*.mca" 2>/dev/null | wc -l)
-      local region_size=$(du -sh "${region_dir}" 2>/dev/null | cut -f1)
+    if [[ -d "$region_dir" ]]; then
+      local region_count=$(find "$region_dir" -name "*.mca" 2>/dev/null | wc -l)
+      local region_size=$(du -sh "$region_dir" 2>/dev/null | cut -f1)
       echo "  Region files: ${region_count} (${region_size})"
     fi
 
@@ -404,13 +404,13 @@ show_stats(){
   fi
 
   # Total size
-  local total_size=$(du -sh "${world_path}" 2>/dev/null | cut -f1)
+  local total_size=$(du -sh "$world_path" 2>/dev/null | cut -f1)
   echo ""
   echo "Total world size: ${total_size}"
 }
 
 # Show usage
-show_usage(){
+show_usage() {
   cat <<EOF
 Minecraft World Optimization Tool
 
@@ -486,48 +486,48 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Main execution
-case "${COMMAND}" in
+case "$COMMAND" in
 chunks)
-  [[ "${DRY_RUN}" == "true" ]] && print_warning "DRY RUN MODE - No changes will be made"
+  [[ "$DRY_RUN" == "true" ]] && print_warning "DRY RUN MODE - No changes will be made"
   create_backup
-  clean_chunks "${WORLD_DIR}" "${MIN_INHABITED_TICKS}"
+  clean_chunks "$WORLD_DIR" "$MIN_INHABITED_TICKS"
   ;;
 players)
-  [[ "${DRY_RUN}" == "true" ]] && print_warning "DRY RUN MODE - No changes will be made"
+  [[ "$DRY_RUN" == "true" ]] && print_warning "DRY RUN MODE - No changes will be made"
   create_backup
-  clean_player_data "${WORLD_DIR}" "${PLAYER_INACTIVITY_DAYS}"
+  clean_player_data "$WORLD_DIR" "$PLAYER_INACTIVITY_DAYS"
   ;;
 stats)
-  [[ "${DRY_RUN}" == "true" ]] && print_warning "DRY RUN MODE - No changes will be made"
+  [[ "$DRY_RUN" == "true" ]] && print_warning "DRY RUN MODE - No changes will be made"
   create_backup
-  clean_statistics "${WORLD_DIR}" "${PLAYER_INACTIVITY_DAYS}"
+  clean_statistics "$WORLD_DIR" "$PLAYER_INACTIVITY_DAYS"
   ;;
 advancements)
-  [[ "${DRY_RUN}" == "true" ]] && print_warning "DRY RUN MODE - No changes will be made"
+  [[ "$DRY_RUN" == "true" ]] && print_warning "DRY RUN MODE - No changes will be made"
   create_backup
-  clean_advancements "${WORLD_DIR}" "${PLAYER_INACTIVITY_DAYS}"
+  clean_advancements "$WORLD_DIR" "$PLAYER_INACTIVITY_DAYS"
   ;;
 locks)
-  [[ "${DRY_RUN}" == "true" ]] && print_warning "DRY RUN MODE - No changes will be made"
-  clean_session_locks "${WORLD_DIR}"
+  [[ "$DRY_RUN" == "true" ]] && print_warning "DRY RUN MODE - No changes will be made"
+  clean_session_locks "$WORLD_DIR"
   ;;
 optimize)
-  [[ "${DRY_RUN}" == "true" ]] && print_warning "DRY RUN MODE - No changes will be made"
-  optimize_regions "${WORLD_DIR}"
+  [[ "$DRY_RUN" == "true" ]] && print_warning "DRY RUN MODE - No changes will be made"
+  optimize_regions "$WORLD_DIR"
   ;;
 all)
-  [[ "${DRY_RUN}" == "true" ]] && print_warning "DRY RUN MODE - No changes will be made"
+  [[ "$DRY_RUN" == "true" ]] && print_warning "DRY RUN MODE - No changes will be made"
   create_backup
-  clean_chunks "${WORLD_DIR}" "${MIN_INHABITED_TICKS}"
-  clean_player_data "${WORLD_DIR}" "${PLAYER_INACTIVITY_DAYS}"
-  clean_statistics "${WORLD_DIR}" "${PLAYER_INACTIVITY_DAYS}"
-  clean_advancements "${WORLD_DIR}" "${PLAYER_INACTIVITY_DAYS}"
-  clean_session_locks "${WORLD_DIR}"
-  optimize_regions "${WORLD_DIR}"
+  clean_chunks "$WORLD_DIR" "$MIN_INHABITED_TICKS"
+  clean_player_data "$WORLD_DIR" "$PLAYER_INACTIVITY_DAYS"
+  clean_statistics "$WORLD_DIR" "$PLAYER_INACTIVITY_DAYS"
+  clean_advancements "$WORLD_DIR" "$PLAYER_INACTIVITY_DAYS"
+  clean_session_locks "$WORLD_DIR"
+  optimize_regions "$WORLD_DIR"
   print_success "All optimizations complete!"
   ;;
 info)
-  show_stats "${WORLD_DIR}"
+  show_stats "$WORLD_DIR"
   ;;
 help | --help | -h)
   show_usage
