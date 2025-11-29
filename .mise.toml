@@ -1,0 +1,16 @@
+# Mise configuration for MC-Server tools
+# See https://mise.jdx.dev/ for more information
+
+[tools]
+# Java using GraalVM distribution
+java = "graalvm"
+
+# PackSquash - Minecraft resource pack optimizer (from Cargo)
+packsquash = "cargo:packsquash"
+
+# ChunkCleaner - Minecraft chunk cleaning tool (from GitHub)
+chunkcleaner = "github:zeroBzeroT/ChunkCleaner"
+
+[env]
+# Set JAVA_HOME when using GraalVM
+_.java.JAVA_HOME = "{{config_root}}/.mise/installs/java/{{version}}"
