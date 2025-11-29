@@ -51,7 +51,7 @@ jobs:
 
           # Install yamlfmt for better YAML formatting
           go install github.com/google/yamlfmt/cmd/yamlfmt@latest
-          echo "${HOME}/go/bin" >> $GITHUB_PATH
+          echo "${HOME}/go/bin" >> "$GITHUB_PATH"
       - name: Install GNU Parallel
         run: |
           sudo apt-get install -y parallel

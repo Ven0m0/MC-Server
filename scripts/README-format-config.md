@@ -1,6 +1,7 @@
 # Config Format/Lint/Autofix Script
 
-A comprehensive script for formatting, linting, and minifying JSON and YAML configuration files.
+A comprehensive script for formatting, linting, and minifying JSON and YAML
+configuration files.
 
 ## Features
 
@@ -126,7 +127,8 @@ Removes all unnecessary whitespace to reduce file size:
 
 ### Check Mode (CI/CD)
 
-Validates formatting without making changes. Exits with code 1 if any files need formatting:
+Validates formatting without making changes. Exits with code 1 if any files need
+formatting:
 
 ```bash
 ./scripts/format-config.sh --mode check

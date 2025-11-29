@@ -18,7 +18,7 @@ Common issues and solutions for Minecraft server management.
 
 **Error Message:**
 
-```text
+````text
 You need to agree to the EULA in order to run the server
 ```text
 
@@ -678,3 +678,4 @@ iotop -o
    - Server logs
    - System information
    - Diagnostic report
+````
