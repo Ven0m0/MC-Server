@@ -12,15 +12,15 @@ export HOME="/home/${user}"
 SHELL="$(command -v bash 2>/dev/null || echo '/usr/bin/bash')"
 
 # Check if command exists
-has_command(){ command -v "$1" &>/dev/null; }
+has_command() { command -v "$1" &>/dev/null; }
 
 # Check if required commands are available
-check_dependencies(){
+check_dependencies() {
   local missing=()
   for cmd in "$@"; do
     has_command "$cmd" || missing+=("$cmd")
   done
-  (( ${#missing[@]} )) && {
+  ((${#missing[@]})) && {
     echo "Error: Missing required dependencies: ${missing[*]}" >&2
     echo "Please install them before continuing." >&2
     return 1
@@ -28,38 +28,62 @@ check_dependencies(){
 }
 
 # Detect JSON processor (prefer jaq over jq)
-get_json_processor(){
-  has_command jaq && { echo "jaq"; return; }
-  has_command jq && { echo "jq"; return; }
+get_json_processor() {
+  has_command jaq && {
+    echo "jaq"
+    return
+  }
+  has_command jq && {
+    echo "jq"
+    return
+  }
   echo "Error: No JSON processor found. Please install jq or jaq." >&2
   return 1
 }
 
 # Fetch URL to stdout
-fetch_url(){
+fetch_url() {
   local url="$1"
-  has_command aria2c && { aria2c -q -d /tmp -o - "$url" 2>/dev/null; return; }
-  has_command curl && { curl -fsSL "$url"; return; }
-  has_command wget && { wget -qO- "$url"; return; }
+  has_command aria2c && {
+    aria2c -q -d /tmp -o - "$url" 2>/dev/null
+    return
+  }
+  has_command curl && {
+    curl -fsSL "$url"
+    return
+  }
+  has_command wget && {
+    wget -qO- "$url"
+    return
+  }
   echo "Error: No download tool found (aria2c, curl, or wget)" >&2
   return 1
 }
 
 # Download file with aria2c or curl fallback
-download_file(){
+download_file() {
   local url="$1" output="$2" connections="${3:-8}"
-  has_command aria2c && { aria2c -x "$connections" -s "$connections" -o "$output" "$url"; return; }
-  has_command curl && { curl -fsL -o "$output" "$url"; return; }
-  has_command wget && { wget -qO "$output" "$url"; return; }
+  has_command aria2c && {
+    aria2c -x "$connections" -s "$connections" -o "$output" "$url"
+    return
+  }
+  has_command curl && {
+    curl -fsL -o "$output" "$url"
+    return
+  }
+  has_command wget && {
+    wget -qO "$output" "$url"
+    return
+  }
   echo "Error: No download tool found (aria2c, curl, or wget)" >&2
   return 1
 }
 
 # Create directory if it doesn't exist
-ensure_dir(){ [[ ! -d $1 ]] && mkdir -p "$1" || return 0; }
+ensure_dir() { [[ ! -d $1 ]] && mkdir -p "$1" || return 0; }
 
 # Extract natives from JAR file
-extract_natives(){
+extract_natives() {
   local jar_file="$1" dest_dir="$2"
   ensure_dir "$dest_dir"
   unzip -q -o "$jar_file" -d "$dest_dir" 2>/dev/null || :
@@ -67,21 +91,25 @@ extract_natives(){
 }
 
 # Get aria2c options as array
-get_aria2c_opts_array(){ echo "-x" "16" "-s" "16"; }
+get_aria2c_opts_array() { echo "-x" "16" "-s" "16"; }
 
 # Calculate total RAM in GB
-get_total_ram_gb(){ awk '/MemTotal/ {printf "%.0f\n",$2/1024/1024}' /proc/meminfo 2>/dev/null; }
+get_total_ram_gb() { awk '/MemTotal/ {printf "%.0f\n",$2/1024/1024}' /proc/meminfo 2>/dev/null; }
 
 # Calculate client memory allocation
-get_client_xms_gb(){
-  local total_ram=$(get_total_ram_gb) xms=$((total_ram / 4))
-  (( xms < 1 )) && xms=1
+get_client_xms_gb() {
+  local total_ram
+  total_ram=$(get_total_ram_gb)
+  local xms=$((total_ram / 4))
+  ((xms < 1)) && xms=1
   echo "$xms"
 }
 
-get_client_xmx_gb(){
-  local total_ram=$(get_total_ram_gb) xmx=$((total_ram / 2))
-  (( xmx < 2 )) && xmx=2
+get_client_xmx_gb() {
+  local total_ram
+  total_ram=$(get_total_ram_gb)
+  local xmx=$((total_ram / 2))
+  ((xmx < 2)) && xmx=2
   echo "$xmx"
 }
 
@@ -131,7 +159,7 @@ VERSION_MANIFEST="$VERSIONS_DIR/version.json"
 if [[ ! -f $VERSION_MANIFEST ]]; then
   echo "  Downloading version list..."
   VERSION_LIST=$(fetch_url "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json")
-  VERSION_URL=$(echo "$VERSION_LIST" | $JSON_PROC -r ".versions[] | select(.id == \"$VERSION\") | .url")
+  VERSION_URL=$(echo "$VERSION_LIST" | "$JSON_PROC" -r ".versions[] | select(.id == \"$VERSION\") | .url")
 
   if [[ -z $VERSION_URL ]]; then
     echo "Error: Version $VERSION not found" >&2
@@ -149,7 +177,7 @@ echo "[2/5] Downloading client JAR..."
 CLIENT_JAR="$VERSIONS_DIR/$VERSION.jar"
 
 if [[ ! -f $CLIENT_JAR ]]; then
-  CLIENT_URL=$($JSON_PROC -r '.downloads.client.url' <"$VERSION_MANIFEST")
+  CLIENT_URL=$("$JSON_PROC" -r '.downloads.client.url' <"$VERSION_MANIFEST")
   echo "  Downloading from Mojang servers..."
   download_file "$CLIENT_URL" "$CLIENT_JAR"
 else
@@ -158,8 +186,8 @@ fi
 
 # Download assets
 echo "[3/5] Downloading game assets..."
-ASSET_INDEX=$($JSON_PROC -r '.assetIndex.id' <"$VERSION_MANIFEST")
-ASSET_INDEX_URL=$($JSON_PROC -r '.assetIndex.url' <"$VERSION_MANIFEST")
+ASSET_INDEX=$("$JSON_PROC" -r '.assetIndex.id' <"$VERSION_MANIFEST")
+ASSET_INDEX_URL=$("$JSON_PROC" -r '.assetIndex.url' <"$VERSION_MANIFEST")
 ASSET_INDEX_FILE="$ASSETS_DIR/indexes/$ASSET_INDEX.json"
 
 ensure_dir "$ASSETS_DIR/indexes"
@@ -172,12 +200,12 @@ fi
 
 # Download individual assets
 echo "  Downloading asset objects..."
-ASSET_COUNT=$($JSON_PROC -r '.objects | length' <"$ASSET_INDEX_FILE")
+ASSET_COUNT=$("$JSON_PROC" -r '.objects | length' <"$ASSET_INDEX_FILE")
 echo "  Total assets: $ASSET_COUNT"
 
 # Create temporary file for aria2c input
 ASSET_INPUT_FILE="/tmp/mc-assets-$$.txt"
-$JSON_PROC -r '.objects[] | .hash' <"$ASSET_INDEX_FILE" | while read -r hash; do
+"$JSON_PROC" -r '.objects[] | .hash' <"$ASSET_INDEX_FILE" | while read -r hash; do
   HASH_PREFIX="${hash:0:2}"
   ASSET_FILE="$ASSETS_DIR/objects/$HASH_PREFIX/$hash"
 
@@ -193,11 +221,11 @@ done
 if [[ -f $ASSET_INPUT_FILE ]] && [[ -s $ASSET_INPUT_FILE ]]; then
   if has_command aria2c; then
     echo "  Downloading missing assets with aria2c..."
-    ARIA2_OPTS=($(get_aria2c_opts_array))
+    mapfile -t ARIA2_OPTS < <(get_aria2c_opts_array)
     aria2c "${ARIA2_OPTS[@]}" -j 16 -i "$ASSET_INPUT_FILE" --auto-file-renaming=false --allow-overwrite=true
   else
     echo "  Warning: aria2c not found, assets download may be slow"
-    $JSON_PROC -r '.objects[] | .hash' <"$ASSET_INDEX_FILE" | while read -r hash; do
+    "$JSON_PROC" -r '.objects[] | .hash' <"$ASSET_INDEX_FILE" | while read -r hash; do
       HASH_PREFIX="${hash:0:2}"
       ASSET_FILE="$ASSETS_DIR/objects/$HASH_PREFIX/$hash"
       if [[ ! -f $ASSET_FILE ]]; then
@@ -215,11 +243,11 @@ fi
 echo "[4/5] Downloading libraries..."
 CLASSPATH="$CLIENT_JAR"
 
-$JSON_PROC -c '.libraries[]' <"$VERSION_MANIFEST" | while IFS= read -r library; do
+"$JSON_PROC" -c '.libraries[]' <"$VERSION_MANIFEST" | while IFS= read -r library; do
   # Check if library applies to current OS
-  RULES=$(echo "$library" | $JSON_PROC -r '.rules // [] | length')
+  RULES=$(echo "$library" | "$JSON_PROC" -r '.rules // [] | length')
   if [[ $RULES -gt 0 ]]; then
-    ALLOWED=$(echo "$library" | $JSON_PROC -r '
+    ALLOWED=$(echo "$library" | "$JSON_PROC" -r '
             .rules | map(
                 select(.action == "allow") |
                 (.os.name // "any") as $os |
@@ -232,8 +260,8 @@ $JSON_PROC -c '.libraries[]' <"$VERSION_MANIFEST" | while IFS= read -r library; 
   fi
 
   # Get library download info
-  LIB_PATH=$(echo "$library" | $JSON_PROC -r '.downloads.artifact.path // empty')
-  LIB_URL=$(echo "$library" | $JSON_PROC -r '.downloads.artifact.url // empty')
+  LIB_PATH=$(echo "$library" | "$JSON_PROC" -r '.downloads.artifact.path // empty')
+  LIB_URL=$(echo "$library" | "$JSON_PROC" -r '.downloads.artifact.url // empty')
 
   if [[ -n $LIB_URL ]] && [[ -n $LIB_PATH ]]; then
     LIB_FILE="$LIBRARIES_DIR/$LIB_PATH"
@@ -248,11 +276,11 @@ $JSON_PROC -c '.libraries[]' <"$VERSION_MANIFEST" | while IFS= read -r library; 
   fi
 
   # Download natives if present
-  NATIVES=$(echo "$library" | $JSON_PROC -r '.downloads.classifiers // {} | keys | length')
+  NATIVES=$(echo "$library" | "$JSON_PROC" -r '.downloads.classifiers // {} | keys | length')
   if [[ $NATIVES -gt 0 ]]; then
     NATIVE_KEY="natives-linux"
-    NATIVE_PATH=$(echo "$library" | $JSON_PROC -r ".downloads.classifiers[\"$NATIVE_KEY\"].path // empty")
-    NATIVE_URL=$(echo "$library" | $JSON_PROC -r ".downloads.classifiers[\"$NATIVE_KEY\"].url // empty")
+    NATIVE_PATH=$(echo "$library" | "$JSON_PROC" -r ".downloads.classifiers[\"$NATIVE_KEY\"].path // empty")
+    NATIVE_URL=$(echo "$library" | "$JSON_PROC" -r ".downloads.classifiers[\"$NATIVE_KEY\"].url // empty")
 
     if [[ -n $NATIVE_URL ]] && [[ -n $NATIVE_PATH ]]; then
       NATIVE_FILE="$LIBRARIES_DIR/$NATIVE_PATH"
@@ -273,10 +301,10 @@ done
 echo "[5/5] Launching Minecraft..."
 
 # Get main class
-MAIN_CLASS=$($JSON_PROC -r '.mainClass' <"$VERSION_MANIFEST")
+MAIN_CLASS=$("$JSON_PROC" -r '.mainClass' <"$VERSION_MANIFEST")
 
 # Build JVM arguments
-JVM_ARGS=$($JSON_PROC -r '.arguments.jvm[]? // empty' <"$VERSION_MANIFEST" | grep -v '^\$' || echo "")
+JVM_ARGS=$("$JSON_PROC" -r '.arguments.jvm[]? // empty' <"$VERSION_MANIFEST" | grep -v '^\$' || echo "")
 
 # Detect RAM and calculate memory allocation
 XMS=$(get_client_xms_gb)
@@ -288,7 +316,7 @@ if [[ -z $JVM_ARGS ]]; then
 fi
 
 # Game arguments
-GAME_ARGS=$($JSON_PROC -r '.arguments.game[]? // .minecraftArguments? // empty' <"$VERSION_MANIFEST" | tr '\n' ' ')
+GAME_ARGS=$("$JSON_PROC" -r '.arguments.game[]? // .minecraftArguments? // empty' <"$VERSION_MANIFEST" | tr '\n' ' ')
 
 # Replace argument variables
 GAME_ARGS="${GAME_ARGS//\$\{auth_player_name\}/$USERNAME}"
@@ -310,9 +338,9 @@ JAVA_OPTS="-XX:+ShowCodeDetailsInExceptionMessages"
 
 # Launch the game
 java \
-  -Xms${XMS}G \
-  -Xmx${XMX}G \
-  $JAVA_OPTS \
+  -Xms"${XMS}"G \
+  -Xmx"${XMX}"G \
+  "$JAVA_OPTS" \
   -XX:+UnlockExperimentalVMOptions \
   -XX:+UseG1GC \
   -XX:G1NewSizePercent=20 \
@@ -324,4 +352,4 @@ java \
   -Dminecraft.launcher.version=1.0 \
   -cp "$CLASSPATH" \
   "$MAIN_CLASS" \
-  $GAME_ARGS
+  "$GAME_ARGS"

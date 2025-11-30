@@ -1,6 +1,7 @@
 # 📖 Minecraft Server Setup Guide
 
-Complete step-by-step guide for setting up and configuring your Minecraft server.
+Complete step-by-step guide for setting up and configuring your Minecraft
+server.
 
 ## Table of Contents
 

@@ -11,7 +11,8 @@ optimization.
 ## ✨ Features
 
 - 🚀 **Automated Server Management** - One-command server setup and deployment
-- 📊 **Real-time Monitoring** - Health checks, performance metrics, and player activity tracking
+- 📊 **Real-time Monitoring** - Health checks, performance metrics, and player
+  activity tracking
 - 💾 **Automated Backups** - Scheduled backups with rotation and compression
 - 🔄 **Auto-Restart & Crash Recovery** - Watchdog service for maximum uptime
 - 📝 **Log Management** - Automatic log rotation, compression, and archiving
@@ -51,7 +52,7 @@ cd MC-Server
 
 ### Quick Operations
 
-```bash
+````bash
 # Monitor server health
 ./tools/monitor.sh status
 
@@ -501,3 +502,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ---
 
 **Note**: This is a production-ready server management suite. Always test changes in a development environment before applying to production servers.
+````

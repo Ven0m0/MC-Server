@@ -62,7 +62,7 @@ jobs:
           while IFS= read -r -d '' file; do
             FOUND_FILES=$((FOUND_FILES + 1))
             BEFORE_SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file")
-            echo "Optimizing: $file ($(numfmt --to=iec-i --suffix=B $BEFORE_SIZE))"
+            echo "Optimizing: $file ($(numfmt --to=iec-i --suffix=B "$BEFORE_SIZE"))"
 
             # Use optipng with moderate optimization (level 2)
             # Add -o7 for aggressive optimization
@@ -77,7 +77,7 @@ jobs:
             SAVED=$((BEFORE_SIZE - AFTER_SIZE))
             if [[ $SAVED -gt 0 ]]; then
               OPTIMIZED_FILES=$((OPTIMIZED_FILES + 1))
-              echo "✓ Saved $(numfmt --to=iec-i --suffix=B $SAVED)"
+              echo "✓ Saved $(numfmt --to=iec-i --suffix=B "$SAVED")"
             else
               echo "✓ Already optimized"
             fi
@@ -88,8 +88,8 @@ jobs:
                     -not -path "*/build/*" \
                     -print0)
 
-          echo "png_found=$FOUND_FILES" >> $GITHUB_OUTPUT
-          echo "png_optimized=$OPTIMIZED_FILES" >> $GITHUB_OUTPUT
+          echo "png_found=$FOUND_FILES" >> "$GITHUB_OUTPUT"
+          echo "png_optimized=$OPTIMIZED_FILES" >> "$GITHUB_OUTPUT"
       - name: Find and optimize JPEG files
         id: optimize-jpeg
         run: |
@@ -100,7 +100,7 @@ jobs:
           while IFS= read -r -d '' file; do
             FOUND_FILES=$((FOUND_FILES + 1))
             BEFORE_SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file")
-            echo "Optimizing: $file ($(numfmt --to=iec-i --suffix=B $BEFORE_SIZE))"
+            echo "Optimizing: $file ($(numfmt --to=iec-i --suffix=B "$BEFORE_SIZE"))"
 
             # Use jpegoptim with quality preservation
             if [[ "${{ github.event.inputs.aggressive }}" == "true" ]]; then
@@ -113,7 +113,7 @@ jobs:
             SAVED=$((BEFORE_SIZE - AFTER_SIZE))
             if [[ $SAVED -gt 0 ]]; then
               OPTIMIZED_FILES=$((OPTIMIZED_FILES + 1))
-              echo "✓ Saved $(numfmt --to=iec-i --suffix=B $SAVED)"
+              echo "✓ Saved $(numfmt --to=iec-i --suffix=B "$SAVED")"
             else
               echo "✓ Already optimized"
             fi
@@ -124,8 +124,8 @@ jobs:
                     -not -path "*/build/*" \
                     -print0)
 
-          echo "jpeg_found=$FOUND_FILES" >> $GITHUB_OUTPUT
-          echo "jpeg_optimized=$OPTIMIZED_FILES" >> $GITHUB_OUTPUT
+          echo "jpeg_found=$FOUND_FILES" >> "$GITHUB_OUTPUT"
+          echo "jpeg_optimized=$OPTIMIZED_FILES" >> "$GITHUB_OUTPUT"
       - name: Find and optimize GIF files
         id: optimize-gif
         run: |
@@ -136,7 +136,7 @@ jobs:
           while IFS= read -r -d '' file; do
             FOUND_FILES=$((FOUND_FILES + 1))
             BEFORE_SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file")
-            echo "Optimizing: $file ($(numfmt --to=iec-i --suffix=B $BEFORE_SIZE))"
+            echo "Optimizing: $file ($(numfmt --to=iec-i --suffix=B "$BEFORE_SIZE"))"
 
             # Use gifsicle for GIF optimization
             if [[ "${{ github.event.inputs.aggressive }}" == "true" ]]; then
@@ -149,7 +149,7 @@ jobs:
             SAVED=$((BEFORE_SIZE - AFTER_SIZE))
             if [[ $SAVED -gt 0 ]]; then
               OPTIMIZED_FILES=$((OPTIMIZED_FILES + 1))
-              echo "✓ Saved $(numfmt --to=iec-i --suffix=B $SAVED)"
+              echo "✓ Saved $(numfmt --to=iec-i --suffix=B "$SAVED")"
             else
               echo "✓ Already optimized"
             fi
@@ -160,8 +160,8 @@ jobs:
                     -not -path "*/build/*" \
                     -print0)
 
-          echo "gif_found=$FOUND_FILES" >> $GITHUB_OUTPUT
-          echo "gif_optimized=$OPTIMIZED_FILES" >> $GITHUB_OUTPUT
+          echo "gif_found=$FOUND_FILES" >> "$GITHUB_OUTPUT"
+          echo "gif_optimized=$OPTIMIZED_FILES" >> "$GITHUB_OUTPUT"
       - name: Find and optimize SVG files
         id: optimize-svg
         run: |
@@ -172,7 +172,7 @@ jobs:
           while IFS= read -r -d '' file; do
             FOUND_FILES=$((FOUND_FILES + 1))
             BEFORE_SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file")
-            echo "Optimizing: $file ($(numfmt --to=iec-i --suffix=B $BEFORE_SIZE))"
+            echo "Optimizing: $file ($(numfmt --to=iec-i --suffix=B "$BEFORE_SIZE"))"
 
             # Use svgo for SVG optimization
             svgo --quiet --multipass "$file"
@@ -181,7 +181,7 @@ jobs:
             SAVED=$((BEFORE_SIZE - AFTER_SIZE))
             if [[ $SAVED -gt 0 ]]; then
               OPTIMIZED_FILES=$((OPTIMIZED_FILES + 1))
-              echo "✓ Saved $(numfmt --to=iec-i --suffix=B $SAVED)"
+              echo "✓ Saved $(numfmt --to=iec-i --suffix=B "$SAVED")"
             else
               echo "✓ Already optimized"
             fi
@@ -192,8 +192,8 @@ jobs:
                     -not -path "*/build/*" \
                     -print0)
 
-          echo "svg_found=$FOUND_FILES" >> $GITHUB_OUTPUT
-          echo "svg_optimized=$OPTIMIZED_FILES" >> $GITHUB_OUTPUT
+          echo "svg_found=$FOUND_FILES" >> "$GITHUB_OUTPUT"
+          echo "svg_optimized=$OPTIMIZED_FILES" >> "$GITHUB_OUTPUT"
       - name: Find and optimize WebP files
         id: optimize-webp
         run: |
@@ -204,7 +204,7 @@ jobs:
           while IFS= read -r -d '' file; do
             FOUND_FILES=$((FOUND_FILES + 1))
             BEFORE_SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file")
-            echo "Optimizing: $file ($(numfmt --to=iec-i --suffix=B $BEFORE_SIZE))"
+            echo "Optimizing: $file ($(numfmt --to=iec-i --suffix=B "$BEFORE_SIZE"))"
 
             # Re-encode WebP with better compression
             TEMP_FILE="${file}.tmp"
@@ -218,7 +218,7 @@ jobs:
             SAVED=$((BEFORE_SIZE - AFTER_SIZE))
             if [[ $SAVED -gt 0 ]]; then
               OPTIMIZED_FILES=$((OPTIMIZED_FILES + 1))
-              echo "✓ Saved $(numfmt --to=iec-i --suffix=B $SAVED)"
+              echo "✓ Saved $(numfmt --to=iec-i --suffix=B "$SAVED")"
             else
               echo "✓ Already optimized"
             fi
@@ -229,19 +229,21 @@ jobs:
                     -not -path "*/build/*" \
                     -print0)
 
-          echo "webp_found=$FOUND_FILES" >> $GITHUB_OUTPUT
-          echo "webp_optimized=$OPTIMIZED_FILES" >> $GITHUB_OUTPUT
+          echo "webp_found=$FOUND_FILES" >> "$GITHUB_OUTPUT"
+          echo "webp_optimized=$OPTIMIZED_FILES" >> "$GITHUB_OUTPUT"
       - name: Generate optimization summary
         run: |
-          echo "## Image Optimization Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Format | Files Found | Files Optimized |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|-------------|-----------------|" >> $GITHUB_STEP_SUMMARY
-          echo "| PNG    | ${{ steps.optimize-png.outputs.png_found }} | ${{ steps.optimize-png.outputs.png_optimized }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| JPEG   | ${{ steps.optimize-jpeg.outputs.jpeg_found }} | ${{ steps.optimize-jpeg.outputs.jpeg_optimized }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| GIF    | ${{ steps.optimize-gif.outputs.gif_found }} | ${{ steps.optimize-gif.outputs.gif_optimized }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| SVG    | ${{ steps.optimize-svg.outputs.svg_found }} | ${{ steps.optimize-svg.outputs.svg_optimized }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| WebP   | ${{ steps.optimize-webp.outputs.webp_found }} | ${{ steps.optimize-webp.outputs.webp_optimized }} |" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Image Optimization Summary"
+            echo ""
+            echo "| Format | Files Found | Files Optimized |"
+            echo "|--------|-------------|-----------------|"
+            echo "| PNG    | ${{ steps.optimize-png.outputs.png_found }} | ${{ steps.optimize-png.outputs.png_optimized }} |"
+            echo "| JPEG   | ${{ steps.optimize-jpeg.outputs.jpeg_found }} | ${{ steps.optimize-jpeg.outputs.jpeg_optimized }} |"
+            echo "| GIF    | ${{ steps.optimize-gif.outputs.gif_found }} | ${{ steps.optimize-gif.outputs.gif_optimized }} |"
+            echo "| SVG    | ${{ steps.optimize-svg.outputs.svg_found }} | ${{ steps.optimize-svg.outputs.svg_optimized }} |"
+            echo "| WebP   | ${{ steps.optimize-webp.outputs.webp_found }} | ${{ steps.optimize-webp.outputs.webp_optimized }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Commit optimized images (on push to main/claude branches)
         if: |
           github.event_name == 'push' &&
