@@ -3,7 +3,7 @@
 
 [tools]
 java = "oracle-graalvm"
-"ubi:ComunidadAylas/PackSquash" = "latest"
+"cargo:https://github.com/ComunidadAylas/PackSquash" = "latest"
 "ubi:zeroBzeroT/ChunkCleaner" = "latest"
 
 [env]
