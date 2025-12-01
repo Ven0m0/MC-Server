@@ -2,15 +2,9 @@
 # See https://mise.jdx.dev/ for more information
 
 [tools]
-# Java using GraalVM distribution
-java = "graalvm"
-
-# PackSquash - Minecraft resource pack optimizer (from Cargo)
-packsquash = "cargo:packsquash"
-
-# ChunkCleaner - Minecraft chunk cleaning tool (from GitHub)
-chunkcleaner = "github:zeroBzeroT/ChunkCleaner"
+java = "oracle-graalvm"
+"ubi:ComunidadAylas/PackSquash" = "latest"
+"ubi:zeroBzeroT/ChunkCleaner" = "latest"
 
 [env]
-# Set JAVA_HOME when using GraalVM
-_.java.JAVA_HOME = "{{config_root}}/.mise/installs/java/{{version}}"
+_.java.GRAALVM_HOME = "${MISE_INSTALLS}/graalvm/${version}"
