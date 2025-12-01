@@ -1,20 +1,24 @@
 name: Optimize resource pack
 on: workflow_dispatch
-permissions:
-  contents: write
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   packsquash:
     name: Optimize resource pack
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - name: Clone repository
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
         with:
+          token: ${{ secrets.PAT || github.token }}
           fetch-depth: 0
       - name: Run PackSquash
         uses: ComunidadAylas/PackSquash-action@v4
         with:
-          packsquash_version: latest-unstable # or 'latest'
+          packsquash_version: latest
       - name: Commit optimized pack
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
@@ -24,5 +28,5 @@ jobs:
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.ref }}
+          github_token: ${{ secrets.PAT || github.token }}
+          branch: ${{ github.head_ref || github.ref || github.run_id }}
