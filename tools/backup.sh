@@ -68,11 +68,14 @@ backup_mods() {
 cleanup_old_backups() {
   print_info "Cleaning old backups (keeping last ${MAX_BACKUPS})..."
   for dir in worlds configs; do
-    local count=$(find "${BACKUP_DIR}/${dir}" -name "*.tar.gz" 2>/dev/null | wc -l)
-    ((count > MAX_BACKUPS)) && {
-      find "${BACKUP_DIR}/${dir}" -name "*.tar.gz" -type f -printf '%T@ %p\n' |
-        sort -n | head -n -"$MAX_BACKUPS" | cut -d' ' -f2- | xargs rm -f
-    }
+    local backup_path="${BACKUP_DIR}/${dir}"
+    [[ ! -d "$backup_path" ]] && continue
+    # Single find call that counts and cleans in one pass
+    local files
+    mapfile -t files < <(find "$backup_path" -name "*.tar.gz" -type f -printf '%T@ %p\n' 2>/dev/null | sort -n | head -n -"$MAX_BACKUPS" | cut -d' ' -f2-)
+    if [[ ${#files[@]} -gt 0 ]]; then
+      printf '%s\0' "${files[@]}" | xargs -0 rm -f 2>/dev/null || true
+    fi
   done
   print_success "Cleanup complete"
 }
@@ -82,14 +85,27 @@ list_backups() {
   print_header "Available backups"
   echo ""
   echo "World Backups:"
-  find "${BACKUP_DIR}/worlds" -name "*.tar.gz" 2>/dev/null | sort -r | head -10 | while read -r f; do
-    echo "  $(basename "$f") ($(du -h "$f" | cut -f1))"
-  done
+  # Use -printf for efficiency instead of calling du in a loop
+  while IFS='|' read -r size name; do
+    echo "  ${name} (${size})"
+  done < <(find "${BACKUP_DIR}/worlds" -name "*.tar.gz" -type f -printf '%s|%f\n' 2>/dev/null | sort -t'|' -k1 -rn | head -10 | awk -F'|' '{
+    size=$1;
+    if (size >= 1073741824) printf "%.1fG|%s\n", size/1073741824, $2;
+    else if (size >= 1048576) printf "%.1fM|%s\n", size/1048576, $2;
+    else if (size >= 1024) printf "%.1fK|%s\n", size/1024, $2;
+    else printf "%dB|%s\n", size, $2;
+  }')
   echo ""
   echo "Config Backups:"
-  find "${BACKUP_DIR}/configs" -name "*.tar.gz" 2>/dev/null | sort -r | head -10 | while read -r f; do
-    echo "  $(basename "$f") ($(du -h "$f" | cut -f1))"
-  done
+  while IFS='|' read -r size name; do
+    echo "  ${name} (${size})"
+  done < <(find "${BACKUP_DIR}/configs" -name "*.tar.gz" -type f -printf '%s|%f\n' 2>/dev/null | sort -t'|' -k1 -rn | head -10 | awk -F'|' '{
+    size=$1;
+    if (size >= 1073741824) printf "%.1fG|%s\n", size/1073741824, $2;
+    else if (size >= 1048576) printf "%.1fM|%s\n", size/1048576, $2;
+    else if (size >= 1024) printf "%.1fK|%s\n", size/1024, $2;
+    else printf "%dB|%s\n", size, $2;
+  }')
 }
 
 # Restore backup

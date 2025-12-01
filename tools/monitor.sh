@@ -69,9 +69,21 @@ get_memory() {
 # Get disk usage
 get_disk() {
   print_header "Disk Usage"
-  [[ -d "${SCRIPT_DIR}/world" ]] && echo "  World: $(du -sh "${SCRIPT_DIR}/world" 2>/dev/null | cut -f1)"
-  [[ -d "${SCRIPT_DIR}/backups" ]] && echo "  Backups: $(du -sh "${SCRIPT_DIR}/backups" 2>/dev/null | cut -f1)"
-  [[ -d "${SCRIPT_DIR}/logs" ]] && echo "  Logs: $(du -sh "${SCRIPT_DIR}/logs" 2>/dev/null | cut -f1)"
+  # Run single du command for all directories (much faster than separate calls)
+  local dirs_to_check=()
+  [[ -d "${SCRIPT_DIR}/world" ]] && dirs_to_check+=("${SCRIPT_DIR}/world")
+  [[ -d "${SCRIPT_DIR}/backups" ]] && dirs_to_check+=("${SCRIPT_DIR}/backups")
+  [[ -d "${SCRIPT_DIR}/logs" ]] && dirs_to_check+=("${SCRIPT_DIR}/logs")
+
+  if [[ ${#dirs_to_check[@]} -gt 0 ]]; then
+    while IFS=$'\t' read -r size path; do
+      local name
+      name=$(basename "$path")
+      [[ "$name" == "world" ]] && echo "  World: $size"
+      [[ "$name" == "backups" ]] && echo "  Backups: $size"
+      [[ "$name" == "logs" ]] && echo "  Logs: $size"
+    done < <(du -sh "${dirs_to_check[@]}" 2>/dev/null)
+  fi
   echo "  Total: $(du -sh "$SCRIPT_DIR" 2>/dev/null | cut -f1)"
   echo ""
 }
