@@ -20,6 +20,23 @@ print_success() { echo -e "\033[0;32m✓\033[0m $1"; }
 print_error() { echo -e "\033[0;31m✗\033[0m $1" >&2; }
 print_info() { echo -e "\033[1;33m→\033[0m $1"; }
 
+# Format byte sizes to human-readable form (1G, 1M, 1K, 1B)
+# Usage: format_size_bytes <size_in_bytes>
+format_size_bytes() {
+  local size="$1"
+  # Byte conversion constants
+  local KB=1024 MB=1048576 GB=1073741824
+  if ((size >= GB)); then
+    awk "BEGIN {printf \"%.1fG\", $size/$GB}"
+  elif ((size >= MB)); then
+    awk "BEGIN {printf \"%.1fM\", $size/$MB}"
+  elif ((size >= KB)); then
+    awk "BEGIN {printf \"%.1fK\", $size/$KB}"
+  else
+    echo "${size}B"
+  fi
+}
+
 # Configuration
 BACKUP_DIR="${SCRIPT_DIR}/backups"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
@@ -86,26 +103,18 @@ list_backups() {
   echo ""
   echo "World Backups:"
   # Use -printf for efficiency instead of calling du in a loop
-  while IFS='|' read -r size name; do
+  while IFS='|' read -r size_bytes name; do
+    local size
+    size=$(format_size_bytes "$size_bytes")
     echo "  ${name} (${size})"
-  done < <(find "${BACKUP_DIR}/worlds" -name "*.tar.gz" -type f -printf '%s|%f\n' 2>/dev/null | sort -t'|' -k1 -rn | head -10 | awk -F'|' '{
-    size=$1;
-    if (size >= 1073741824) printf "%.1fG|%s\n", size/1073741824, $2;
-    else if (size >= 1048576) printf "%.1fM|%s\n", size/1048576, $2;
-    else if (size >= 1024) printf "%.1fK|%s\n", size/1024, $2;
-    else printf "%dB|%s\n", size, $2;
-  }')
+  done < <(find "${BACKUP_DIR}/worlds" -name "*.tar.gz" -type f -printf '%s|%f\n' 2>/dev/null | sort -t'|' -k1 -rn | head -10)
   echo ""
   echo "Config Backups:"
-  while IFS='|' read -r size name; do
+  while IFS='|' read -r size_bytes name; do
+    local size
+    size=$(format_size_bytes "$size_bytes")
     echo "  ${name} (${size})"
-  done < <(find "${BACKUP_DIR}/configs" -name "*.tar.gz" -type f -printf '%s|%f\n' 2>/dev/null | sort -t'|' -k1 -rn | head -10 | awk -F'|' '{
-    size=$1;
-    if (size >= 1073741824) printf "%.1fG|%s\n", size/1073741824, $2;
-    else if (size >= 1048576) printf "%.1fM|%s\n", size/1048576, $2;
-    else if (size >= 1024) printf "%.1fK|%s\n", size/1024, $2;
-    else printf "%dB|%s\n", size, $2;
-  }')
+  done < <(find "${BACKUP_DIR}/configs" -name "*.tar.gz" -type f -printf '%s|%f\n' 2>/dev/null | sort -t'|' -k1 -rn | head -10)
 }
 
 # Restore backup
