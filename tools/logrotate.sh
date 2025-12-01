@@ -53,10 +53,10 @@ rotate_all() {
   print_header "Rotating logs"
   [[ -f "${LOGS_DIR}/latest.log" ]] && rotate_log "${LOGS_DIR}/latest.log"
   [[ -f "${LOGS_DIR}/debug.log" ]] && rotate_log "${LOGS_DIR}/debug.log"
-  find "$LOGS_DIR" -maxdepth 1 -name "*.log" -type f | while read -r log; do
-    local size_mb=$(du -m "$log" 2>/dev/null | cut -f1)
-    ((size_mb > LOG_SIZE_LIMIT_MB)) && rotate_log "$log"
-  done
+  # Use find with -size filter instead of du for better performance
+  while IFS= read -r -d '' log; do
+    rotate_log "$log"
+  done < <(find "$LOGS_DIR" -maxdepth 1 -name "*.log" -type f -size +"${LOG_SIZE_LIMIT_MB}M" -print0 2>/dev/null)
   print_success "Rotation complete"
 }
 
@@ -64,19 +64,21 @@ rotate_all() {
 compress_old() {
   print_header "Compressing old logs"
   local count=0
-  find "$LOGS_DIR" -maxdepth 1 -name "*.log" -type f -mtime +1 | while read -r log; do
-    local name=$(basename "$log")
+  # Use process substitution to preserve count variable
+  while IFS= read -r -d '' log; do
+    local name
+    name=$(basename "$log")
     [[ $name != "latest.log" && $name != "debug.log" && $name != "watchdog.log" ]] && {
       print_info "Compressing: $name"
       gzip "$log"
       ((count++))
     }
-  done
-  find "$ARCHIVE_DIR" -name "*.log" -type f | while read -r log; do
+  done < <(find "$LOGS_DIR" -maxdepth 1 -name "*.log" -type f -mtime +1 -print0 2>/dev/null)
+  while IFS= read -r -d '' log; do
     print_info "Compressing: $(basename "$log")"
     gzip "$log"
     ((count++))
-  done
+  done < <(find "$ARCHIVE_DIR" -name "*.log" -type f -print0 2>/dev/null)
   ((count > 0)) && print_success "Compressed $count files" || print_info "Nothing to compress"
 }
 
@@ -84,30 +86,35 @@ compress_old() {
 clean_old() {
   print_header "Cleaning logs older than ${MAX_LOG_AGE_DAYS} days"
   local count=0
-  find "$LOGS_DIR" -maxdepth 1 \( -name "*.log.gz" -o -name "*.log" \) -type f -mtime +"$MAX_LOG_AGE_DAYS" | while read -r log; do
+  # Use process substitution to preserve count variable
+  while IFS= read -r -d '' log; do
     print_info "Deleting: $(basename "$log")"
     rm -f "$log"
     ((count++))
-  done
-  find "$ARCHIVE_DIR" -name "*.log.gz" -type f -mtime +"$MAX_LOG_AGE_DAYS" | while read -r log; do
+  done < <(find "$LOGS_DIR" -maxdepth 1 \( -name "*.log.gz" -o -name "*.log" \) -type f -mtime +"$MAX_LOG_AGE_DAYS" -print0 2>/dev/null)
+  while IFS= read -r -d '' log; do
     print_info "Deleting: $(basename "$log")"
     rm -f "$log"
     ((count++))
-  done
+  done < <(find "$ARCHIVE_DIR" -name "*.log.gz" -type f -mtime +"$MAX_LOG_AGE_DAYS" -print0 2>/dev/null)
   ((count > 0)) && print_success "Deleted $count files" || print_info "Nothing to clean"
 }
 
 # Limit archived logs
 limit_archives() {
   print_header "Limiting archives to ${MAX_ARCHIVED_LOGS}"
-  local count=$(find "$ARCHIVE_DIR" -name "*.log.gz" -type f | wc -l)
+  # Single find with -printf is more efficient than find | wc -l
+  local files
+  mapfile -t files < <(find "$ARCHIVE_DIR" -name "*.log.gz" -type f -printf '%T@ %p\n' 2>/dev/null | sort -n)
+  local count=${#files[@]}
   ((count <= MAX_ARCHIVED_LOGS)) && {
     print_info "Archive count ($count) OK"
     return 0
   }
   print_info "Removing oldest archives..."
-  find "$ARCHIVE_DIR" -name "*.log.gz" -type f -printf '%T@ %p\n' |
-    sort -n | head -n -"$MAX_ARCHIVED_LOGS" | cut -d' ' -f2- | while read -r log; do
+  local to_remove=$((count - MAX_ARCHIVED_LOGS))
+  for ((i = 0; i < to_remove; i++)); do
+    local log="${files[i]#* }"  # Remove timestamp prefix
     rm -f "$log"
   done
   print_success "Archives cleaned"
@@ -121,24 +128,37 @@ show_stats() {
   echo "═══════════════════════════════════════════"
   echo ""
   [[ -d $LOGS_DIR ]] && {
-    local count=$(find "$LOGS_DIR" -maxdepth 1 -name "*.log*" -type f | wc -l)
-    local size=$(du -sh "$LOGS_DIR" 2>/dev/null | cut -f1)
+    # Single find call for count and single du for all stats
+    local count
+    count=$(find "$LOGS_DIR" -maxdepth 1 -name "*.log*" -type f -print 2>/dev/null | wc -l)
+    local size
+    size=$(du -sh "$LOGS_DIR" 2>/dev/null | cut -f1)
     echo "Current Logs:"
     echo "  Count: $count"
     echo "  Size: $size"
     echo ""
     echo "Active Logs:"
+    # Combine du calls for active logs
+    local active_logs=()
     for log in latest.log debug.log watchdog.log; do
-      [[ -f "${LOGS_DIR}/${log}" ]] && {
-        local s=$(du -h "${LOGS_DIR}/${log}" 2>/dev/null | cut -f1) lines=$(wc -l <"${LOGS_DIR}/${log}")
-        echo "  ${log}: ${s} (${lines} lines)"
-      }
+      [[ -f "${LOGS_DIR}/${log}" ]] && active_logs+=("${LOGS_DIR}/${log}")
     done
+    if [[ ${#active_logs[@]} -gt 0 ]]; then
+      # Single du call for all active logs
+      while IFS=$'\t' read -r s path; do
+        local log_name lines
+        log_name=$(basename "$path")
+        lines=$(wc -l <"$path" 2>/dev/null || echo 0)
+        echo "  ${log_name}: ${s} (${lines} lines)"
+      done < <(du -h "${active_logs[@]}" 2>/dev/null)
+    fi
     echo ""
   }
   [[ -d $ARCHIVE_DIR ]] && {
-    local count=$(find "$ARCHIVE_DIR" -name "*.log.gz" -type f | wc -l)
-    local size=$(du -sh "$ARCHIVE_DIR" 2>/dev/null | cut -f1)
+    local count
+    count=$(find "$ARCHIVE_DIR" -name "*.log.gz" -type f -print 2>/dev/null | wc -l)
+    local size
+    size=$(du -sh "$ARCHIVE_DIR" 2>/dev/null | cut -f1)
     echo "Archives:"
     echo "  Count: $count"
     echo "  Size: $size"

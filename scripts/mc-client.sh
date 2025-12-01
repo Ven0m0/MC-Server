@@ -90,8 +90,8 @@ extract_natives() {
   rm -rf "${dest_dir}/META-INF"
 }
 
-# Get aria2c options as array
-get_aria2c_opts_array() { echo "-x" "16" "-s" "16"; }
+# Get aria2c options as array (use: mapfile -t arr < <(get_aria2c_opts_array))
+get_aria2c_opts_array() { printf '%s\n' "-x" "16" "-s" "16"; }
 
 # Calculate total RAM in GB
 get_total_ram_gb() { awk '/MemTotal/ {printf "%.0f\n",$2/1024/1024}' /proc/meminfo 2>/dev/null; }
@@ -243,57 +243,49 @@ fi
 echo "[4/5] Downloading libraries..."
 CLASSPATH="$CLIENT_JAR"
 
-"$JSON_PROC" -c '.libraries[]' <"$VERSION_MANIFEST" | while IFS= read -r library; do
-  # Check if library applies to current OS
-  RULES=$(echo "$library" | "$JSON_PROC" -r '.rules // [] | length')
-  if [[ $RULES -gt 0 ]]; then
-    ALLOWED=$(echo "$library" | "$JSON_PROC" -r '
-            .rules | map(
-                select(.action == "allow") |
-                (.os.name // "any") as $os |
-                if $os == "any" or $os == "linux" then true else false end
-            ) | any
-        ')
-    if [[ $ALLOWED != "true" ]]; then
-      continue
-    fi
-  fi
-
-  # Get library download info
-  LIB_PATH=$(echo "$library" | "$JSON_PROC" -r '.downloads.artifact.path // empty')
-  LIB_URL=$(echo "$library" | "$JSON_PROC" -r '.downloads.artifact.url // empty')
-
-  if [[ -n $LIB_URL ]] && [[ -n $LIB_PATH ]]; then
-    LIB_FILE="$LIBRARIES_DIR/$LIB_PATH"
+# Extract all library info in a single JSON parse (major performance improvement)
+# Format: allowed|lib_path|lib_url|native_path|native_url
+"$JSON_PROC" -r '.libraries[] |
+  (
+    if (.rules // []) | length > 0 then
+      (.rules | map(select(.action == "allow") | (.os.name // "any") as $os | if $os == "any" or $os == "linux" then true else false end) | any)
+    else true end
+  ) as $allowed |
+  if $allowed then
+    [
+      "1",
+      (.downloads.artifact.path // ""),
+      (.downloads.artifact.url // ""),
+      (.downloads.classifiers["natives-linux"].path // ""),
+      (.downloads.classifiers["natives-linux"].url // "")
+    ] | join("|")
+  else empty end
+' <"$VERSION_MANIFEST" | while IFS='|' read -r allowed lib_path lib_url native_path native_url; do
+  # Process artifact
+  if [[ -n $lib_url ]] && [[ -n $lib_path ]]; then
+    LIB_FILE="$LIBRARIES_DIR/$lib_path"
 
     if [[ ! -f $LIB_FILE ]]; then
       ensure_dir "$(dirname "$LIB_FILE")"
-      echo "  Downloading $(basename "$LIB_PATH")..."
-      download_file "$LIB_URL" "$LIB_FILE"
+      echo "  Downloading $(basename "$lib_path")..."
+      download_file "$lib_url" "$LIB_FILE"
     fi
 
     CLASSPATH="$CLASSPATH:$LIB_FILE"
   fi
 
-  # Download natives if present
-  NATIVES=$(echo "$library" | "$JSON_PROC" -r '.downloads.classifiers // {} | keys | length')
-  if [[ $NATIVES -gt 0 ]]; then
-    NATIVE_KEY="natives-linux"
-    NATIVE_PATH=$(echo "$library" | "$JSON_PROC" -r ".downloads.classifiers[\"$NATIVE_KEY\"].path // empty")
-    NATIVE_URL=$(echo "$library" | "$JSON_PROC" -r ".downloads.classifiers[\"$NATIVE_KEY\"].url // empty")
+  # Process natives if present
+  if [[ -n $native_url ]] && [[ -n $native_path ]]; then
+    NATIVE_FILE="$LIBRARIES_DIR/$native_path"
 
-    if [[ -n $NATIVE_URL ]] && [[ -n $NATIVE_PATH ]]; then
-      NATIVE_FILE="$LIBRARIES_DIR/$NATIVE_PATH"
-
-      if [[ ! -f $NATIVE_FILE ]]; then
-        ensure_dir "$(dirname "$NATIVE_FILE")"
-        echo "  Downloading native $(basename "$NATIVE_PATH")..."
-        download_file "$NATIVE_URL" "$NATIVE_FILE"
-      fi
-
-      # Extract natives
-      extract_natives "$NATIVE_FILE" "$NATIVES_DIR"
+    if [[ ! -f $NATIVE_FILE ]]; then
+      ensure_dir "$(dirname "$NATIVE_FILE")"
+      echo "  Downloading native $(basename "$native_path")..."
+      download_file "$native_url" "$NATIVE_FILE"
     fi
+
+    # Extract natives
+    extract_natives "$NATIVE_FILE" "$NATIVES_DIR"
   fi
 done
 

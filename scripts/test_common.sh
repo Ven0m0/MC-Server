@@ -65,7 +65,8 @@ get_cpu_cores() { nproc 2>/dev/null || echo 4; }
 
 # Get aria2c download options
 get_aria2c_opts() { echo "-x 16 -s 16"; }
-get_aria2c_opts_array() { echo "-x" "16" "-s" "16"; }
+# Get aria2c options as array (use: mapfile -t arr < <(get_aria2c_opts_array))
+get_aria2c_opts_array() { printf '%s\n' "-x" "16" "-s" "16"; }
 
 # Create directory if it doesn't exist
 ensure_dir() { [[ ! -d $1 ]] && mkdir -p "$1" || return 0; }
