@@ -1,13 +1,9 @@
 #!/usr/bin/env bash
 # Simplified Minecraft server watchdog
-
-# Initialize strict mode
-set -euo pipefail
-shopt -s nullglob globstar
+set -euo pipefail; shopt -s nullglob globstar
 IFS=$'\n\t'
-export LC_ALL=C LANG=C
 user="${SUDO_USER:-${USER:-$(id -un)}}"
-export HOME="/home/${user}"
+export HOME="/home/${user}"  LC_ALL=C LANG=C
 SHELL="$(command -v bash 2>/dev/null || echo '/usr/bin/bash')"
 
 # Initialize SCRIPT_DIR
@@ -20,6 +16,7 @@ CHECK_INTERVAL=30
 MAX_RESTART_ATTEMPTS=3
 RESTART_COOLDOWN=300
 LOG_FILE="${SCRIPT_DIR}/logs/watchdog.log"
+SERVER_PORT=25565
 
 # State
 RESTART_COUNT=0
@@ -27,70 +24,35 @@ LAST_RESTART_TIME=0
 
 # Logging
 mkdir -p "$(dirname "$LOG_FILE")"
-log() {
-  local msg="[$(date '+%Y-%m-%d %H:%M:%S')] $*"
-  echo "$msg" | tee -a "$LOG_FILE"
-}
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"; }
 
 # Check if server is running
-is_server_running() {
-  pgrep -f "fabric-server-launch.jar" >/dev/null || pgrep -f "server.jar" >/dev/null
+is_server_running() { pgrep -f "fabric-server-launch.jar" >/dev/null || pgrep -f "server.jar" >/dev/null; }
+check_network() {
+  # If nc is available, check if port is actually open
+  if has_command nc; then
+    nc -z localhost "$SERVER_PORT" >/dev/null 2>&1
+    return $?
+  fi
+  return 0 # Skip check if nc not installed
 }
-
-# Can we restart?
-can_restart() {
-  local current_time
-  current_time=$(date +%s)
-  local time_since=$((current_time - LAST_RESTART_TIME))
-  ((time_since < RESTART_COOLDOWN)) && {
-    log "Too soon to restart. Wait $((RESTART_COOLDOWN - time_since))s"
-    return 1
-  }
-  ((RESTART_COUNT >= MAX_RESTART_ATTEMPTS)) && {
-    log "Max restart attempts ($MAX_RESTART_ATTEMPTS) reached"
-    return 1
-  }
+check_health() {
+  if ! is_server_running; then
+    log "Process not running."; return 1
+  fi
+  # Check Log Activity (Hang detection)
+  local log_file="${SCRIPT_DIR}/logs/latest.log"
+  if [[ -f $log_file ]]; then
+    local last_log=$(stat -c %Y "$log_file" 2>/dev/null || echo 0)
+    local idle=$(( $(date +%s) - last_log ))
+    if ((idle > 300)); then
+      # If no logs for 5 mins, check network before killing
+      if ! check_network; then
+        log "Stalled: No log activity for ${idle}s and port unreachable."; return 1
+      fi
+    fi
+  fi
   return 0
-}
-
-# Start server
-start_server() {
-  log "Starting server..."
-  [[ ! -x $SERVER_START_SCRIPT ]] && {
-    log "Start script not found"
-    return 1
-  }
-  cd "$SCRIPT_DIR"
-  command -v screen &>/dev/null && {
-    screen -dmS minecraft bash -c "cd '$SCRIPT_DIR' && '$SERVER_START_SCRIPT'"
-  } || command -v tmux &>/dev/null && {
-    tmux new-session -d -s minecraft "cd '$SCRIPT_DIR' && '$SERVER_START_SCRIPT'"
-  } || {
-    nohup "$SERVER_START_SCRIPT" >"${SCRIPT_DIR}/logs/server.log" 2>&1 &
-  }
-  sleep 30
-  is_server_running && {
-    log "Server started successfully"
-    LAST_RESTART_TIME=$(date +%s)
-    ((RESTART_COUNT++))
-    return 0
-  }
-  log "Server failed to start"
-  return 1
-}
-
-# Stop server
-stop_server() {
-  log "Stopping server..."
-  screen -list 2>/dev/null | grep -q "minecraft" && screen -S minecraft -X stuff "stop^M"
-  tmux list-sessions 2>/dev/null | grep -q "minecraft" && tmux send-keys -t minecraft "stop" Enter
-  local wait=0
-  while is_server_running && ((wait < 60)); do
-    sleep 5
-    ((wait += 5))
-  done
-  is_server_running && pkill -9 -f "fabric-server-launch.jar"
-  log "Server stopped"
 }
 
 # Restart server
@@ -103,10 +65,7 @@ restart_server() {
 
 # Check health
 check_health() {
-  is_server_running || {
-    log "Server not running"
-    return 1
-  }
+  is_server_running || { log "Server not running"; return 1; }
   local log_file="${SCRIPT_DIR}/logs/latest.log"
   [[ -f $log_file ]] && {
     local last_log
@@ -115,8 +74,7 @@ check_health() {
     now=$(date +%s)
     local idle=$((now - last_log))
     ((idle > 300)) && {
-      log "No log activity for ${idle}s"
-      return 1
+      log "No log activity for ${idle}s"; return 1; }
     }
   }
   return 0
