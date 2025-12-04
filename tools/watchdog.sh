@@ -24,11 +24,15 @@ LAST_RESTART_TIME=0
 
 # Logging
 mkdir -p "$(dirname "$LOG_FILE")"
-log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"; }
+log(){ printf '[%(%Y-%m-%d %H:%M:%S)T] %s\n' -1 "$*" | tee -a "$LOG_FILE"; }
+
+# Check if command exists
+has_command(){ command -v "$1" &>/dev/null; }
 
 # Check if server is running
-is_server_running() { pgrep -f "fabric-server-launch.jar" >/dev/null || pgrep -f "server.jar" >/dev/null; }
-check_network() {
+is_server_running(){ pgrep -f "fabric-server-launch.jar" >/dev/null || pgrep -f "server.jar" >/dev/null; }
+
+check_network(){
   # If nc is available, check if port is actually open
   if has_command nc; then
     nc -z localhost "$SERVER_PORT" >/dev/null 2>&1
@@ -36,7 +40,7 @@ check_network() {
   fi
   return 0 # Skip check if nc not installed
 }
-check_health() {
+check_health(){
   if ! is_server_running; then
     log "Process not running."; return 1
   fi
@@ -44,7 +48,7 @@ check_health() {
   local log_file="${SCRIPT_DIR}/logs/latest.log"
   if [[ -f $log_file ]]; then
     local last_log=$(stat -c %Y "$log_file" 2>/dev/null || echo 0)
-    local idle=$(( $(date +%s) - last_log ))
+    local idle=$(( $(printf '%(%s)T' -1) - last_log ))
     if ((idle > 300)); then
       # If no logs for 5 mins, check network before killing
       if ! check_network; then
@@ -55,33 +59,52 @@ check_health() {
   return 0
 }
 
+# Check if can restart (rate limiting)
+can_restart(){
+  local now
+  now=$(printf '%(%s)T' -1)
+  local time_since_last=$((now - LAST_RESTART_TIME))
+
+  if ((time_since_last < RESTART_COOLDOWN && RESTART_COUNT >= MAX_RESTART_ATTEMPTS)); then
+    log "Too many restarts, waiting for cooldown..."
+    return 1
+  fi
+
+  LAST_RESTART_TIME=$now
+  ((RESTART_COUNT++))
+  return 0
+}
+
+# Start server
+start_server(){
+  if [[ ! -x $SERVER_START_SCRIPT ]]; then
+    log "Server start script not found or not executable: ${SERVER_START_SCRIPT}"
+    return 1
+  fi
+  log "Starting server..."
+  bash "$SERVER_START_SCRIPT" &
+  sleep 5
+  return 0
+}
+
+# Stop server
+stop_server(){
+  log "Stopping server..."
+  pkill -f "fabric-server-launch.jar" || pkill -f "server.jar" || true
+  sleep 2
+  return 0
+}
+
 # Restart server
-restart_server() {
+restart_server(){
   log "Restarting server..."
   can_restart || return 1
   is_server_running && stop_server
   start_server
 }
 
-# Check health
-check_health() {
-  is_server_running || { log "Server not running"; return 1; }
-  local log_file="${SCRIPT_DIR}/logs/latest.log"
-  [[ -f $log_file ]] && {
-    local last_log
-    last_log=$(stat -c %Y "$log_file" 2>/dev/null || echo 0)
-    local now
-    now=$(date +%s)
-    local idle=$((now - last_log))
-    ((idle > 300)) && {
-      log "No log activity for ${idle}s"; return 1; }
-    }
-  }
-  return 0
-}
-
 # Monitor mode
-monitor_mode() {
+monitor_mode(){
   log "Watchdog started (interval: ${CHECK_INTERVAL}s, max attempts: ${MAX_RESTART_ATTEMPTS})"
   while true; do
     check_health || {
@@ -105,7 +128,7 @@ monitor_mode() {
 }
 
 # Show usage
-show_usage() {
+show_usage(){
   cat <<EOF
 Minecraft Server Watchdog
 

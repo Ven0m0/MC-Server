@@ -39,9 +39,9 @@ get_heap_size_gb(){
 get_cpu_cores(){ nproc 2>/dev/null || echo 4; }
 
 # Output formatting helpers
-print_header(){ echo -e "\033[0;34m==>\033[0m $1"; }
-print_error(){ echo -e "\033[0;31m✗\033[0m $1" >&2; }
-print_info(){ echo -e "\033[1;33m→\033[0m $1"; }
+print_header(){ printf '\033[0;34m==>\033[0m %s\n' "$1"; }
+print_error(){ printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
+print_info(){ printf '\033[1;33m→\033[0m %s\n' "$1"; }
 
 # Configuration
 : "${SERVER_JAR:=server.jar}"
