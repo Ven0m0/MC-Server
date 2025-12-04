@@ -84,3 +84,6 @@ name = "shellcheck"
 
 [[plugin]]
 name = "yamllint"
+
+[[plugin]]
+name = "markdownlint"
