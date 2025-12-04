@@ -1,5 +1,24 @@
-# Mise configuration for MC-Server tools
-# See https://mise.jdx.dev/ for more information
+# Mise Configuration | https://mise.jdx.dev/configuration.html
+[settings]
+yes = true
+auto_install = true
+lockfile = true
+activate_aggressive = true
+gix = true
+go_skip_checksum = true
+
+[settings.python]
+uv_venv_auto = true
+uv_venv_create_args = ["--system-site-packages", "--seed"]
+
+[settings.cargo]
+binstall = true
+
+[settings.pipx]
+uvx = true
+
+[settings.npm]
+bun = true
 
 [tools]
 #java = "oracle-graalvm"
