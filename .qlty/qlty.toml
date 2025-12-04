@@ -80,4 +80,7 @@ name = "ripgrep"
 mode = "comment"
 
 [[plugin]]
+name = "shellcheck"
+
+[[plugin]]
 name = "yamllint"
