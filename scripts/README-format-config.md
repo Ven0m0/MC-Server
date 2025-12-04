@@ -141,9 +141,9 @@ Use this in CI/CD pipelines to enforce formatting standards.
 The script is integrated into a GitHub Actions workflow that:
 
 1. **Automatically validates** formatting on all PRs
-2. **Auto-fixes** formatting on pushes to main/claude branches
-3. **Comments on PRs** when formatting is needed
-4. **Validates JSON/YAML** syntax separately
+1. **Auto-fixes** formatting on pushes to main/claude branches
+1. **Comments on PRs** when formatting is needed
+1. **Validates JSON/YAML** syntax separately
 
 ### Workflow Features
 
@@ -158,8 +158,8 @@ The script is integrated into a GitHub Actions workflow that:
 You can manually trigger the workflow with different modes:
 
 1. Go to Actions → Config Format & Lint
-2. Click "Run workflow"
-3. Select mode: check, format, or minify
+1. Click "Run workflow"
+1. Select mode: check, format, or minify
 
 ## Exclusions
 
@@ -219,7 +219,7 @@ If you see warnings about YAML formatting being skipped:
    chmod +x /usr/local/bin/yq
    ```
 
-2. Or install yamlfmt:
+1. Or install yamlfmt:
 
    ```bash
    go install github.com/google/yamlfmt/cmd/yamlfmt@latest

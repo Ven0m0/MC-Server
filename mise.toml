@@ -2,9 +2,9 @@
 # See https://mise.jdx.dev/ for more information
 
 [tools]
-java = "oracle-graalvm"
+#java = "oracle-graalvm"
 "cargo:https://github.com/ComunidadAylas/PackSquash" = "latest"
 "ubi:zeroBzeroT/ChunkCleaner" = "latest"
 
-[env]
-_.java.GRAALVM_HOME = "${MISE_INSTALLS}/graalvm/${version}"
+#[env]
+#_.java.GRAALVM_HOME = "${MISE_INSTALLS}/graalvm/${version}"

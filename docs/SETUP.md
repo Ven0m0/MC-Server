@@ -463,8 +463,8 @@ cd MC-Server-2
 Use custom world generation mods:
 
 1. Add world gen mods (e.g., Terralith, Amplified Nether)
-2. Configure in respective config files
-3. Generate new world or use on fresh server
+1. Configure in respective config files
+1. Generate new world or use on fresh server
 
 ## Verification
 
@@ -504,11 +504,11 @@ tail -f logs/latest.log
 ## Next Steps
 
 1. Configure plugins in `config/` directory
-2. Set up automated backups (cron)
-3. Enable watchdog for auto-restart
-4. Configure whitelist and permissions
-5. Optimize performance based on player count
-6. Set up monitoring dashboard
+1. Set up automated backups (cron)
+1. Enable watchdog for auto-restart
+1. Configure whitelist and permissions
+1. Optimize performance based on player count
+1. Set up monitoring dashboard
 
 For troubleshooting, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
