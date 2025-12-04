@@ -57,8 +57,8 @@ declare -i TOTAL_SIZE_AFTER=0
 #   $1 - Color code
 #   $2 - Message
 #######################################
-print_msg() {
-  echo -e "${1}${2}${NC}"
+print_msg(){
+  printf '%b' "${1}${2}${NC}\n"
 }
 
 #######################################
@@ -66,7 +66,7 @@ print_msg() {
 # Arguments:
 #   $1 - Error message
 #######################################
-error_exit() {
+error_exit(){
   print_msg "$RED" "ERROR: $1" >&2
   exit 1
 }
@@ -78,14 +78,14 @@ error_exit() {
 # Returns:
 #   0 if exists, 1 otherwise
 #######################################
-command_exists() {
+command_exists(){
   command -v "$1" >/dev/null 2>&1
 }
 
 #######################################
 # Check required dependencies
 #######################################
-check_dependencies() {
+check_dependencies(){
   local missing_deps=()
 
   # Check for jq (required for JSON)
@@ -119,7 +119,7 @@ check_dependencies() {
 # Returns:
 #   Array of find arguments to exclude directories and patterns
 #######################################
-build_exclusions() {
+build_exclusions(){
   local -a exclusions=()
 
   # Exclude directories
@@ -142,7 +142,7 @@ build_exclusions() {
 # Returns:
 #   File size in bytes
 #######################################
-get_file_size() {
+get_file_size(){
   stat -f%z "$1" 2>/dev/null || stat -c%s "$1" 2>/dev/null || echo 0
 }
 
@@ -153,7 +153,7 @@ get_file_size() {
 # Returns:
 #   0 on success, 1 on failure
 #######################################
-format_json() {
+format_json(){
   local file="$1"
   local temp_file="${file}.tmp"
 
@@ -218,7 +218,7 @@ format_json() {
 # Returns:
 #   0 on success, 1 on failure
 #######################################
-format_yaml() {
+format_yaml(){
   local file="$1"
   local temp_file="${file}.tmp"
 
@@ -284,7 +284,7 @@ format_yaml() {
 # Arguments:
 #   $1 - File path
 #######################################
-process_file() {
+process_file(){
   local file="$1"
 
   [[ ${VERBOSE} == true ]] && print_msg "$BLUE" "Processing: ${file}"
@@ -315,7 +315,7 @@ process_file() {
 # Arguments:
 #   $1 - Target directory (optional, defaults to PROJECT_ROOT)
 #######################################
-process_directory() {
+process_directory(){
   local target_dir="${1:-${PROJECT_ROOT}}"
 
   print_msg "$BLUE" "Processing config files in: ${target_dir}"
@@ -362,7 +362,7 @@ process_directory() {
 #######################################
 # Print usage information
 #######################################
-usage() {
+usage(){
   cat <<EOF
 Config Format/Lint/Autofix Script
 
@@ -396,7 +396,7 @@ EOF
 #######################################
 # Parse command line arguments
 #######################################
-parse_args() {
+parse_args(){
   while [[ $# -gt 0 ]]; do
     case $1 in
     -m | --mode)
@@ -441,7 +441,7 @@ parse_args() {
 #######################################
 # Print summary statistics
 #######################################
-print_summary() {
+print_summary(){
   echo
   print_msg "$BLUE" "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   print_msg "$BLUE" "Summary"
@@ -466,7 +466,7 @@ print_summary() {
 #######################################
 # Main function
 #######################################
-main() {
+main(){
   local TARGET_DIR="$PROJECT_ROOT"
 
   parse_args "$@"

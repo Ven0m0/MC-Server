@@ -12,10 +12,10 @@ export HOME="/home/${user}"
 SHELL="$(command -v bash 2>/dev/null || echo '/usr/bin/bash')"
 
 # Check if command exists
-has_command() { command -v "$1" &>/dev/null; }
+has_command(){ command -v "$1" &>/dev/null; }
 
 # Check if required commands are available
-check_dependencies() {
+check_dependencies(){
   local missing=()
   for cmd in "$@"; do
     has_command "$cmd" || missing+=("$cmd")
@@ -28,7 +28,7 @@ check_dependencies() {
 }
 
 # Detect JSON processor (prefer jaq over jq)
-get_json_processor() {
+get_json_processor(){
   has_command jaq && {
     echo "jaq"
     return
@@ -42,7 +42,7 @@ get_json_processor() {
 }
 
 # Fetch URL to stdout
-fetch_url() {
+fetch_url(){
   local url="$1"
   has_command aria2c && {
     aria2c -q -d /tmp -o - "$url" 2>/dev/null
@@ -61,7 +61,7 @@ fetch_url() {
 }
 
 # Download file with aria2c or curl fallback
-download_file() {
+download_file(){
   local url="$1" output="$2" connections="${3:-8}"
   has_command aria2c && {
     aria2c -x "$connections" -s "$connections" -o "$output" "$url"
@@ -80,10 +80,10 @@ download_file() {
 }
 
 # Create directory if it doesn't exist
-ensure_dir() { [[ ! -d $1 ]] && mkdir -p "$1" || return 0; }
+ensure_dir(){ [[ ! -d $1 ]] && mkdir -p "$1" || return 0; }
 
 # Extract natives from JAR file
-extract_natives() {
+extract_natives(){
   local jar_file="$1" dest_dir="$2"
   ensure_dir "$dest_dir"
   unzip -q -o "$jar_file" -d "$dest_dir" 2>/dev/null || :
@@ -91,13 +91,13 @@ extract_natives() {
 }
 
 # Get aria2c options as array (use: mapfile -t arr < <(get_aria2c_opts_array))
-get_aria2c_opts_array() { printf '%s\n' "-x" "16" "-s" "16"; }
+get_aria2c_opts_array(){ printf '%s\n' "-x" "16" "-s" "16"; }
 
 # Calculate total RAM in GB
-get_total_ram_gb() { awk '/MemTotal/ {printf "%.0f\n",$2/1024/1024}' /proc/meminfo 2>/dev/null; }
+get_total_ram_gb(){ awk '/MemTotal/ {printf "%.0f\n",$2/1024/1024}' /proc/meminfo 2>/dev/null; }
 
 # Calculate client memory allocation
-get_client_xms_gb() {
+get_client_xms_gb(){
   local total_ram
   total_ram=$(get_total_ram_gb)
   local xms=$((total_ram / 4))
@@ -105,7 +105,7 @@ get_client_xms_gb() {
   echo "$xms"
 }
 
-get_client_xmx_gb() {
+get_client_xmx_gb(){
   local total_ram
   total_ram=$(get_total_ram_gb)
   local xmx=$((total_ram / 2))
