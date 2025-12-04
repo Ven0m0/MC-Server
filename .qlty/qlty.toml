@@ -59,3 +59,25 @@ mode = "comment"
 [[source]]
 name = "default"
 default = true
+
+[[plugin]]
+name = "actionlint"
+
+[[plugin]]
+name = "ast-grep"
+
+[[plugin]]
+name = "biome"
+
+[[plugin]]
+name = "eslint"
+
+[[plugin]]
+name = "prettier"
+
+[[plugin]]
+name = "ripgrep"
+mode = "comment"
+
+[[plugin]]
+name = "yamllint"
