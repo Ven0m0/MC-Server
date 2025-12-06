@@ -9,6 +9,8 @@
 - **Log Maintenance**: `./tools/logrotate.sh maintenance`
 - **Lint/Format Configs**: `./scripts/format-config.sh --mode [format|check|minify]`
 - **Test**: `./scripts/test_common.sh`
+- **Setup lazymc**: `./scripts/lazymc-setup.sh [install|config]`
+- **Manage lazymc**: `./tools/lazymc.sh [start|stop|restart|status|logs|follow]`
 
 ## Code Style & Standards
 - **Shell**: Bash 5.0+. Shebang `#!/usr/bin/env bash`.
@@ -24,7 +26,7 @@
 - **Core**: Bash Scripts (Management, Automation, Monitoring).
 - **Runtime**: Java 21+ (GraalVM Enterprise/Community or Eclipse Temurin).
 - **Server**: Fabric Loader + Minecraft Java Edition.
-- **Proxy/Tunnel**: Playit.gg, Infrarust.
+- **Proxy/Tunnel**: Playit.gg, Infrarust, lazymc (auto sleep/wake).
 - **Geyser**: Bedrock/Java interoperability.
 
 ## Tool Preferences
