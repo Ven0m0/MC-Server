@@ -3,7 +3,8 @@
 echo "Taking ownership of all server files/folders in dirname/minecraft..."
 sudo chown -R userxname dirname/minecraft
 sudo chmod -R 755 dirname/minecraft/*.sh
-
+umask 077
+sudo systemctl daemon-reload
 ```
 
 ### Service
@@ -29,3 +30,8 @@ WantedBy=multi-user.target
 ```markdown
 -XX:-UseAESCTRIntrinsics
 ```
+
+### Other repos to integrate
+
+- https://github.com/hpi-swa/native-minecraft-server
+- https://github.com/oddlama/minecraft-server
