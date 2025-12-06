@@ -49,20 +49,15 @@ fetch_url(){
 # Download file with aria2c or curl fallback
 download_file(){
   local url="$1" output="$2" connections="${3:-8}"
-  has_command aria2c && {
-    aria2c -x "$connections" -s "$connections" -o "$output" "$url"
-    return
-  }
   has_command curl && {
-    curl -fsL -o "$output" "$url"
+    curl -fsL -H "Accept-Encoding: identity" -H "Accept-Language: en" -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4.212 Safari/537.36" -o "$output" "$url"
     return
   }
   has_command wget && {
     wget -qO "$output" "$url"
     return
   }
-  echo "Error: No download tool found (aria2c, curl, or wget)" >&2
-  return 1
+  echo "Error: No download tool found (aria2c, curl, or wget)" >&2; return 1
 }
 
 # Output formatting helpers
