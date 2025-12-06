@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # lazymc-setup.sh: Install and configure lazymc for automatic server sleep
 set -euo pipefail
+shopt -s nullglob globstar
+IFS=$'\n\t'
 
 # Output formatting helpers
 print_header() { printf '\033[0;34m==>\033[0m %s\n' "$1"; }
@@ -14,7 +16,7 @@ has_command() { command -v "$1" &>/dev/null; }
 # Configuration
 LAZYMC_VERSION="${LAZYMC_VERSION:-0.2.11}"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
-CONFIG_DIR="${CONFIG_DIR:-$(pwd)/config}"
+CONFIG_DIR="${CONFIG_DIR:-$PWD/config}"
 LAZYMC_CONFIG="${CONFIG_DIR}/lazymc.toml"
 
 # Detect architecture

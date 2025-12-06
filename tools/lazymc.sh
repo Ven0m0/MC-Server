@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # lazymc.sh: Manage lazymc for automatic server sleep/wake
 set -euo pipefail
+shopt -s nullglob globstar
+IFS=$'\n\t'
 
 # Output formatting helpers
 print_header() { printf '\033[0;34m==>\033[0m %s\n' "$1"; }
@@ -12,7 +14,7 @@ print_info() { printf '\033[1;33m→\033[0m %s\n' "$1"; }
 has_command() { command -v "$1" &>/dev/null; }
 
 # Configuration
-CONFIG_DIR="${CONFIG_DIR:-$(pwd)/config}"
+CONFIG_DIR="${CONFIG_DIR:-$PWD/config}"
 LAZYMC_CONFIG="${CONFIG_DIR}/lazymc.toml"
 LAZYMC_PID_FILE="/tmp/lazymc.pid"
 LAZYMC_LOG_FILE="logs/lazymc.log"
@@ -41,9 +43,13 @@ start_lazymc() {
   check_config
 
   # Check if already running
-  if [[ -f $LAZYMC_PID_FILE ]] && kill -0 "$(cat "$LAZYMC_PID_FILE")" 2>/dev/null; then
-    print_info "lazymc is already running (PID: $(cat "$LAZYMC_PID_FILE"))"
-    return 0
+  if [[ -f $LAZYMC_PID_FILE ]]; then
+    local existing_pid
+    existing_pid="$(cat "$LAZYMC_PID_FILE")"
+    if kill -0 "$existing_pid" 2>/dev/null; then
+      print_info "lazymc is already running (PID: ${existing_pid})"
+      return 0
+    fi
   fi
 
   print_header "Starting lazymc"
