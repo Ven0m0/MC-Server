@@ -58,20 +58,15 @@ fetch_url(){
 # Download file with aria2c or curl fallback
 download_file(){
   local url="$1" output="$2" connections="${3:-8}"
-  has_command aria2c && {
-    aria2c -x "$connections" -s "$connections" -o "$output" "$url"
-    return
-  }
   has_command curl && {
-    curl -fsL -o "$output" "$url"
+    curl -fsL -H "Accept-Encoding: identity" -H "Accept-Language: en" -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4.212 Safari/537.36" -o "$output" "$url"
     return
   }
   has_command wget && {
     wget -qO "$output" "$url"
     return
   }
-  echo "Error: No download tool found (aria2c, curl, or wget)" >&2
-  return 1
+  echo "Error: No download tool found (aria2c, curl, or wget)" >&2; return 1
 }
 
 # Create directory if it doesn't exist
@@ -84,9 +79,6 @@ extract_natives(){
   unzip -q -o "$jar_file" -d "$dest_dir" 2>/dev/null || :
   rm -rf "${dest_dir}/META-INF"
 }
-
-# Get aria2c options as array (use: mapfile -t arr < <(get_aria2c_opts_array))
-get_aria2c_opts_array(){ printf '%s\n' "-x" "16" "-s" "16"; }
 
 # Calculate total RAM in GB
 get_total_ram_gb(){ awk '/MemTotal/ {printf "%.0f\n",$2/1024/1024}' /proc/meminfo 2>/dev/null; }
@@ -214,11 +206,6 @@ done
 
 # Download missing assets with aria2c
 if [[ -f $ASSET_INPUT_FILE ]] && [[ -s $ASSET_INPUT_FILE ]]; then
-  if has_command aria2c; then
-    echo "  Downloading missing assets with aria2c..."
-    mapfile -t ARIA2_OPTS < <(get_aria2c_opts_array)
-    aria2c "${ARIA2_OPTS[@]}" -j 16 -i "$ASSET_INPUT_FILE" --auto-file-renaming=false --allow-overwrite=true
-  else
     echo "  Warning: aria2c not found, assets download may be slow"
     "$JSON_PROC" -r '.objects[] | .hash' <"$ASSET_INDEX_FILE" | while read -r hash; do
       HASH_PREFIX="${hash:0:2}"
