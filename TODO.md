@@ -1,14 +1,12 @@
-# Bash
-
+### Bash
 ```bash
 echo "Taking ownership of all server files/folders in dirname/minecraft..."
 sudo chown -R userxname dirname/minecraft
 sudo chmod -R 755 dirname/minecraft/*.sh
+
 ```
 
-
 ### Service
-
 ```markdown
 [Unit]
 Description=Minecraft Server Service
@@ -25,4 +23,9 @@ TimeoutStartSec=1800
 
 [Install]
 WantedBy=multi-user.target
+```
+
+### Java flags
+```markdown
+-XX:-UseAESCTRIntrinsics
 ```
