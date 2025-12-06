@@ -58,3 +58,5 @@ WantedBy=multi-user.target
 - https://github.com/MinecraftServerControl/mscs
 - https://github.com/msmhq/msm
 - https://github.com/Fenixin/Minecraft-Region-Fixer
+- https://github.com/TheRemote/MinecraftBedrockServer
+
