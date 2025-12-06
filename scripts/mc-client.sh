@@ -44,20 +44,15 @@ get_json_processor(){
 # Fetch URL to stdout
 fetch_url(){
   local url="$1"
-  has_command aria2c && {
-    aria2c -q -d /tmp -o - "$url" 2>/dev/null
-    return
-  }
   has_command curl && {
-    curl -fsSL "$url"
+    curl -fsSL -H "Accept-Encoding: identity" -H "Accept-Language: en" -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4.212 Safari/537.36" "$url"
     return
   }
   has_command wget && {
     wget -qO- "$url"
     return
   }
-  echo "Error: No download tool found (aria2c, curl, or wget)" >&2
-  return 1
+  echo "Error: No download tool found (aria2c, curl, or wget)" >&2; return 1
 }
 
 # Download file with aria2c or curl fallback
