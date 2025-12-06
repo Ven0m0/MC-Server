@@ -14,13 +14,31 @@ Description=Minecraft Server Service
 After=network-online.target
 
 [Service]
-User=userxname
+User=minecraft
+Group=minecraft
 WorkingDirectory=dirname/minecraft
 Type=forking
 ExecStart=/bin/bash dirname/minecraft/start.sh
 ExecStop=/bin/bash dirname/minecraft/stop.sh
 GuessMainPID=no
 TimeoutStartSec=1800
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+NoNewPrivileges=true
+PrivateUsers=true
+ProtectClock=true
+ProtectKernelLogs=true
+ProtectHostname=true
+LockPersonality=true
+RestrictSUIDSGID=true
+RestrictNamespaces=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+AmbientCapabilities=CAP_KILL
+CapabilityBoundingSet=CAP_KILL
+WorkingDirectory=/var/lib/minecraft/deploy/server
+ReadWriteDirectories=/var/lib/minecraft
 
 [Install]
 WantedBy=multi-user.target
