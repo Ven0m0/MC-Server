@@ -54,4 +54,6 @@ WantedBy=multi-user.target
 - https://github.com/hpi-swa/native-minecraft-server
 - https://github.com/oddlama/minecraft-server
 - https://github.com/Dan-megabyte/minecraft-server
-- 
+- https://github.com/Edenhofer/minecraft-server
+- https://github.com/MinecraftServerControl/mscs
+- https://github.com/msmhq/msm
