@@ -15,15 +15,9 @@ has_command() { command -v "$1" &>/dev/null; }
 
 # Detect JSON processor (prefer jaq over jq)
 get_json_processor() {
-  has_command jaq && {
-    echo "jaq"
-    return
-  }
-  has_command jq && {
-    echo "jq"
-    return
-  }
-  echo "Error: No JSON processor found. Please install jq or jaq." >&2
+  has_command jaq && { printf 'jaq'; return; }
+  has_command jq && { printf 'jq'; return; }
+  printf 'Error: No JSON processor found. Please install jq or jaq.\n' >&2
   return 1
 }
 
@@ -34,11 +28,8 @@ download_file() {
     curl -fsL -H "Accept-Encoding: identity" -H "Accept-Language: en" -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4.212 Safari/537.36" -o "$output" "$url"
     return
   }
-  has_command wget && {
-    wget -qO "$output" "$url"
-    return
-  }
-  echo "Error: No download tool found (aria2c, curl, or wget)" >&2
+  has_command wget && { wget -qO "$output" "$url"; return; }
+  printf 'Error: No download tool found (aria2c, curl, or wget)\n' >&2
   return 1
 }
 
@@ -57,7 +48,7 @@ JSON_PROC=$(get_json_processor) || exit 1
 # Setup server environment
 setup_server() {
   print_header "Setting up server environment"
-  echo "eula=true" >eula.txt
+  printf 'eula=true\n' >eula.txt
   [[ -d world ]] && sudo chown -R "$(id -un):$(id -gn)" world 2>/dev/null || :
   sudo chmod -R 755 ./*.sh 2>/dev/null || :
   print_success "Server setup complete"
@@ -85,10 +76,7 @@ EOF
 
 # Update with Ferium
 ferium_update() {
-  has_command ferium || {
-    print_error "Ferium not installed"
-    return 1
-  }
+  has_command ferium || { print_error "Ferium not installed"; return 1; }
   print_header "Running Ferium update"
   ferium scan && ferium upgrade
   [[ -d mods/.old ]] && rm -rf mods/.old
@@ -97,17 +85,11 @@ ferium_update() {
 
 # Repack mods
 repack_mods() {
-  has_command mc-repack || {
-    print_error "mc-repack not installed"
-    return 1
-  }
+  has_command mc-repack || { print_error "mc-repack not installed"; return 1; }
   print_header "Repacking mods"
   local mods_src="${1:-$HOME/Documents/MC/Minecraft/mods}"
   local mods_dst="${2:-$HOME/Documents/MC/Minecraft/mods-$(printf '%(%Y%m%d_%H%M)T' -1)}"
-  [[ ! -d $mods_src ]] && {
-    print_error "Source not found: $mods_src"
-    return 1
-  }
+  [[ ! -d $mods_src ]] && { print_error "Source not found: $mods_src"; return 1; }
   mc-repack jars -c "$MC_REPACK_CONFIG" --in "$mods_src" --out "$mods_dst"
   print_success "Repack complete: $mods_dst"
 }
@@ -136,18 +118,9 @@ full_update() {
   print_header "Running full update"
   setup_server
   setup_mc_repack
-  has_command ferium && {
-    ferium_update
-    echo ""
-  }
-  has_command mc-repack && {
-    repack_mods
-    echo ""
-  }
-  [[ -d "$HOME/Documents/MC/Minecraft/config/Geyser-Fabric" ]] && {
-    update_geyserconnect
-    echo ""
-  }
+  has_command ferium && { ferium_update; printf '\n'; }
+  has_command mc-repack && { repack_mods; printf '\n'; }
+  [[ -d "$HOME/Documents/MC/Minecraft/config/Geyser-Fabric" ]] && { update_geyserconnect; printf '\n'; }
   print_success "Full update complete!"
 }
 
@@ -180,15 +153,12 @@ case "${1:-}" in
   setup) setup_server ;;
   setup-repack) setup_mc_repack ;;
   ferium) ferium_update ;;
-  repack) repack_mods "$2" "$3" ;;
-  geyser | geyserconnect) update_geyserconnect "$2" ;;
+  repack) repack_mods "${2:-}" "${3:-}" ;;
+  geyser | geyserconnect) update_geyserconnect "${2:-}" ;;
   full-update) full_update ;;
   help | --help | -h) show_help ;;
   *)
-    [[ -z $1 ]] && show_help || {
-      print_error "Unknown command: $1"
-      show_help
-    }
+    [[ -z ${1:-} ]] && show_help || { print_error "Unknown command: $1"; show_help; }
     exit 1
     ;;
 esac

@@ -17,8 +17,8 @@ check_dependencies() {
     has_command "$cmd" || missing+=("$cmd")
   done
   ((${#missing[@]})) && {
-    echo "Error: Missing required dependencies: ${missing[*]}" >&2
-    echo "Please install them before continuing." >&2
+    printf 'Error: Missing required dependencies: %s\n' "${missing[*]}" >&2
+    printf 'Please install them before continuing.\n' >&2
     return 1
   }
 }
@@ -33,7 +33,7 @@ get_heap_size_gb() {
   total_ram=$(get_total_ram_gb)
   local heap=$((total_ram - reserved))
   ((heap < 1)) && heap=1
-  echo "$heap"
+  printf '%d' "$heap"
 }
 
 # Get number of CPU cores
@@ -60,7 +60,7 @@ check_dependencies java || exit 1
 # Memory Configuration
 CPU_CORES=$(get_cpu_cores)
 HEAP_SIZE=$(get_heap_size_gb 2)
-[[ $HEAP_SIZE -lt $MIN_HEAP_GB ]] && HEAP_SIZE=$MIN_HEAP_GB
+((HEAP_SIZE < MIN_HEAP_GB)) && HEAP_SIZE=$MIN_HEAP_GB
 XMS="${HEAP_SIZE}G"
 XMX="${HEAP_SIZE}G"
 
@@ -127,7 +127,7 @@ fi
 
 # Launch Server
 print_header "Starting Minecraft Server"
-echo "  JAR: ${SERVER_JAR}"
-echo "  Memory: ${XMS} - ${XMX}"
-echo "  CPU Cores: ${CPU_CORES}"
+printf '  JAR: %s\n' "$SERVER_JAR"
+printf '  Memory: %s - %s\n' "$XMS" "$XMX"
+printf '  CPU Cores: %s\n' "$CPU_CORES"
 exec "$JAVA_CMD" "${JVM_FLAGS[@]}" -jar "$SERVER_JAR" --nogui

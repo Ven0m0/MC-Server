@@ -15,34 +15,19 @@ has_command() { command -v "$1" &>/dev/null; }
 
 # Detect JSON processor (prefer jaq over jq)
 get_json_processor() {
-  has_command jaq && {
-    echo "jaq"
-    return
-  }
-  has_command jq && {
-    echo "jq"
-    return
-  }
-  echo "Error: No JSON processor found. Please install jq or jaq." >&2
+  has_command jaq && { printf 'jaq'; return; }
+  has_command jq && { printf 'jq'; return; }
+  printf 'Error: No JSON processor found. Please install jq or jaq.\n' >&2
   return 1
 }
 
 # Fetch URL to stdout
 fetch_url() {
   local url="$1"
-  has_command aria2c && {
-    aria2c -q -d /tmp -o - "$url" 2>/dev/null
-    return
-  }
-  has_command curl && {
-    curl -fsSL "$url"
-    return
-  }
-  has_command wget && {
-    wget -qO- "$url"
-    return
-  }
-  echo "Error: No download tool found (aria2c, curl, or wget)" >&2
+  has_command aria2c && { aria2c -q -d /tmp -o - "$url" 2>/dev/null; return; }
+  has_command curl && { curl -fsSL "$url"; return; }
+  has_command wget && { wget -qO- "$url"; return; }
+  printf 'Error: No download tool found (aria2c, curl, or wget)\n' >&2
   return 1
 }
 
@@ -53,11 +38,8 @@ download_file() {
     curl -fsL -H "Accept-Encoding: identity" -H "Accept-Language: en" -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4.212 Safari/537.36" -o "$output" "$url"
     return
   }
-  has_command wget && {
-    wget -qO "$output" "$url"
-    return
-  }
-  echo "Error: No download tool found (aria2c, curl, or wget)" >&2
+  has_command wget && { wget -qO "$output" "$url"; return; }
+  printf 'Error: No download tool found (aria2c, curl, or wget)\n' >&2
   return 1
 }
 

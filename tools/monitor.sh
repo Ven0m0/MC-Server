@@ -45,25 +45,25 @@ check_port() {
 # Get server status
 get_status() {
   print_header "Server Status"
-  check_process && echo "  Process: Running" || echo "  Process: Not Running"
-  check_port && echo "  Port $SERVER_PORT: Listening" || echo "  Port $SERVER_PORT: Not Listening"
-  echo ""
+  check_process && printf '  Process: Running\n' || printf '  Process: Not Running\n'
+  check_port && printf '  Port %s: Listening\n' "$SERVER_PORT" || printf '  Port %s: Not Listening\n' "$SERVER_PORT"
+  printf '\n'
 }
 
 # Get memory usage
 get_memory() {
-  local pid=$(pgrep -f "fabric-server-launch.jar" | head -1)
+  local pid
+  pid=$(pgrep -f "fabric-server-launch.jar" | head -1)
   [[ -z $pid ]] && {
-    echo "Server not running"
+    printf 'Server not running\n'
     return 1
   }
   print_header "Memory Usage"
   local mem_kb
   mem_kb=$(ps -p "$pid" -o rss= | awk '{print $1}')
   local mem_mb=$((mem_kb / 1024))
-  echo "  PID: $pid"
-  echo "  Memory: ${mem_mb} MB"
-  echo ""
+  printf '  PID: %s\n' "$pid"
+  printf '  Memory: %s MB\n\n' "$mem_mb"
 }
 
 # Get disk usage
@@ -79,80 +79,79 @@ get_disk() {
     while IFS=$'\t' read -r size path; do
       local name
       name=$(basename "$path")
-      [[ $name == "world" ]] && echo "  World: $size"
-      [[ $name == "backups" ]] && echo "  Backups: $size"
-      [[ $name == "logs" ]] && echo "  Logs: $size"
+      [[ $name == "world" ]] && printf '  World: %s\n' "$size"
+      [[ $name == "backups" ]] && printf '  Backups: %s\n' "$size"
+      [[ $name == "logs" ]] && printf '  Logs: %s\n' "$size"
     done < <(du -sh "${dirs_to_check[@]}" 2>/dev/null)
   fi
-  echo "  Total: $(du -sh "$SCRIPT_DIR" 2>/dev/null | cut -f1)"
-  echo ""
+  printf '  Total: %s\n\n' "$(du -sh "$SCRIPT_DIR" 2>/dev/null | cut -f1)"
 }
 
 # Get player activity
 get_players() {
   [[ ! -f $LOG_FILE ]] && {
-    echo "Log file not found"
+    printf 'Log file not found\n'
     return 1
   }
   print_header "Recent Player Activity"
-  tail -200 "$LOG_FILE" 2>/dev/null | grep -E '(joined|left) the game' | tail -5 || echo "No recent activity"
-  echo ""
+  tail -200 "$LOG_FILE" 2>/dev/null | grep -E '(joined|left) the game' | tail -5 || printf 'No recent activity\n'
+  printf '\n'
 }
 
 # Check for errors
 check_errors() {
   [[ ! -f $LOG_FILE ]] && {
-    echo "Log file not found"
+    printf 'Log file not found\n'
     return 1
   }
   print_header "Recent Errors"
-  local errors=$(tail -100 "$LOG_FILE" 2>/dev/null | grep -ci 'ERROR\|SEVERE' || echo 0)
-  local warns=$(tail -100 "$LOG_FILE" 2>/dev/null | grep -ci 'WARN' || echo 0)
-  echo "  Errors in last 100 lines: $errors"
-  echo "  Warnings in last 100 lines: $warns"
+  local errors
+  errors=$(tail -100 "$LOG_FILE" 2>/dev/null | grep -ci 'ERROR\|SEVERE' || echo 0)
+  local warns
+  warns=$(tail -100 "$LOG_FILE" 2>/dev/null | grep -ci 'WARN' || echo 0)
+  printf '  Errors in last 100 lines: %s\n' "$errors"
+  printf '  Warnings in last 100 lines: %s\n' "$warns"
   ((errors > 0)) && {
-    echo ""
-    echo "  Last 3 errors:"
+    printf '\n  Last 3 errors:\n'
     tail -100 "$LOG_FILE" 2>/dev/null | grep -i 'ERROR\|SEVERE' | tail -3 | sed 's/^/    /'
   }
-  echo ""
+  printf '\n'
 }
 
 # Get uptime
 get_uptime() {
-  local pid=$(pgrep -f "fabric-server-launch.jar" | head -1)
+  local pid
+  pid=$(pgrep -f "fabric-server-launch.jar" | head -1)
   [[ -z $pid ]] && {
-    echo "Server not running"
+    printf 'Server not running\n'
     return 1
   }
   print_header "Server Uptime"
-  local uptime_sec=$(ps -p "$pid" -o etimes= | tr -d ' ')
+  local uptime_sec
+  uptime_sec=$(ps -p "$pid" -o etimes= | tr -d ' ')
   local days=$((uptime_sec / 86400)) hours=$(((uptime_sec % 86400) / 3600)) mins=$(((uptime_sec % 3600) / 60))
-  echo "  ${days}d ${hours}h ${mins}m"
-  echo ""
+  printf '  %dd %dh %dm\n\n' "$days" "$hours" "$mins"
 }
 
 # Show comprehensive status
 show_status() {
-  echo ""
-  echo "════════════════════════════════════════════════════════"
-  echo "      Minecraft Server Monitor - $(printf '%(%Y-%m-%d %H:%M:%S)T' -1)"
-  echo "════════════════════════════════════════════════════════"
-  echo ""
+  printf '\n'
+  printf '════════════════════════════════════════════════════════\n'
+  printf '      Minecraft Server Monitor - %(%Y-%m-%d %H:%M:%S)T\n' -1
+  printf '════════════════════════════════════════════════════════\n\n'
   get_status
   get_uptime
   get_memory
   get_disk
   get_players
   check_errors
-  echo "════════════════════════════════════════════════════════"
+  printf '════════════════════════════════════════════════════════\n'
 }
 
 # Watch mode
 watch_mode() {
-  echo "Starting monitor (Ctrl+C to stop)"
-  echo "Update interval: ${CHECK_INTERVAL}s"
-  echo ""
+  printf 'Starting monitor (Ctrl+C to stop)\n'
+  printf 'Update interval: %ss\n\n' "$CHECK_INTERVAL"
   while true; do
     clear
     show_status
@@ -172,13 +171,15 @@ alert_mode() {
     ((issues++))
   }
   [[ -f $LOG_FILE ]] && {
-    local errors=$(tail -20 "$LOG_FILE" 2>/dev/null | grep -ci 'ERROR\|SEVERE' || echo 0)
+    local errors
+    errors=$(tail -20 "$LOG_FILE" 2>/dev/null | grep -ci 'ERROR\|SEVERE' || echo 0)
     ((errors > 5)) && {
       print_error "High error rate: $errors errors"
       ((issues++))
     }
   }
-  local disk=$(df -h "$SCRIPT_DIR" | tail -1 | awk '{print $5}' | sed 's/%//')
+  local disk
+  disk=$(df -h "$SCRIPT_DIR" | tail -1 | awk '{print $5}' | sed 's/%//')
   ((disk > 90)) && {
     print_error "Disk usage critical: ${disk}%"
     ((issues++))

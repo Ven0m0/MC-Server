@@ -20,8 +20,8 @@ check_dependencies() {
     has_command "$cmd" || missing+=("$cmd")
   done
   ((${#missing[@]})) && {
-    echo "Error: Missing required dependencies: ${missing[*]}" >&2
-    echo "Please install them before continuing." >&2
+    printf 'Error: Missing required dependencies: %s\n' "${missing[*]}" >&2
+    printf 'Please install them before continuing.\n' >&2
     return 1
   }
 }

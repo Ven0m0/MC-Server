@@ -33,7 +33,7 @@ format_size_bytes() {
   elif ((size >= KB)); then
     awk "BEGIN {printf \"%.1fK\", $size/$KB}"
   else
-    echo "${size}B"
+    printf '%dB' "$size"
   fi
 }
 
@@ -100,20 +100,20 @@ cleanup_old_backups() {
 # List backups
 list_backups() {
   print_header "Available backups"
-  echo ""
-  echo "World Backups:"
+  printf '\n'
+  printf 'World Backups:\n'
   # Use -printf for efficiency instead of calling du in a loop
   while IFS='|' read -r size_bytes name; do
     local size
     size=$(format_size_bytes "$size_bytes")
-    echo "  ${name} (${size})"
+    printf '  %s (%s)\n' "$name" "$size"
   done < <(find "${BACKUP_DIR}/worlds" -name "*.tar.gz" -type f -printf '%s|%f\n' 2>/dev/null | sort -t'|' -k1 -rn | head -10)
-  echo ""
-  echo "Config Backups:"
+  printf '\n'
+  printf 'Config Backups:\n'
   while IFS='|' read -r size_bytes name; do
     local size
     size=$(format_size_bytes "$size_bytes")
-    echo "  ${name} (${size})"
+    printf '  %s (%s)\n' "$name" "$size"
   done < <(find "${BACKUP_DIR}/configs" -name "*.tar.gz" -type f -printf '%s|%f\n' 2>/dev/null | sort -t'|' -k1 -rn | head -10)
 }
 
@@ -136,13 +136,13 @@ restore_backup() {
 }
 
 # Check if path is on Btrfs filesystem
-is_btrfs(){
+is_btrfs() {
   local path="${1:-${SCRIPT_DIR}}"
   [[ $(stat -f -c %T "$path" 2>/dev/null) == "btrfs" ]]
 }
 
 # Create Btrfs snapshot
-create_btrfs_snapshot(){
+create_btrfs_snapshot() {
   local source="${1:-${SCRIPT_DIR}/world}"
   local snapshot_name="${2:-snapshot_${TIMESTAMP}}"
 
@@ -182,7 +182,7 @@ create_btrfs_snapshot(){
 }
 
 # List Btrfs snapshots
-list_btrfs_snapshots(){
+list_btrfs_snapshots() {
   local snapshot_dir="${BACKUP_DIR}/btrfs-snapshots"
 
   [[ ! -d $snapshot_dir ]] && {
@@ -191,7 +191,7 @@ list_btrfs_snapshots(){
   }
 
   print_header "Btrfs Snapshots"
-  echo ""
+  printf '\n'
 
   command -v btrfs &>/dev/null || {
     print_error "btrfs command not found"
@@ -211,7 +211,7 @@ list_btrfs_snapshots(){
 }
 
 # Delete Btrfs snapshot
-delete_btrfs_snapshot(){
+delete_btrfs_snapshot() {
   local snapshot_name="$1"
   local snapshot_dir="${BACKUP_DIR}/btrfs-snapshots"
   local snapshot_path="${snapshot_dir}/${snapshot_name}"
@@ -246,7 +246,7 @@ delete_btrfs_snapshot(){
 }
 
 # Restore Btrfs snapshot
-restore_btrfs_snapshot(){
+restore_btrfs_snapshot() {
   local snapshot_name="$1"
   local target="${2:-${SCRIPT_DIR}/world}"
   local snapshot_dir="${BACKUP_DIR}/btrfs-snapshots"
