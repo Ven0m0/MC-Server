@@ -19,16 +19,16 @@ export SCRIPT_DIR
 MCCTL_VERSION="2.0.0-integrated"
 
 # Output formatting helpers
-print_header() { printf '\033[0;34m==>\033[0m %s\n' "$1"; }
-print_success() { printf '\033[0;32m✓\033[0m %s\n' "$1"; }
-print_error() { printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
-print_info() { printf '\033[1;33m→\033[0m %s\n' "$1"; }
+print_header(){ printf '\033[0;34m==>\033[0m %s\n' "$1"; }
+print_success(){ printf '\033[0;32m✓\033[0m %s\n' "$1"; }
+print_error(){ printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
+print_info(){ printf '\033[1;33m→\033[0m %s\n' "$1"; }
 
 # Check if command exists
-has_command() { command -v "$1" &>/dev/null; }
+has_command(){ command -v "$1" &>/dev/null; }
 
 # Detect JSON processor (prefer jaq over jq)
-get_json_processor() {
+get_json_processor(){
   has_command jaq && { printf 'jaq'; return; }
   has_command jq && { printf 'jq'; return; }
   print_error "No JSON processor found. Install jq or jaq"
@@ -36,7 +36,7 @@ get_json_processor() {
 }
 
 # Download file with preferred tool chain
-download_file() {
+download_file(){
   local url="$1" output="$2"
   if has_command aria2c; then
     aria2c -x8 -s8 --allow-overwrite=true --auto-file-renaming=false -o "$output" "$url"
@@ -51,7 +51,7 @@ download_file() {
 }
 
 # Get latest git tag from repository
-get_latest_tag() {
+get_latest_tag(){
   local repo_url="$1"
   local temp_dir
   temp_dir=$(mktemp -d)
@@ -63,7 +63,7 @@ get_latest_tag() {
 }
 
 # Get download URLs for various components
-get_url() {
+get_url(){
   local component="$1"
   local version="${2:-}"
   local build="${3:-}"
@@ -124,7 +124,7 @@ get_url() {
 }
 
 # Get latest Paper build for version
-get_latest_paper_build() {
+get_latest_paper_build(){
   local version="$1"
   local json_proc
   json_proc=$(get_json_processor) || return 1
@@ -136,7 +136,7 @@ get_latest_paper_build() {
 }
 
 # Build/Download Paper server
-build_paper() {
+build_paper(){
   local version="${1:-1.21.1}"
 
   print_header "Building Paper ${version}"
@@ -165,7 +165,7 @@ build_paper() {
 }
 
 # Build Spigot server
-build_spigot() {
+build_spigot(){
   local version="${1:-latest}"
 
   print_header "Building Spigot ${version}"
@@ -203,7 +203,7 @@ build_spigot() {
 }
 
 # Update plugin
-update_plugin() {
+update_plugin(){
   local plugin="$1"
   local plugins_dir="${2:-${SCRIPT_DIR}/plugins}"
 
@@ -241,14 +241,14 @@ update_plugin() {
 }
 
 # Accept EULA
-accept_eula() {
+accept_eula(){
   print_info "Accepting EULA..."
   printf 'eula=true\n' > "${SCRIPT_DIR}/eula.txt"
   print_success "EULA accepted"
 }
 
 # Initialize server directory
-init_server() {
+init_server(){
   print_header "Initializing server directory"
 
   mkdir -p "${SCRIPT_DIR}"/{plugins,world,logs,backups}
@@ -259,7 +259,7 @@ init_server() {
 }
 
 # Update all plugins
-update_all_plugins() {
+update_all_plugins(){
   local plugins=(
     viaversion
     viabackwards
@@ -277,7 +277,7 @@ update_all_plugins() {
 }
 
 # Show usage
-show_usage() {
+show_usage(){
   cat <<EOF
 mcctl - Paper/Spigot Server Management Tool
 Version: ${MCCTL_VERSION}
