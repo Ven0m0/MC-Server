@@ -1,6 +1,29 @@
+# Bedrock
 https://modrinth.com/plugin/geyser
 https://modrinth.com/plugin/geyser-recipe-fix
 https://modrinth.com/mod/geyserconnect
 https://modrinth.com/mod/geyserreversion
 https://modrinth.com/mod/thirdpartycosmetics
 https://modrinth.com/mod/emoteoffhand
+# Optimization
+https://modrinth.com/mod/moonrise-opt
+# Moonrise is incompatible with c2me
+# https://modrinth.com/mod/c2me-fabric
+https://modrinth.com/mod/structure-layout-optimizer
+https://modrinth.com/mod/mobtimizations
+https://modrinth.com/mod/immersive-optimization
+https://modrinth.com/mod/debugify
+https://modrinth.com/mod/ferrite-core
+https://modrinth.com/mod/lithium
+https://modrinth.com/mod/modernfix
+https://modrinth.com/mod/memoryleakfix
+https://modrinth.com/mod/krypton
+https://modrinth.com/mod/packet-fixer
+https://modrinth.com/plugin/lmd
+https://modrinth.com/mod/lazydfu
+https://modrinth.com/mod/fastload
+https://modrinth.com/mod/vmp-fabric
+https://modrinth.com/plugin/chunky
+https://modrinth.com/mod/leaves-be-gone
+https://modrinth.com/mod/ksyxis
+https://modrinth.com/mod/servercore
