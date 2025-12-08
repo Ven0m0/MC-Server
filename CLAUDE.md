@@ -1,14 +1,42 @@
 # CLAUDE.md - Minecraft Server Management Suite
 
 ## Commands
+
+### Fabric Server Management
 - **Start Server**: `./scripts/server-start.sh`
 - **Install/Update Fabric**: `./scripts/mcdl.sh [version]`
 - **Update Mods**: `./scripts/mod-updates.sh upgrade`
-- **Backup**: `./tools/backup.sh backup [all|world|config|mods]`
+
+### Paper/Spigot Server Management (NEW)
+- **Build Paper**: `./tools/mcctl.sh build-paper [version]`
+- **Build Spigot**: `./tools/mcctl.sh build-spigot [version]`
+- **Update Plugin**: `./tools/mcctl.sh update <plugin>`
+- **Update All Plugins**: `./tools/mcctl.sh update-all`
+- **Initialize Server**: `./tools/mcctl.sh init`
+
+### Backup & Snapshots
+- **Backup (tar)**: `./tools/backup.sh backup [all|world|config|mods]`
+- **List Backups**: `./tools/backup.sh list`
+- **Restore Backup**: `./tools/backup.sh restore <file>`
+- **Btrfs Snapshot**: `./tools/backup.sh snapshot [source] [name]`
+- **List Snapshots**: `./tools/backup.sh snapshot-list`
+- **Restore Snapshot**: `./tools/backup.sh snapshot-restore <name>`
+
+### Systemd Service (NEW)
+- **Create Service**: `./tools/systemd-service.sh create`
+- **Enable Service**: `./tools/systemd-service.sh enable`
+- **Start Service**: `./tools/systemd-service.sh start`
+- **Stop Service**: `./tools/systemd-service.sh stop`
+- **View Status**: `./tools/systemd-service.sh status`
+- **View Logs**: `./tools/systemd-service.sh logs [lines]`
+
+### Monitoring & Maintenance
 - **Monitor**: `./tools/monitor.sh [status|watch|alert]`
 - **Log Maintenance**: `./tools/logrotate.sh maintenance`
 - **Lint/Format Configs**: `./scripts/format-config.sh --mode [format|check|minify]`
 - **Test**: `./scripts/test_common.sh`
+
+### Proxy & Tunneling
 - **Setup lazymc**: `./scripts/lazymc-setup.sh [install|config]`
 - **Manage lazymc**: `./tools/lazymc.sh [start|stop|restart|status|logs|follow]`
 
@@ -25,9 +53,12 @@
 ## Tech Stack
 - **Core**: Bash Scripts (Management, Automation, Monitoring).
 - **Runtime**: Java 21+ (GraalVM Enterprise/Community or Eclipse Temurin).
-- **Server**: Fabric Loader + Minecraft Java Edition.
+- **Server**:
+  - Fabric Loader + Minecraft Java Edition (primary)
+  - Paper/Spigot support via mcctl (integrated)
 - **Proxy/Tunnel**: Playit.gg, Infrarust, lazymc (auto sleep/wake).
 - **Geyser**: Bedrock/Java interoperability.
+- **Backup**: tar-based backups + Btrfs snapshots (optional).
 
 ## Tool Preferences
 - **JSON**: `jaq` > `jq`.
@@ -37,8 +68,21 @@
 
 ## Directory Structure
 - `scripts/`: Core logic (start, updates, install).
-- `tools/`: Operational utilities (backup, monitor, watchdog, logs).
+- `tools/`: Operational utilities (backup, monitor, watchdog, logs, mcctl, systemd).
 - `config/`: Plugin/Mod configurations (ServerCore, Geyser, etc.).
 - `docs/`: Documentation and JVM flag references.
 - `backups/`: Storage for compressed world/config archives.
+  - `worlds/`: Tar-based world backups
+  - `configs/`: Tar-based config backups
+  - `btrfs-snapshots/`: Btrfs snapshots (if filesystem supports)
+- `plugins/`: Paper/Spigot plugins (when using mcctl).
 - `.github/`: CI/CD workflows, issue templates, agent definitions.
+
+## mcctl Integration
+This repository includes an integrated version of [Kraftland/mcctl](https://github.com/Kraftland/mcctl) for Paper/Spigot server management. The tool has been modernized to follow this repository's code standards:
+- Modern bash with strict mode (`set -euo pipefail`)
+- Consistent code style (2-space indent, snake_case)
+- Modular design with clear separation of concerns
+- Compatible with existing Fabric-focused tooling
+
+Use `./tools/mcctl.sh help` for Paper/Spigot commands.
