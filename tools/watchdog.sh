@@ -36,7 +36,7 @@ is_server_running(){ pgrep -f "fabric-server-launch.jar" >/dev/null || pgrep -f 
 check_network(){
   # If nc is available, check if port is actually open
   if has_command nc; then
-    nc -z localhost "$SERVER_PORT" >/dev/null 2>&1>/dev/null
+    nc -z localhost "$SERVER_PORT" &>/dev/null
     return $?
   fi
   return 0 # Skip check if nc not installed
