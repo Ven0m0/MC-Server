@@ -44,7 +44,7 @@ get_heap_size_gb(){
 get_minecraft_memory_gb(){ get_heap_size_gb "${1:-3}"; }
 
 # Calculate client memory allocation
-get_client_xms_gb(){
+get_client_xms_gb() {
   local total_ram
   total_ram=$(get_total_ram_gb)
   local xms=$((total_ram / 4))
