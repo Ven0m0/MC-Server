@@ -24,10 +24,13 @@ detect_arch() {
   local arch
   arch="$(uname -m)"
   case "$arch" in
-    x86_64|amd64) echo "x86_64" ;;
-    aarch64|arm64) echo "aarch64" ;;
+    x86_64 | amd64) echo "x86_64" ;;
+    aarch64 | arm64) echo "aarch64" ;;
     armv7l) echo "armv7" ;;
-    *) print_error "Unsupported architecture: $arch"; exit 1 ;;
+    *)
+      print_error "Unsupported architecture: $arch"
+      exit 1
+      ;;
   esac
 }
 
@@ -69,7 +72,7 @@ generate_config() {
 
   mkdir -p "$CONFIG_DIR"
 
-  cat > "$LAZYMC_CONFIG" << 'EOF'
+  cat >"$LAZYMC_CONFIG" <<'EOF'
 # lazymc configuration
 # https://github.com/timvisee/lazymc
 
@@ -146,7 +149,7 @@ main() {
     config)
       generate_config
       ;;
-    help|--help|-h)
+    help | --help | -h)
       print_header "lazymc Setup Script"
       printf '\n'
       printf 'Usage: %s [command]\n' "$0"

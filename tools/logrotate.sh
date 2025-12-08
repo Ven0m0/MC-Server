@@ -15,10 +15,10 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 export SCRIPT_DIR
 
 # Output formatting helpers
-print_header(){ printf '\033[0;34m==>\033[0m %s\n' "$1"; }
-print_success(){ printf '\033[0;32m✓\033[0m %s\n' "$1"; }
-print_error(){ printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
-print_info(){ printf '\033[1;33m→\033[0m %s\n' "$1"; }
+print_header() { printf '\033[0;34m==>\033[0m %s\n' "$1"; }
+print_success() { printf '\033[0;32m✓\033[0m %s\n' "$1"; }
+print_error() { printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
+print_info() { printf '\033[1;33m→\033[0m %s\n' "$1"; }
 
 # Configuration
 LOGS_DIR="${SCRIPT_DIR}/logs"
@@ -31,7 +31,7 @@ LOG_SIZE_LIMIT_MB=100
 mkdir -p "$ARCHIVE_DIR"
 
 # Rotate log file
-rotate_log(){
+rotate_log() {
   local log_file="$1"
   [[ ! -f $log_file ]] && return 1
   local size_mb=$(du -m "$log_file" 2>/dev/null | cut -f1)
@@ -49,7 +49,7 @@ rotate_log(){
 }
 
 # Rotate all logs
-rotate_all(){
+rotate_all() {
   print_header "Rotating logs"
   [[ -f "${LOGS_DIR}/latest.log" ]] && rotate_log "${LOGS_DIR}/latest.log"
   [[ -f "${LOGS_DIR}/debug.log" ]] && rotate_log "${LOGS_DIR}/debug.log"
@@ -61,7 +61,7 @@ rotate_all(){
 }
 
 # Compress old logs
-compress_old(){
+compress_old() {
   print_header "Compressing old logs"
   local count=0
   # Use process substitution to preserve count variable
@@ -83,7 +83,7 @@ compress_old(){
 }
 
 # Clean old logs
-clean_old(){
+clean_old() {
   print_header "Cleaning logs older than ${MAX_LOG_AGE_DAYS} days"
   local count=0
   # Use process substitution to preserve count variable
@@ -101,7 +101,7 @@ clean_old(){
 }
 
 # Limit archived logs
-limit_archives(){
+limit_archives() {
   print_header "Limiting archives to ${MAX_ARCHIVED_LOGS}"
   # Single find with -printf is more efficient than find | wc -l
   local files
@@ -114,14 +114,14 @@ limit_archives(){
   print_info "Removing oldest archives..."
   local to_remove=$((count - MAX_ARCHIVED_LOGS))
   for ((i = 0; i < to_remove; i++)); do
-    local log="${files[i]#* }"  # Remove timestamp prefix
+    local log="${files[i]#* }" # Remove timestamp prefix
     rm -f "$log"
   done
   print_success "Archives cleaned"
 }
 
 # Show statistics
-show_stats(){
+show_stats() {
   echo ""
   echo "═══════════════════════════════════════════"
   echo "        Log Management Statistics"
@@ -168,7 +168,7 @@ show_stats(){
 }
 
 # View log
-view_log(){
+view_log() {
   local log="${1:-latest.log}"
   local lines="${2:-50}"
   local path="${LOGS_DIR}/${log}"
@@ -182,7 +182,7 @@ view_log(){
 }
 
 # Search logs
-search_log(){
+search_log() {
   local pattern="$1"
   local log="${2:-latest.log}"
   local path="${LOGS_DIR}/${log}"
@@ -196,7 +196,7 @@ search_log(){
 }
 
 # Full maintenance
-full_maintenance(){
+full_maintenance() {
   print_header "Full log maintenance"
   echo ""
   rotate_all
@@ -211,7 +211,7 @@ full_maintenance(){
 }
 
 # Show usage
-show_usage(){
+show_usage() {
   cat <<EOF
 Minecraft Server Log Management
 
@@ -240,30 +240,30 @@ EOF
 
 # Main
 case "${1:-help}" in
-rotate) rotate_all ;;
-compress) compress_old ;;
-clean)
-  MAX_LOG_AGE_DAYS="${2:-$MAX_LOG_AGE_DAYS}"
-  clean_old
-  ;;
-limit)
-  MAX_ARCHIVED_LOGS="${2:-$MAX_ARCHIVED_LOGS}"
-  limit_archives
-  ;;
-maintenance) full_maintenance ;;
-stats) show_stats ;;
-view) view_log "${2:-latest.log}" "${3:-50}" ;;
-search)
-  [[ -z $2 ]] && {
-    print_error "Provide search pattern"
+  rotate) rotate_all ;;
+  compress) compress_old ;;
+  clean)
+    MAX_LOG_AGE_DAYS="${2:-$MAX_LOG_AGE_DAYS}"
+    clean_old
+    ;;
+  limit)
+    MAX_ARCHIVED_LOGS="${2:-$MAX_ARCHIVED_LOGS}"
+    limit_archives
+    ;;
+  maintenance) full_maintenance ;;
+  stats) show_stats ;;
+  view) view_log "${2:-latest.log}" "${3:-50}" ;;
+  search)
+    [[ -z $2 ]] && {
+      print_error "Provide search pattern"
+      exit 1
+    }
+    search_log "$2" "${3:-latest.log}"
+    ;;
+  help | --help | -h) show_usage ;;
+  *)
+    print_error "Unknown command: $1"
+    show_usage
     exit 1
-  }
-  search_log "$2" "${3:-latest.log}"
-  ;;
-help | --help | -h) show_usage ;;
-*)
-  print_error "Unknown command: $1"
-  show_usage
-  exit 1
-  ;;
+    ;;
 esac

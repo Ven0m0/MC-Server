@@ -2,7 +2,6 @@ packetfixer-fabric-1.21.5-2.1.2.jar
 spark-1.10.128-fabric.jar
 Chunky-Fabric-1.4.36.jar
 collective-1.21.5-8.3.jar
-filenames.txt
 tectonic-3.0.0+beta4.jar
 krypton-0.2.9.jar
 Neruina-2.3.1-beta.1-fabric+1.21.5.jar

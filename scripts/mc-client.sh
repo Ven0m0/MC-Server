@@ -12,10 +12,10 @@ export HOME="/home/${user}"
 SHELL="$(command -v bash 2>/dev/null || echo '/usr/bin/bash')"
 
 # Check if command exists
-has_command(){ command -v "$1" &>/dev/null; }
+has_command() { command -v "$1" &>/dev/null; }
 
 # Check if required commands are available
-check_dependencies(){
+check_dependencies() {
   local missing=()
   for cmd in "$@"; do
     has_command "$cmd" || missing+=("$cmd")
@@ -28,7 +28,7 @@ check_dependencies(){
 }
 
 # Detect JSON processor (prefer jaq over jq)
-get_json_processor(){
+get_json_processor() {
   has_command jaq && {
     echo "jaq"
     return
@@ -42,7 +42,7 @@ get_json_processor(){
 }
 
 # Fetch URL to stdout
-fetch_url(){
+fetch_url() {
   local url="$1"
   has_command curl && {
     curl -fsSL -H "Accept-Encoding: identity" -H "Accept-Language: en" -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4.212 Safari/537.36" "$url"
@@ -52,11 +52,12 @@ fetch_url(){
     wget -qO- "$url"
     return
   }
-  echo "Error: No download tool found (aria2c, curl, or wget)" >&2; return 1
+  echo "Error: No download tool found (aria2c, curl, or wget)" >&2
+  return 1
 }
 
 # Download file with aria2c or curl fallback
-download_file(){
+download_file() {
   local url="$1" output="$2" connections="${3:-8}"
   has_command curl && {
     curl -fsL -H "Accept-Encoding: identity" -H "Accept-Language: en" -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4.212 Safari/537.36" -o "$output" "$url"
@@ -66,14 +67,15 @@ download_file(){
     wget -qO "$output" "$url"
     return
   }
-  echo "Error: No download tool found (aria2c, curl, or wget)" >&2; return 1
+  echo "Error: No download tool found (aria2c, curl, or wget)" >&2
+  return 1
 }
 
 # Create directory if it doesn't exist
-ensure_dir(){ [[ ! -d $1 ]] && mkdir -p "$1" || return 0; }
+ensure_dir() { [[ ! -d $1 ]] && mkdir -p "$1" || return 0; }
 
 # Extract natives from JAR file
-extract_natives(){
+extract_natives() {
   local jar_file="$1" dest_dir="$2"
   ensure_dir "$dest_dir"
   unzip -q -o "$jar_file" -d "$dest_dir" 2>/dev/null || :
@@ -81,10 +83,10 @@ extract_natives(){
 }
 
 # Calculate total RAM in GB
-get_total_ram_gb(){ awk '/MemTotal/ {printf "%.0f\n",$2/1024/1024}' /proc/meminfo 2>/dev/null; }
+get_total_ram_gb() { awk '/MemTotal/ {printf "%.0f\n",$2/1024/1024}' /proc/meminfo 2>/dev/null; }
 
 # Calculate client memory allocation
-get_client_xms_gb(){
+get_client_xms_gb() {
   local total_ram
   total_ram=$(get_total_ram_gb)
   local xms=$((total_ram / 4))
@@ -92,7 +94,7 @@ get_client_xms_gb(){
   echo "$xms"
 }
 
-get_client_xmx_gb(){
+get_client_xmx_gb() {
   local total_ram
   total_ram=$(get_total_ram_gb)
   local xmx=$((total_ram / 2))
@@ -206,6 +208,7 @@ done
 
 # Download missing assets with aria2c
 if [[ -f $ASSET_INPUT_FILE ]] && [[ -s $ASSET_INPUT_FILE ]]; then
+  if ! has_command aria2c; then
     echo "  Warning: aria2c not found, assets download may be slow"
     "$JSON_PROC" -r '.objects[] | .hash' <"$ASSET_INDEX_FILE" | while read -r hash; do
       HASH_PREFIX="${hash:0:2}"
@@ -214,6 +217,8 @@ if [[ -f $ASSET_INPUT_FILE ]] && [[ -s $ASSET_INPUT_FILE ]]; then
         download_file "https://resources.download.minecraft.net/$HASH_PREFIX/$hash" "$ASSET_FILE"
       fi
     done
+  else
+    aria2c --input-file="$ASSET_INPUT_FILE" --check-certificate=false
   fi
   rm -f "$ASSET_INPUT_FILE"
 else
