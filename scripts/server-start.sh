@@ -41,6 +41,7 @@ get_cpu_cores() { nproc 2>/dev/null || echo 4; }
 
 # Output formatting helpers
 print_header() { printf '\033[0;34m==>\033[0m %s\n' "$1"; }
+print_success() { printf '\033[0;32m✓\033[0m %s\n' "$1"; }
 print_error() { printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
 print_info() { printf '\033[1;33m→\033[0m %s\n' "$1"; }
 
@@ -67,6 +68,7 @@ print_info "Memory: ${XMS} - ${XMX} | CPU Cores: ${CPU_CORES}"
 
 # JDK Detection
 JAVA_CMD="java"
+JAVA_TYPE=""
 if has_command archlinux-java; then
   sudo archlinux-java fix 2>/dev/null || :
   SEL_JAVA="$(archlinux-java get 2>/dev/null)"
