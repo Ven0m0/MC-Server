@@ -5,13 +5,13 @@ shopt -s nullglob globstar
 IFS=$'\n\t'
 
 # Output formatting helpers
-print_header() { printf '\033[0;34m==>\033[0m %s\n' "$1"; }
-print_error() { printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
-print_success() { printf '\033[0;32m✓\033[0m %s\n' "$1"; }
-print_info() { printf '\033[1;33m→\033[0m %s\n' "$1"; }
+print_header(){ printf '\033[0;34m==>\033[0m %s\n' "$1"; }
+print_error(){ printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
+print_success(){ printf '\033[0;32m✓\033[0m %s\n' "$1"; }
+print_info(){ printf '\033[1;33m→\033[0m %s\n' "$1"; }
 
 # Check if command exists
-has_command() { command -v "$1" &>/dev/null; }
+has_command(){ command -v "$1" &>/dev/null; }
 
 # Configuration
 LAZYMC_VERSION="${LAZYMC_VERSION:-0.2.11}"
@@ -20,7 +20,7 @@ CONFIG_DIR="${CONFIG_DIR:-$PWD/config}"
 LAZYMC_CONFIG="${CONFIG_DIR}/lazymc.toml"
 
 # Detect architecture
-detect_arch() {
+detect_arch(){
   local arch
   arch="$(uname -m)"
   case "$arch" in
@@ -35,7 +35,7 @@ detect_arch() {
 }
 
 # Download lazymc binary
-download_lazymc() {
+download_lazymc(){
   local arch version url target_file
   arch="$(detect_arch)"
   version="$1"
@@ -67,7 +67,7 @@ download_lazymc() {
 }
 
 # Generate lazymc configuration
-generate_config() {
+generate_config(){
   print_header "Generating lazymc configuration"
 
   mkdir -p "$CONFIG_DIR"
@@ -117,7 +117,7 @@ EOF
 }
 
 # Show usage instructions
-show_usage() {
+show_usage(){
   print_header "lazymc Setup Complete!"
   printf '\n'
   print_info "Installation directory: ${INSTALL_DIR}"
@@ -137,7 +137,7 @@ show_usage() {
 }
 
 # Main installation flow
-main() {
+main(){
   local cmd="${1:-install}"
 
   case "$cmd" in
