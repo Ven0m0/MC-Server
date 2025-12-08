@@ -15,14 +15,14 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 export SCRIPT_DIR
 
 # Output formatting helpers
-print_header(){ printf '\033[0;34m==>\033[0m %s\n' "$1"; }
-print_success(){ printf '\033[0;32m✓\033[0m %s\n' "$1"; }
-print_error(){ printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
-print_info(){ printf '\033[1;33m→\033[0m %s\n' "$1"; }
+print_header() { printf '\033[0;34m==>\033[0m %s\n' "$1"; }
+print_success() { printf '\033[0;32m✓\033[0m %s\n' "$1"; }
+print_error() { printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
+print_info() { printf '\033[1;33m→\033[0m %s\n' "$1"; }
 
 # Format byte sizes to human-readable form (1G, 1M, 1K, 1B)
 # Usage: format_size_bytes <size_in_bytes>
-format_size_bytes(){
+format_size_bytes() {
   local size="$1"
   # Byte conversion constants
   local KB=1024 MB=1048576 GB=1073741824
@@ -46,20 +46,20 @@ MAX_BACKUPS=10
 mkdir -p "${BACKUP_DIR}/worlds" "${BACKUP_DIR}/configs"
 
 # Backup world data
-backup_world(){
+backup_world() {
   print_info "Backing up world..."
   [[ ! -d "${SCRIPT_DIR}/world" ]] && {
     print_error "No world directory found"
     return 1
   }
   cd "$SCRIPT_DIR"
-  tar -czf "${BACKUP_DIR}/worlds/world_${TIMESTAMP}.tar.gz" world/ world_nether/ world_the_end/ 2>/dev/null ||
-    tar -czf "${BACKUP_DIR}/worlds/world_${TIMESTAMP}.tar.gz" world/
+  tar -czf "${BACKUP_DIR}/worlds/world_${TIMESTAMP}.tar.gz" world/ world_nether/ world_the_end/ 2>/dev/null \
+    || tar -czf "${BACKUP_DIR}/worlds/world_${TIMESTAMP}.tar.gz" world/
   print_success "World backup created: world_${TIMESTAMP}.tar.gz"
 }
 
 # Backup configs
-backup_configs(){
+backup_configs() {
   print_info "Backing up configs..."
   cd "$SCRIPT_DIR"
   tar -czf "${BACKUP_DIR}/configs/config_${TIMESTAMP}.tar.gz" \
@@ -70,7 +70,7 @@ backup_configs(){
 }
 
 # Backup mods
-backup_mods(){
+backup_mods() {
   print_info "Backing up mods..."
   [[ ! -d "${SCRIPT_DIR}/mods" ]] && {
     print_info "No mods directory"
@@ -82,11 +82,11 @@ backup_mods(){
 }
 
 # Clean old backups
-cleanup_old_backups(){
+cleanup_old_backups() {
   print_info "Cleaning old backups (keeping last ${MAX_BACKUPS})..."
   for dir in worlds configs; do
     local backup_path="${BACKUP_DIR}/${dir}"
-    [[ ! -d "$backup_path" ]] && continue
+    [[ ! -d $backup_path ]] && continue
     # Single find call that counts and cleans in one pass
     local files
     mapfile -t files < <(find "$backup_path" -name "*.tar.gz" -type f -printf '%T@ %p\n' 2>/dev/null | sort -n | head -n -"$MAX_BACKUPS" | cut -d' ' -f2-)
@@ -98,7 +98,7 @@ cleanup_old_backups(){
 }
 
 # List backups
-list_backups(){
+list_backups() {
   print_header "Available backups"
   echo ""
   echo "World Backups:"
@@ -118,7 +118,7 @@ list_backups(){
 }
 
 # Restore backup
-restore_backup(){
+restore_backup() {
   local file="$1"
   [[ ! -f $file ]] && {
     print_error "File not found: $file"
@@ -136,7 +136,7 @@ restore_backup(){
 }
 
 # Show usage
-show_usage(){
+show_usage() {
   cat <<EOF
 Minecraft Server Backup Tool
 
@@ -162,26 +162,26 @@ EOF
 
 # Main
 case "${1:-backup}" in
-backup)
-  case "${2:-all}" in
-  world) backup_world ;;
-  config) backup_configs ;;
-  mods) backup_mods ;;
-  all | *)
-    backup_world
-    backup_configs
-    backup_mods
+  backup)
+    case "${2:-all}" in
+      world) backup_world ;;
+      config) backup_configs ;;
+      mods) backup_mods ;;
+      all | *)
+        backup_world
+        backup_configs
+        backup_mods
+        ;;
+    esac
+    cleanup_old_backups
     ;;
-  esac
-  cleanup_old_backups
-  ;;
-list) list_backups ;;
-restore) restore_backup "$2" ;;
-cleanup) cleanup_old_backups ;;
-help | --help | -h) show_usage ;;
-*)
-  print_error "Unknown command: $1"
-  show_usage
-  exit 1
-  ;;
+  list) list_backups ;;
+  restore) restore_backup "$2" ;;
+  cleanup) cleanup_old_backups ;;
+  help | --help | -h) show_usage ;;
+  *)
+    print_error "Unknown command: $1"
+    show_usage
+    exit 1
+    ;;
 esac

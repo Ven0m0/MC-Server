@@ -58,11 +58,11 @@ start_lazymc() {
   mkdir -p "$(dirname "$LAZYMC_LOG_FILE")"
 
   # Start lazymc in background
-  nohup lazymc start --config "$LAZYMC_CONFIG" >> "$LAZYMC_LOG_FILE" 2>&1 &
+  nohup lazymc start --config "$LAZYMC_CONFIG" >>"$LAZYMC_LOG_FILE" 2>&1 &
   local pid=$!
 
   # Save PID
-  echo "$pid" > "$LAZYMC_PID_FILE"
+  echo "$pid" >"$LAZYMC_PID_FILE"
 
   # Wait a moment and check if still running
   sleep 2
@@ -228,7 +228,7 @@ main() {
     follow)
       follow_logs
       ;;
-    help|--help|-h)
+    help | --help | -h)
       show_usage
       ;;
     *)
