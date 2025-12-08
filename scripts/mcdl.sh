@@ -11,10 +11,10 @@ export HOME="/home/${user}"
 SHELL="$(command -v bash 2>/dev/null || echo '/usr/bin/bash')"
 
 # Check if command exists
-has_command() { command -v "$1" &>/dev/null; }
+has_command(){ command -v "$1" &>/dev/null; }
 
 # Detect JSON processor (prefer jaq over jq)
-get_json_processor() {
+get_json_processor(){
   has_command jaq && { printf 'jaq'; return; }
   has_command jq && { printf 'jq'; return; }
   printf 'Error: No JSON processor found. Please install jq or jaq.\n' >&2
@@ -22,7 +22,7 @@ get_json_processor() {
 }
 
 # Fetch URL to stdout
-fetch_url() {
+fetch_url(){
   local url="$1"
   has_command aria2c && { aria2c -q -d /tmp -o - "$url" 2>/dev/null; return; }
   has_command curl && { curl -fsSL "$url"; return; }
@@ -32,7 +32,7 @@ fetch_url() {
 }
 
 # Download file with aria2c or curl fallback
-download_file() {
+download_file(){
   local url="$1" output="$2" connections="${3:-8}"
   has_command curl && {
     curl -fsL -H "Accept-Encoding: identity" -H "Accept-Language: en" -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4.212 Safari/537.36" -o "$output" "$url"
@@ -44,8 +44,8 @@ download_file() {
 }
 
 # Output formatting helpers
-print_info() { printf '\033[1;33m→\033[0m %s\n' "$1"; }
-print_success() { printf '\033[0;32m✓\033[0m %s\n' "$1"; }
+print_info(){ printf '\033[1;33m→\033[0m %s\n' "$1"; }
+print_success(){ printf '\033[0;32m✓\033[0m %s\n' "$1"; }
 
 # Get JSON processor
 JSON_PROC=$(get_json_processor) || exit 1
