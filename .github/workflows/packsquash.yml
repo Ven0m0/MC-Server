@@ -3,7 +3,8 @@ on: workflow_dispatch
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref || github.run_id }}
   cancel-in-progress: true
-
+permissions:
+  contents: read
 jobs:
   packsquash:
     name: Optimize resource pack
@@ -11,12 +12,12 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
           token: ${{ secrets.PAT || github.token }}
           fetch-depth: 0
       - name: Run PackSquash
-        uses: ComunidadAylas/PackSquash-action@v4
+        uses: ComunidadAylas/PackSquash-action@a9128decf6503efc143586d8eebbf52a861fcb6e # v4.0.3
         with:
           packsquash_version: latest
       - name: Commit optimized pack
@@ -26,7 +27,7 @@ jobs:
           git add .
           git diff --staged --quiet || git commit -m "chore: optimize resource pack with PackSquash"
       - name: Push changes
-        uses: ad-m/github-push-action@master
+        uses: ad-m/github-push-action@77c5b412c50b723d2a4fbc6d71fb5723bcd439aa # v1.0.0
         with:
           github_token: ${{ secrets.PAT || github.token }}
           branch: ${{ github.head_ref || github.ref || github.run_id }}

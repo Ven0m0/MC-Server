@@ -354,26 +354,14 @@ case "${1:-backup}" in
   list) list_backups ;;
   restore) restore_backup "$2" ;;
   cleanup) cleanup_old_backups ;;
+  snapshot) create_btrfs_snapshot "${2:-}" "${3:-}" ;;
+  snapshot-list) list_btrfs_snapshots ;;
+  snapshot-restore) restore_btrfs_snapshot "$2" "${3:-}" ;;
+  snapshot-delete) delete_btrfs_snapshot "$2" ;;
   help | --help | -h) show_usage ;;
   *)
     print_error "Unknown command: $1"
     show_usage
     exit 1
     ;;
-  esac
-  cleanup_old_backups
-  ;;
-list) list_backups ;;
-restore) restore_backup "$2" ;;
-cleanup) cleanup_old_backups ;;
-snapshot) create_btrfs_snapshot "${2:-}" "${3:-}" ;;
-snapshot-list) list_btrfs_snapshots ;;
-snapshot-restore) restore_btrfs_snapshot "$2" "${3:-}" ;;
-snapshot-delete) delete_btrfs_snapshot "$2" ;;
-help | --help | -h) show_usage ;;
-*)
-  print_error "Unknown command: $1"
-  show_usage
-  exit 1
-  ;;
 esac
