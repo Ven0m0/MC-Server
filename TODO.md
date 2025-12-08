@@ -49,11 +49,10 @@ WantedBy=multi-user.target
 -XX:-UseAESCTRIntrinsics -Djava.locale.providers=JRE -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -XX:+UseDynamicNumberOfGCThreads
 ```
 - https://github.com/MeowIce/meowice-flags
+- https://github.com/Obydux/Minecraft-GraalVM-Flags
 - https://www.leafmc.one/docs/how-to/java-flags
 
-
 ### Other repos to integrate
-
 - https://github.com/hpi-swa/native-minecraft-server
 - https://github.com/oddlama/minecraft-server
 - https://github.com/Dan-megabyte/minecraft-server
@@ -64,6 +63,4 @@ WantedBy=multi-user.target
 - https://github.com/TheRemote/MinecraftBedrockServer
 
 ### Optimization
-
 - https://github.com/Radk6/MC-Optimization-Guide
-- 
