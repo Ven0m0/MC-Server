@@ -248,7 +248,7 @@ format_yaml(){
   # Try yq as fallback (check if it's mikefarah/yq, not python yq)
   elif command_exists yq && yq --version 2>&1 | grep -q "mikefarah"; then
     if [[ ${MODE} == "check" ]]; then
-      if yq eval . "$file" >/dev/null 2>&1>/dev/null; then
+      if yq eval . "$file" &>/dev/null; then
         print_msg "$GREEN" "✓ Valid: ${file}"
         return 0
       else
