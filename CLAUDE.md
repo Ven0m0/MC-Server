@@ -3,11 +3,13 @@
 ## Commands
 
 ### Fabric Server Management
+
 - **Start Server**: `./scripts/server-start.sh`
 - **Install/Update Fabric**: `./scripts/mcdl.sh [version]`
 - **Update Mods**: `./scripts/mod-updates.sh upgrade`
 
 ### Paper/Spigot Server Management (NEW)
+
 - **Build Paper**: `./tools/mcctl.sh build-paper [version]`
 - **Build Spigot**: `./tools/mcctl.sh build-spigot [version]`
 - **Update Plugin**: `./tools/mcctl.sh update <plugin>`
@@ -15,6 +17,7 @@
 - **Initialize Server**: `./tools/mcctl.sh init`
 
 ### Backup & Snapshots
+
 - **Backup (tar)**: `./tools/backup.sh backup [all|world|config|mods]`
 - **List Backups**: `./tools/backup.sh list`
 - **Restore Backup**: `./tools/backup.sh restore <file>`
@@ -23,6 +26,7 @@
 - **Restore Snapshot**: `./tools/backup.sh snapshot-restore <name>`
 
 ### Systemd Service (NEW)
+
 - **Create Service**: `./tools/systemd-service.sh create`
 - **Enable Service**: `./tools/systemd-service.sh enable`
 - **Start Service**: `./tools/systemd-service.sh start`
@@ -31,16 +35,19 @@
 - **View Logs**: `./tools/systemd-service.sh logs [lines]`
 
 ### Monitoring & Maintenance
+
 - **Monitor**: `./tools/monitor.sh [status|watch|alert]`
 - **Log Maintenance**: `./tools/logrotate.sh maintenance`
 - **Lint/Format Configs**: `./scripts/format-config.sh --mode [format|check|minify]`
 - **Test**: `./scripts/test_common.sh`
 
 ### Proxy & Tunneling
+
 - **Setup lazymc**: `./scripts/lazymc-setup.sh [install|config]`
 - **Manage lazymc**: `./tools/lazymc.sh [start|stop|restart|status|logs|follow]`
 
 ## Code Style & Standards
+
 - **Shell**: Bash 5.0+. Shebang `#!/usr/bin/env bash`.
 - **Strict Mode**: Always use `set -euo pipefail`.
 - **Formatting**: 2-space indent. No tabs. Strip trailing whitespace.
@@ -51,6 +58,7 @@
 - **Functions**: Define as `func_name() { ... }`. Use `local` variables. Return values via `printf` capture or global refs if necessary.
 
 ## Tech Stack
+
 - **Core**: Bash Scripts (Management, Automation, Monitoring).
 - **Runtime**: Java 21+ (GraalVM Enterprise/Community or Eclipse Temurin).
 - **Server**:
@@ -61,12 +69,14 @@
 - **Backup**: tar-based backups + Btrfs snapshots (optional).
 
 ## Tool Preferences
+
 - **JSON**: `jaq` > `jq`.
 - **Download**: `aria2c` > `curl` > `wget`.
 - **Search**: `rg` (ripgrep) > `grep`.
 - **Optimization**: `oxipng`, `optipng`, `jpegoptim` (via workflows).
 
 ## Directory Structure
+
 - `scripts/`: Core logic (start, updates, install).
 - `tools/`: Operational utilities (backup, monitor, watchdog, logs, mcctl, systemd).
 - `config/`: Plugin/Mod configurations (ServerCore, Geyser, etc.).
@@ -79,7 +89,9 @@
 - `.github/`: CI/CD workflows, issue templates, agent definitions.
 
 ## mcctl Integration
+
 This repository includes an integrated version of [Kraftland/mcctl](https://github.com/Kraftland/mcctl) for Paper/Spigot server management. The tool has been modernized to follow this repository's code standards:
+
 - Modern bash with strict mode (`set -euo pipefail`)
 - Consistent code style (2-space indent, snake_case)
 - Modular design with clear separation of concerns

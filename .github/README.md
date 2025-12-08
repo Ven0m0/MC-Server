@@ -469,10 +469,10 @@ MC-Server/
 Contributions are welcome! Please read our contributing guidelines:
 
 1. Fork the repository
-1. Create a feature branch: `git checkout -b feature/amazing-feature`
-1. Commit your changes: `git commit -m 'Add amazing feature'`
-1. Push to the branch: `git push origin feature/amazing-feature`
-1. Open a Pull Request
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
 
 ## 📝 License
 
@@ -499,6 +499,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - 💬 [Discussions](../../discussions)
 - 📖 [Documentation](docs/)
 
-______________________________________________________________________
+---
 
 **Note**: This is a production-ready server management suite. Always test changes in a development environment before applying to production servers.

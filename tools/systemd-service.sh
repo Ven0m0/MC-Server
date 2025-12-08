@@ -141,22 +141,22 @@ remove_service(){
   print_header "Removing systemd service"
 
   # Stop service if running
-  if systemctl is-active --quiet "${SERVICE_NAME}"; then
+  if systemctl is-active --quiet "$SERVICE_NAME"; then
     print_info "Stopping service..."
     if [[ $EUID -eq 0 ]]; then
-      systemctl stop "${SERVICE_NAME}"
+      systemctl stop "$SERVICE_NAME"
     else
-      sudo systemctl stop "${SERVICE_NAME}"
+      sudo systemctl stop "$SERVICE_NAME"
     fi
   fi
 
   # Disable service if enabled
-  if systemctl is-enabled --quiet "${SERVICE_NAME}" 2>/dev/null; then
+  if systemctl is-enabled --quiet "$SERVICE_NAME" 2>/dev/null; then
     print_info "Disabling service..."
     if [[ $EUID -eq 0 ]]; then
-      systemctl disable "${SERVICE_NAME}"
+      systemctl disable "$SERVICE_NAME"
     else
-      sudo systemctl disable "${SERVICE_NAME}"
+      sudo systemctl disable "$SERVICE_NAME"
     fi
   fi
 
@@ -191,9 +191,9 @@ enable_service(){
   print_info "Enabling ${SERVICE_NAME}..."
 
   if [[ $EUID -eq 0 ]]; then
-    systemctl enable "${SERVICE_NAME}"
+    systemctl enable "$SERVICE_NAME"
   else
-    sudo systemctl enable "${SERVICE_NAME}"
+    sudo systemctl enable "$SERVICE_NAME"
   fi
 
   print_success "Service enabled (will start on boot)"
@@ -211,9 +211,9 @@ start_service(){
   print_info "Starting ${SERVICE_NAME}..."
 
   if [[ $EUID -eq 0 ]]; then
-    systemctl start "${SERVICE_NAME}"
+    systemctl start "$SERVICE_NAME"
   else
-    sudo systemctl start "${SERVICE_NAME}"
+    sudo systemctl start "$SERVICE_NAME"
   fi
 
   print_success "Service started"
@@ -226,9 +226,9 @@ stop_service(){
   print_info "Stopping ${SERVICE_NAME}..."
 
   if [[ $EUID -eq 0 ]]; then
-    systemctl stop "${SERVICE_NAME}"
+    systemctl stop "$SERVICE_NAME"
   else
-    sudo systemctl stop "${SERVICE_NAME}"
+    sudo systemctl stop "$SERVICE_NAME"
   fi
 
   print_success "Service stopped"
@@ -241,7 +241,7 @@ show_status(){
     return 0
   fi
 
-  systemctl status "${SERVICE_NAME}" --no-pager || true
+  systemctl status "$SERVICE_NAME" --no-pager || true
 }
 
 # Show logs
@@ -253,7 +253,7 @@ show_logs(){
     return 1
   }
 
-  journalctl -u "${SERVICE_NAME}" -n "$lines" --no-pager
+  journalctl -u "$SERVICE_NAME" -n "$lines" --no-pager
 }
 
 # Follow logs
@@ -263,7 +263,7 @@ follow_logs(){
     return 1
   }
 
-  journalctl -u "${SERVICE_NAME}" -f
+  journalctl -u "$SERVICE_NAME" -f
 }
 
 # Show usage

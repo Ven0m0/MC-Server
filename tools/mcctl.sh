@@ -251,7 +251,7 @@ accept_eula(){
 init_server(){
   print_header "Initializing server directory"
 
-  mkdir -p "${SCRIPT_DIR}"/{plugins,world,logs,backups}
+  mkdir -p "$SCRIPT_DIR"/{plugins,world,logs,backups}
 
   accept_eula
 

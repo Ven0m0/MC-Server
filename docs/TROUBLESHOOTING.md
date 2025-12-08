@@ -215,9 +215,9 @@ jstack $(pgrep -f fabric-server-launch) > threads.txt
 **Solutions:**
 
 1. Reduce mob spawning in ServerCore config
-1. Limit redstone contraptions
-1. Use optimization mods (Lithium, Krypton)
-1. Reduce number of loaded chunks
+2. Limit redstone contraptions
+3. Use optimization mods (Lithium, Krypton)
+4. Reduce number of loaded chunks
 
 ## Connection Issues
 
@@ -670,14 +670,14 @@ iotop -o
 ## Still Having Issues?
 
 1. Check the server logs: `logs/latest.log`
-1. Check crash reports: `crash-reports/`
-1. Search existing issues in the repository
-1. Create a new issue with:
-   - Description of the problem
-   - Steps to reproduce
-   - Server logs
-   - System information
-   - Diagnostic report
+2. Check crash reports: `crash-reports/`
+3. Search existing issues in the repository
+4. Create a new issue with:
+  - Description of the problem
+  - Steps to reproduce
+  - Server logs
+  - System information
+  - Diagnostic report
 
 ```
 ```

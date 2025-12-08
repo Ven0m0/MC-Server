@@ -18,7 +18,7 @@ G1:
 -XX:+UseStringDeduplication
 -XX:+AlwaysPreTouch
 -Xlog:async
--XX:+UseLargePages 
+-XX:+UseLargePages
 -XX:+UseTransparentHugePages
 -XX:+ParallelRefProcEnabled
 -XX:+G1PeriodicGCInvokesConcurrent
@@ -32,10 +32,10 @@ G1:
 -XX:+ExplicitGCInvokesConcurrent
 -XX:+UseStringDeduplication -XX:StringDeduplicationAgeThreshold=2 vs 3
 
--XX:+UseLargePages 
+-XX:+UseLargePages
 -XX:+UseTransparentHugePages
 vs
--XX:+UseLargePages 
+-XX:+UseLargePages
 echo 4096 | sudo tee /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
 
 echo madvise | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
@@ -127,7 +127,7 @@ echo advise | sudo tee/sys/kernel/mm/transparent_hugepage/shmem_enabled
 -Dfile.encoding=UTF-8
 
 
-Disable verbose GC logs: 
+Disable verbose GC logs:
 -Xlog:gc*:file=/dev/null -Xlog:safepoint*:file=/dev/null
 Disable assertions:
 -da
@@ -141,7 +141,7 @@ alias use-graalvm='export JAVA_HOME=$JAVA_GRAALVM && export PATH=$JAVA_HOME/bin:
 alias use-temurin='export JAVA_HOME=$JAVA_TEMURIN && export PATH=$JAVA_HOME/bin:$PATH'
 
 
-java -XX:ArchiveClassesAtExit=classes.jsa -cp server.jar 
+java -XX:ArchiveClassesAtExit=classes.jsa -cp server.jar
 java -XX:SharedArchiveFile=classes.jsa -cp server.jar
 or
 java -XX:+AutoCreateSharedArchive -XX:SharedArchiveFile=classes.jsa -cp
