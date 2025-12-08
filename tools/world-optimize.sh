@@ -15,11 +15,11 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 export SCRIPT_DIR
 
 # Output formatting helpers
-print_header() { printf '\033[0;34m==>\033[0m %s\n' "$1"; }
-print_success() { printf '\033[0;32m✓\033[0m %s\n' "$1"; }
-print_error() { printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
-print_info() { printf '\033[1;33m→\033[0m %s\n' "$1"; }
-print_warning() { printf '\033[1;33m⚠\033[0m %s\n' "$1"; }
+print_header(){ printf '\033[0;34m==>\033[0m %s\n' "$1"; }
+print_success(){ printf '\033[0;32m✓\033[0m %s\n' "$1"; }
+print_error(){ printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
+print_info(){ printf '\033[1;33m→\033[0m %s\n' "$1"; }
+print_warning(){ printf '\033[1;33m⚠\033[0m %s\n' "$1"; }
 
 # Configuration
 CHUNK_CLEANER_VERSION="1.0.0"
@@ -32,7 +32,7 @@ CREATE_BACKUP=true
 WORLD_DIR="${SCRIPT_DIR}/world"
 
 # Download ChunkCleaner if not present
-download_chunk_cleaner() {
+download_chunk_cleaner(){
   if [[ -f $CHUNK_CLEANER_BIN ]]; then
     print_info "ChunkCleaner already installed"
     return 0
@@ -60,18 +60,18 @@ download_chunk_cleaner() {
 }
 
 # Create backup before optimization
-create_backup() {
+create_backup(){
   [[ $CREATE_BACKUP != "true" ]] && return 0
 
   print_info "Creating backup before optimization..."
-  "${SCRIPT_DIR}/tools/backup.sh" backup world >/dev/null 2>&1 || {
+  "${SCRIPT_DIR}/tools/backup.sh" backup world &>/dev/null || {
     print_warning "Backup script failed, continuing anyway..."
   }
   print_success "Backup created"
 }
 
 # Clean chunks using ChunkCleaner
-clean_chunks() {
+clean_chunks(){
   local world_path="${1:-${WORLD_DIR}}"
   local min_ticks="${2:-${MIN_INHABITED_TICKS}}"
 
@@ -135,7 +135,7 @@ clean_chunks() {
 }
 
 # Clean old player data
-clean_player_data() {
+clean_player_data(){
   local world_path="${1:-${WORLD_DIR}}"
   local days="${2:-${PLAYER_INACTIVITY_DAYS}}"
 
@@ -175,7 +175,7 @@ clean_player_data() {
 }
 
 # Clean old statistics
-clean_statistics() {
+clean_statistics(){
   local world_path="${1:-${WORLD_DIR}}"
   local days="${2:-${PLAYER_INACTIVITY_DAYS}}"
 
@@ -215,7 +215,7 @@ clean_statistics() {
 }
 
 # Clean advancements
-clean_advancements() {
+clean_advancements(){
   local world_path="${1:-${WORLD_DIR}}"
   local days="${2:-${PLAYER_INACTIVITY_DAYS}}"
 
@@ -255,7 +255,7 @@ clean_advancements() {
 }
 
 # Clean session lock files
-clean_session_locks() {
+clean_session_locks(){
   local world_path="${1:-${WORLD_DIR}}"
 
   print_header "Session Lock Cleanup"
@@ -286,7 +286,7 @@ clean_session_locks() {
 }
 
 # Optimize region files (remove empty chunks)
-optimize_regions() {
+optimize_regions(){
   local world_path="${1:-${WORLD_DIR}}"
 
   print_header "Region File Optimization"
@@ -338,7 +338,7 @@ optimize_regions() {
 }
 
 # Show world statistics
-show_stats() {
+show_stats(){
   local world_path="${1:-${WORLD_DIR}}"
 
   print_header "World Statistics"
@@ -410,7 +410,7 @@ show_stats() {
 }
 
 # Show usage
-show_usage() {
+show_usage(){
   cat <<EOF
 Minecraft World Optimization Tool
 

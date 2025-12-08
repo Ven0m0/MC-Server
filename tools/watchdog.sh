@@ -25,23 +25,23 @@ LAST_RESTART_TIME=0
 
 # Logging
 mkdir -p "$(dirname "$LOG_FILE")"
-log() { printf '[%(%Y-%m-%d %H:%M:%S)T] %s\n' -1 "$*" | tee -a "$LOG_FILE"; }
+log(){ printf '[%(%Y-%m-%d %H:%M:%S)T] %s\n' -1 "$*" | tee -a "$LOG_FILE"; }
 
 # Check if command exists
-has_command() { command -v "$1" &>/dev/null; }
+has_command(){ command -v "$1" &>/dev/null; }
 
 # Check if server is running
-is_server_running() { pgrep -f "fabric-server-launch.jar" >/dev/null || pgrep -f "server.jar" >/dev/null; }
+is_server_running(){ pgrep -f "fabric-server-launch.jar" >/dev/null || pgrep -f "server.jar" >/dev/null; }
 
-check_network() {
+check_network(){
   # If nc is available, check if port is actually open
   if has_command nc; then
-    nc -z localhost "$SERVER_PORT" >/dev/null 2>&1
+    nc -z localhost "$SERVER_PORT" &>/dev/null
     return $?
   fi
   return 0 # Skip check if nc not installed
 }
-check_health() {
+check_health(){
   if ! is_server_running; then
     log "Process not running."
     return 1
@@ -63,7 +63,7 @@ check_health() {
 }
 
 # Check if can restart (rate limiting)
-can_restart() {
+can_restart(){
   local now
   now=$(printf '%(%s)T' -1)
   local time_since_last=$((now - LAST_RESTART_TIME))
@@ -79,7 +79,7 @@ can_restart() {
 }
 
 # Start server
-start_server() {
+start_server(){
   if [[ ! -x $SERVER_START_SCRIPT ]]; then
     log "Server start script not found or not executable: ${SERVER_START_SCRIPT}"
     return 1
@@ -91,7 +91,7 @@ start_server() {
 }
 
 # Stop server
-stop_server() {
+stop_server(){
   log "Stopping server..."
   pkill -f "fabric-server-launch.jar" || pkill -f "server.jar" || true
   sleep 2
@@ -99,7 +99,7 @@ stop_server() {
 }
 
 # Restart server
-restart_server() {
+restart_server(){
   log "Restarting server..."
   can_restart || return 1
   is_server_running && stop_server
@@ -107,7 +107,7 @@ restart_server() {
 }
 
 # Monitor mode
-monitor_mode() {
+monitor_mode(){
   log "Watchdog started (interval: ${CHECK_INTERVAL}s, max attempts: ${MAX_RESTART_ATTEMPTS})"
   while true; do
     check_health || {
@@ -131,7 +131,7 @@ monitor_mode() {
 }
 
 # Show usage
-show_usage() {
+show_usage(){
   cat <<EOF
 Minecraft Server Watchdog
 

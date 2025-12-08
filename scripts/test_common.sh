@@ -11,10 +11,10 @@ export HOME="/home/${user}"
 SHELL="$(command -v bash 2>/dev/null || echo '/usr/bin/bash')"
 
 # Check if command exists
-has_command() { command -v "$1" &>/dev/null; }
+has_command(){ command -v "$1" &>/dev/null; }
 
 # Detect JSON processor (prefer jaq over jq)
-get_json_processor() {
+get_json_processor(){
   has_command jaq && {
     echo "jaq"
     return
@@ -28,10 +28,10 @@ get_json_processor() {
 }
 
 # Calculate total RAM in GB
-get_total_ram_gb() { awk '/MemTotal/ {printf "%.0f\n",$2/1024/1024}' /proc/meminfo 2>/dev/null; }
+get_total_ram_gb(){ awk '/MemTotal/ {printf "%.0f\n",$2/1024/1024}' /proc/meminfo 2>/dev/null; }
 
 # Calculate heap size (total RAM minus reserved for OS)
-get_heap_size_gb() {
+get_heap_size_gb(){
   local reserved="${1:-2}"
   local total_ram
   total_ram=$(get_total_ram_gb)
@@ -41,7 +41,7 @@ get_heap_size_gb() {
 }
 
 # Calculate Minecraft memory allocation
-get_minecraft_memory_gb() { get_heap_size_gb "${1:-3}"; }
+get_minecraft_memory_gb(){ get_heap_size_gb "${1:-3}"; }
 
 # Calculate client memory allocation
 get_client_xms_gb() {
@@ -52,7 +52,7 @@ get_client_xms_gb() {
   echo "$xms"
 }
 
-get_client_xmx_gb() {
+get_client_xmx_gb(){
   local total_ram
   total_ram=$(get_total_ram_gb)
   local xmx=$((total_ram / 2))
@@ -61,15 +61,15 @@ get_client_xmx_gb() {
 }
 
 # Get number of CPU cores
-get_cpu_cores() { nproc 2>/dev/null || echo 4; }
+get_cpu_cores(){ nproc 2>/dev/null || echo 4; }
 
 # Get aria2c download options
-get_aria2c_opts() { echo "-x 16 -s 16"; }
+get_aria2c_opts(){ echo "-x 16 -s 16"; }
 # Get aria2c options as array (use: mapfile -t arr < <(get_aria2c_opts_array))
-get_aria2c_opts_array() { printf '%s\n' "-x" "16" "-s" "16"; }
+get_aria2c_opts_array(){ printf '%s\n' "-x" "16" "-s" "16"; }
 
 # Create directory if it doesn't exist
-ensure_dir() { [[ ! -d $1 ]] && mkdir -p "$1" || return 0; }
+ensure_dir(){ [[ ! -d $1 ]] && mkdir -p "$1" || return 0; }
 
 echo "Testing common.sh functions..."
 echo ""

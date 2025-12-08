@@ -1,41 +1,13 @@
 #!/usr/bin/env bash
 # lazymc-setup.sh: Install and configure lazymc for automatic server sleep
-set -euo pipefail
-shopt -s nullglob globstar
-IFS=$'\n\t'
-
-# Output formatting helpers
-print_header() { printf '\033[0;34m==>\033[0m %s\n' "$1"; }
-print_error() { printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
-print_success() { printf '\033[0;32m✓\033[0m %s\n' "$1"; }
-print_info() { printf '\033[1;33m→\033[0m %s\n' "$1"; }
-
-# Check if command exists
-has_command() { command -v "$1" &>/dev/null; }
-
-# Configuration
-LAZYMC_VERSION="${LAZYMC_VERSION:-0.2.11}"
-INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
-CONFIG_DIR="${CONFIG_DIR:-$PWD/config}"
-LAZYMC_CONFIG="${CONFIG_DIR}/lazymc.toml"
-
-# Detect architecture
-detect_arch() {
-  local arch
-  arch="$(uname -m)"
-  case "$arch" in
-    x86_64 | amd64) echo "x86_64" ;;
-    aarch64 | arm64) echo "aarch64" ;;
-    armv7l) echo "armv7" ;;
-    *)
-      print_error "Unsupported architecture: $arch"
-      exit 1
-      ;;
-  esac
-}
+set -euo pipefail; shopt -s nullglob globstar; IFS=$'\n\t'
+print_header(){ printf '\033[0;34m==>\033[0m %s\n' "$1"; }; print_error(){ printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }; print_success(){ printf '\033[0;32m✓\033[0m %s\n' "$1"; }; print_info(){ printf '\033[1;33m→\033[0m %s\n' "$1"; }
+has_command(){ command -v "$1" &>/dev/null; }
+LAZYMC_VERSION="${LAZYMC_VERSION:-0.2.11}"; INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"; CONFIG_DIR="${CONFIG_DIR:-$PWD/config}"; LAZYMC_CONFIG="${CONFIG_DIR}/lazymc.toml"
+detect_arch(){ local arch; arch="$(uname -m)"; case "$arch" in x86_64|amd64) echo "x86_64";; aarch64|arm64) echo "aarch64";; armv7l) echo "armv7";; *) print_error "Unsupported architecture: $arch"; exit 1;; esac; }
 
 # Download lazymc binary
-download_lazymc() {
+download_lazymc(){
   local arch version url target_file
   arch="$(detect_arch)"
   version="$1"
@@ -67,7 +39,7 @@ download_lazymc() {
 }
 
 # Generate lazymc configuration
-generate_config() {
+generate_config(){
   print_header "Generating lazymc configuration"
 
   mkdir -p "$CONFIG_DIR"
@@ -117,7 +89,7 @@ EOF
 }
 
 # Show usage instructions
-show_usage() {
+show_usage(){
   print_header "lazymc Setup Complete!"
   printf '\n'
   print_info "Installation directory: ${INSTALL_DIR}"
@@ -136,40 +108,5 @@ show_usage() {
   printf '\n'
 }
 
-# Main installation flow
-main() {
-  local cmd="${1:-install}"
-
-  case "$cmd" in
-    install)
-      download_lazymc "$LAZYMC_VERSION"
-      generate_config
-      show_usage
-      ;;
-    config)
-      generate_config
-      ;;
-    help | --help | -h)
-      print_header "lazymc Setup Script"
-      printf '\n'
-      printf 'Usage: %s [command]\n' "$0"
-      printf '\n'
-      printf 'Commands:\n'
-      printf '  install    Download lazymc and generate config (default)\n'
-      printf '  config     Generate configuration only\n'
-      printf '  help       Show this help message\n'
-      printf '\n'
-      printf 'Environment Variables:\n'
-      printf '  LAZYMC_VERSION  Version to install (default: %s)\n' "$LAZYMC_VERSION"
-      printf '  INSTALL_DIR     Installation directory (default: %s)\n' "$INSTALL_DIR"
-      printf '  CONFIG_DIR      Configuration directory (default: %s)\n' "$CONFIG_DIR"
-      ;;
-    *)
-      print_error "Unknown command: $cmd"
-      print_info "Run '$0 help' for usage"
-      exit 1
-      ;;
-  esac
-}
-
+main(){ local cmd="${1:-install}"; case "$cmd" in install) download_lazymc "$LAZYMC_VERSION"; generate_config; show_usage;; config) generate_config;; help|--help|-h) print_header "lazymc Setup Script"; printf '\nUsage: %s [command]\n\nCommands:\n  install    Download lazymc and generate config (default)\n  config     Generate configuration only\n  help       Show this help message\n\nEnvironment Variables:\n  LAZYMC_VERSION  Version to install (default: %s)\n  INSTALL_DIR     Installation directory (default: %s)\n  CONFIG_DIR      Configuration directory (default: %s)\n' "$0" "$LAZYMC_VERSION" "$INSTALL_DIR" "$CONFIG_DIR";; *) print_error "Unknown command: $cmd"; print_info "Run '$0 help' for usage"; exit 1;; esac; }
 main "$@"

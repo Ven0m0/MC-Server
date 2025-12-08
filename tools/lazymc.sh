@@ -5,13 +5,13 @@ shopt -s nullglob globstar
 IFS=$'\n\t'
 
 # Output formatting helpers
-print_header() { printf '\033[0;34m==>\033[0m %s\n' "$1"; }
-print_error() { printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
-print_success() { printf '\033[0;32m✓\033[0m %s\n' "$1"; }
-print_info() { printf '\033[1;33m→\033[0m %s\n' "$1"; }
+print_header(){ printf '\033[0;34m==>\033[0m %s\n' "$1"; }
+print_error(){ printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
+print_success(){ printf '\033[0;32m✓\033[0m %s\n' "$1"; }
+print_info(){ printf '\033[1;33m→\033[0m %s\n' "$1"; }
 
 # Check if command exists
-has_command() { command -v "$1" &>/dev/null; }
+has_command(){ command -v "$1" &>/dev/null; }
 
 # Configuration
 CONFIG_DIR="${CONFIG_DIR:-$PWD/config}"
@@ -20,7 +20,7 @@ LAZYMC_PID_FILE="/tmp/lazymc.pid"
 LAZYMC_LOG_FILE="logs/lazymc.log"
 
 # Ensure lazymc is installed
-check_lazymc() {
+check_lazymc(){
   if ! has_command lazymc; then
     print_error "lazymc not found"
     print_info "Run './scripts/lazymc-setup.sh install' to install"
@@ -29,7 +29,7 @@ check_lazymc() {
 }
 
 # Check if lazymc config exists
-check_config() {
+check_config(){
   if [[ ! -f $LAZYMC_CONFIG ]]; then
     print_error "Configuration not found: ${LAZYMC_CONFIG}"
     print_info "Run './scripts/lazymc-setup.sh config' to generate"
@@ -38,7 +38,7 @@ check_config() {
 }
 
 # Start lazymc
-start_lazymc() {
+start_lazymc(){
   check_lazymc
   check_config
 
@@ -78,7 +78,7 @@ start_lazymc() {
 }
 
 # Stop lazymc
-stop_lazymc() {
+stop_lazymc(){
   if [[ ! -f $LAZYMC_PID_FILE ]]; then
     print_info "lazymc is not running (no PID file)"
     return 0
@@ -116,14 +116,14 @@ stop_lazymc() {
 }
 
 # Restart lazymc
-restart_lazymc() {
+restart_lazymc(){
   stop_lazymc
   sleep 1
   start_lazymc
 }
 
 # Show lazymc status
-status_lazymc() {
+status_lazymc(){
   check_lazymc
 
   print_header "lazymc Status"
@@ -163,7 +163,7 @@ status_lazymc() {
 }
 
 # Show logs
-show_logs() {
+show_logs(){
   if [[ ! -f $LAZYMC_LOG_FILE ]]; then
     print_error "Log file not found: ${LAZYMC_LOG_FILE}"
     exit 1
@@ -174,7 +174,7 @@ show_logs() {
 }
 
 # Follow logs
-follow_logs() {
+follow_logs(){
   if [[ ! -f $LAZYMC_LOG_FILE ]]; then
     print_error "Log file not found: ${LAZYMC_LOG_FILE}"
     exit 1
@@ -184,7 +184,7 @@ follow_logs() {
 }
 
 # Show usage
-show_usage() {
+show_usage(){
   print_header "lazymc Management Script"
   printf '\n'
   printf 'Usage: %s <command> [options]\n' "$0"
@@ -206,7 +206,7 @@ show_usage() {
 }
 
 # Main
-main() {
+main(){
   local cmd="${1:-help}"
 
   case "$cmd" in

@@ -8,10 +8,10 @@ export HOME="/home/${user}" LC_ALL=C LANG=C
 SHELL="$(command -v bash 2>/dev/null || echo '/usr/bin/bash')"
 
 # Check if command exists
-has_command() { command -v "$1" &>/dev/null; }
+has_command(){ command -v "$1" &>/dev/null; }
 
 # Check if required commands are available
-check_dependencies() {
+check_dependencies(){
   local missing=()
   for cmd in "$@"; do
     has_command "$cmd" || missing+=("$cmd")
@@ -24,7 +24,7 @@ check_dependencies() {
 }
 
 # Calculate total RAM in GB
-get_total_ram_gb() { awk '/MemTotal/ {printf "%.0f\n",$2/1024/1024}' /proc/meminfo 2>/dev/null; }
+get_total_ram_gb(){ awk '/MemTotal/ {printf "%.0f\n",$2/1024/1024}' /proc/meminfo 2>/dev/null; }
 
 # Calculate heap size (total RAM minus reserved for OS)
 get_heap_size_gb() {
@@ -37,13 +37,13 @@ get_heap_size_gb() {
 }
 
 # Get number of CPU cores
-get_cpu_cores() { nproc 2>/dev/null || echo 4; }
+get_cpu_cores(){ nproc 2>/dev/null || echo 4; }
 
 # Output formatting helpers
-print_header() { printf '\033[0;34m==>\033[0m %s\n' "$1"; }
-print_success() { printf '\033[0;32m✓\033[0m %s\n' "$1"; }
-print_error() { printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
-print_info() { printf '\033[1;33m→\033[0m %s\n' "$1"; }
+print_header(){ printf '\033[0;34m==>\033[0m %s\n' "$1"; }
+print_success(){ printf '\033[0;32m✓\033[0m %s\n' "$1"; }
+print_error(){ printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
+print_info(){ printf '\033[1;33m→\033[0m %s\n' "$1"; }
 
 # Configuration
 : "${SERVER_JAR:=server.jar}"

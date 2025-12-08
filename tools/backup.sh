@@ -15,14 +15,14 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 export SCRIPT_DIR
 
 # Output formatting helpers
-print_header() { printf '\033[0;34m==>\033[0m %s\n' "$1"; }
-print_success() { printf '\033[0;32m✓\033[0m %s\n' "$1"; }
-print_error() { printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
-print_info() { printf '\033[1;33m→\033[0m %s\n' "$1"; }
+print_header(){ printf '\033[0;34m==>\033[0m %s\n' "$1"; }
+print_success(){ printf '\033[0;32m✓\033[0m %s\n' "$1"; }
+print_error(){ printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
+print_info(){ printf '\033[1;33m→\033[0m %s\n' "$1"; }
 
 # Format byte sizes to human-readable form (1G, 1M, 1K, 1B)
 # Usage: format_size_bytes <size_in_bytes>
-format_size_bytes() {
+format_size_bytes(){
   local size="$1"
   # Byte conversion constants
   local KB=1024 MB=1048576 GB=1073741824
@@ -46,7 +46,7 @@ MAX_BACKUPS=10
 mkdir -p "${BACKUP_DIR}/worlds" "${BACKUP_DIR}/configs"
 
 # Backup world data
-backup_world() {
+backup_world(){
   print_info "Backing up world..."
   [[ ! -d "${SCRIPT_DIR}/world" ]] && {
     print_error "No world directory found"
@@ -59,7 +59,7 @@ backup_world() {
 }
 
 # Backup configs
-backup_configs() {
+backup_configs(){
   print_info "Backing up configs..."
   cd "$SCRIPT_DIR"
   tar -czf "${BACKUP_DIR}/configs/config_${TIMESTAMP}.tar.gz" \
@@ -70,7 +70,7 @@ backup_configs() {
 }
 
 # Backup mods
-backup_mods() {
+backup_mods(){
   print_info "Backing up mods..."
   [[ ! -d "${SCRIPT_DIR}/mods" ]] && {
     print_info "No mods directory"
@@ -82,7 +82,7 @@ backup_mods() {
 }
 
 # Clean old backups
-cleanup_old_backups() {
+cleanup_old_backups(){
   print_info "Cleaning old backups (keeping last ${MAX_BACKUPS})..."
   for dir in worlds configs; do
     local backup_path="${BACKUP_DIR}/${dir}"
@@ -98,7 +98,7 @@ cleanup_old_backups() {
 }
 
 # List backups
-list_backups() {
+list_backups(){
   print_header "Available backups"
   printf '\n'
   printf 'World Backups:\n'
@@ -118,7 +118,7 @@ list_backups() {
 }
 
 # Restore backup
-restore_backup() {
+restore_backup(){
   local file="$1"
   [[ ! -f $file ]] && {
     print_error "File not found: $file"
@@ -136,13 +136,13 @@ restore_backup() {
 }
 
 # Check if path is on Btrfs filesystem
-is_btrfs() {
+is_btrfs(){
   local path="${1:-${SCRIPT_DIR}}"
   [[ $(stat -f -c %T "$path" 2>/dev/null) == "btrfs" ]]
 }
 
 # Create Btrfs snapshot
-create_btrfs_snapshot() {
+create_btrfs_snapshot(){
   local source="${1:-${SCRIPT_DIR}/world}"
   local snapshot_name="${2:-snapshot_${TIMESTAMP}}"
 
@@ -182,7 +182,7 @@ create_btrfs_snapshot() {
 }
 
 # List Btrfs snapshots
-list_btrfs_snapshots() {
+list_btrfs_snapshots(){
   local snapshot_dir="${BACKUP_DIR}/btrfs-snapshots"
 
   [[ ! -d $snapshot_dir ]] && {
@@ -211,7 +211,7 @@ list_btrfs_snapshots() {
 }
 
 # Delete Btrfs snapshot
-delete_btrfs_snapshot() {
+delete_btrfs_snapshot(){
   local snapshot_name="$1"
   local snapshot_dir="${BACKUP_DIR}/btrfs-snapshots"
   local snapshot_path="${snapshot_dir}/${snapshot_name}"
@@ -246,7 +246,7 @@ delete_btrfs_snapshot() {
 }
 
 # Restore Btrfs snapshot
-restore_btrfs_snapshot() {
+restore_btrfs_snapshot(){
   local snapshot_name="$1"
   local target="${2:-${SCRIPT_DIR}/world}"
   local snapshot_dir="${BACKUP_DIR}/btrfs-snapshots"
@@ -290,7 +290,7 @@ restore_btrfs_snapshot() {
 }
 
 # Show usage
-show_usage() {
+show_usage(){
   cat <<EOF
 Minecraft Server Backup Tool
 
@@ -336,32 +336,4 @@ Notes:
 EOF
 }
 
-# Main
-case "${1:-backup}" in
-  backup)
-    case "${2:-all}" in
-      world) backup_world ;;
-      config) backup_configs ;;
-      mods) backup_mods ;;
-      all | *)
-        backup_world
-        backup_configs
-        backup_mods
-        ;;
-    esac
-    cleanup_old_backups
-    ;;
-  list) list_backups ;;
-  restore) restore_backup "$2" ;;
-  cleanup) cleanup_old_backups ;;
-  snapshot) create_btrfs_snapshot "${2:-}" "${3:-}" ;;
-  snapshot-list) list_btrfs_snapshots ;;
-  snapshot-restore) restore_btrfs_snapshot "$2" "${3:-}" ;;
-  snapshot-delete) delete_btrfs_snapshot "$2" ;;
-  help | --help | -h) show_usage ;;
-  *)
-    print_error "Unknown command: $1"
-    show_usage
-    exit 1
-    ;;
-esac
+case "${1:-backup}" in backup) case "${2:-all}" in world) backup_world;; config) backup_configs;; mods) backup_mods;; all|*) backup_world; backup_configs; backup_mods;; esac; cleanup_old_backups;; list) list_backups;; restore) restore_backup "$2";; cleanup) cleanup_old_backups;; snapshot) create_btrfs_snapshot "${2:-}" "${3:-}";; snapshot-list) list_btrfs_snapshots;; snapshot-restore) restore_btrfs_snapshot "$2" "${3:-}";; snapshot-delete) delete_btrfs_snapshot "$2";; help|--help|-h) show_usage;; *) print_error "Unknown command: $1"; show_usage; exit 1;; esac
