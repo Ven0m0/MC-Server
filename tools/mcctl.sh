@@ -319,29 +319,4 @@ NOTES:
 EOF
 }
 
-# Command dispatcher
-case "${1:-help}" in
-  build-paper) build_paper "${2:-1.21.1}" ;;
-  build-spigot) build_spigot "${2:-latest}" ;;
-  init) init_server ;;
-  accept-eula) accept_eula ;;
-  update)
-    [[ -z ${2:-} ]] && {
-      print_error "Plugin name required"
-      printf "Available plugins: viaversion, viabackwards, multilogin, floodgate, geyser, protocollib, vault, luckperms, griefprevention\n"
-      exit 1
-    }
-    update_plugin "$2"
-    ;;
-  update-all) update_all_plugins ;;
-  version)
-    print_header "mcctl version ${MCCTL_VERSION}"
-    printf "Integrated from: https://github.com/Kraftland/mcctl\n"
-    ;;
-  help | --help | -h) show_usage ;;
-  *)
-    print_error "Unknown command: $1"
-    show_usage
-    exit 1
-    ;;
-esac
+case "${1:-help}" in build-paper) build_paper "${2:-1.21.1}";; build-spigot) build_spigot "${2:-latest}";; init) init_server;; accept-eula) accept_eula;; update) [[ -z ${2:-} ]] && { print_error "Plugin name required"; printf "Available plugins: viaversion, viabackwards, multilogin, floodgate, geyser, protocollib, vault, luckperms, griefprevention\n"; exit 1; }; update_plugin "$2";; update-all) update_all_plugins;; version) print_header "mcctl version ${MCCTL_VERSION}"; printf "Integrated from: https://github.com/Kraftland/mcctl\n";; help|--help|-h) show_usage;; *) print_error "Unknown command: $1"; show_usage; exit 1;; esac
