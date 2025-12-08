@@ -64,3 +64,6 @@ WantedBy=multi-user.target
 
 ### Optimization
 - https://github.com/Radk6/MC-Optimization-Guide
+
+### Texture packs
+- https://github.com/Mickey42302/JavaEditionCorrections
