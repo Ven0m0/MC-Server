@@ -14,6 +14,16 @@ indent_style = space
 indent_size = 2
 tab_width = 2
 max_line_length = 120
+spaces_around_operators = true
+spaces_around_brackets = false
+quote_type = auto
+spelling_language = en
+shell_variant = auto
+keep_padding = false
+space_redirects = false
+switch_case_indent = false
+function_next_line = false
+binary_next_line = true
 
 # =============================================================================
 # Shell Scripts
@@ -154,8 +164,8 @@ indent_size = 2
 indent_style = space
 indent_size = 2
 
-# INI and Properties files
-[**.{ini,cfg,conf,desktop,properties}]
+# INI files
+[**.{ini,cfg,conf,desktop}]
 indent_style = space
 indent_size = 2
 
@@ -220,9 +230,9 @@ indent_size = 4
 indent_style = space
 indent_size = 2
 
-[.gitconfig]
-indent_style = tab
-tab_width = 8
+[config,.gitconfig]
+indent_style = space
+indent_size = 2
 
 # =============================================================================
 # Editor/IDE Configs
