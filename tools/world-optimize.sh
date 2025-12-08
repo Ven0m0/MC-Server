@@ -64,7 +64,7 @@ create_backup(){
   [[ $CREATE_BACKUP != "true" ]] && return 0
 
   print_info "Creating backup before optimization..."
-  "${SCRIPT_DIR}/tools/backup.sh" backup world >/dev/null 2>&1>/dev/null || {
+  "${SCRIPT_DIR}/tools/backup.sh" backup world &>/dev/null || {
     print_warning "Backup script failed, continuing anyway..."
   }
   print_success "Backup created"
