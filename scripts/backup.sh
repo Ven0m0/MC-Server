@@ -1,22 +1,17 @@
 #!/usr/bin/env bash
-
 # Minecraft server automatic backup management script
-# https://github.com/nicolaschan/minecraft-backup
-# MIT License
-#
 # For Minecraft servers running in a GNU screen, tmux, or RCON.
 # For most convenience, run automatically with cron.
-
 # Default Configuration
 SCREEN_NAME=""                   # Name of the GNU Screen, tmux session, or hostname:port:password for RCON
 SERVER_WORLDS=()                 # Server world directory
 BACKUP_DIRECTORY=""              # Directory to save backups in
-MAX_BACKUPS=128                  # -1 indicates unlimited
+MAX_BACKUPS=32                   # -1 indicates unlimited
 DELETE_METHOD="thin"             # Choices: thin, sequential, none; sequential: delete oldest; thin: keep last 24 hourly, last 30 daily, and monthly (use with 1 hr cron interval)
 COMPRESSION_ALGORITHM="gzip"     # Leave empty for no compression
 COMPRESSION_FILE_EXTENSION=".gz" # Leave empty for no compression; Precede with a . (for example: ".gz")
-COMPRESSION_LEVEL=3              # Passed to the compression algorithm
-ENABLE_CHAT_MESSAGES=false       # Tell players in Minecraft chat about backup status
+COMPRESSION_LEVEL=6              # Passed to the compression algorithm
+ENABLE_CHAT_MESSAGES=true        # Tell players in Minecraft chat about backup status
 PREFIX="Backup"                  # Shows in the chat message
 DEBUG=false                      # Enable debug messages
 SUPPRESS_WARNINGS=false          # Suppress warnings
@@ -25,23 +20,12 @@ LOCK_FILE=""                     # Optional lock file to acquire to ensure two b
 LOCK_FILE_TIMEOUT=""             # Optional lock file wait timeout (in seconds)
 WINDOW_MANAGER="screen"          # Choices: screen, tmux, RCON
 SAVE_ALL_WAIT_SECONDS=""         # Delay in seconds after save-all flush (default: 5, 0 if rcon)
-
 # Other Variables (do not modify)
 DATE_FORMAT="%F_%H-%M-%S"
 TIMESTAMP=$(date +$DATE_FORMAT)
-
-log-fatal() {
-  echo -e "\033[0;31mFATAL:\033[0m $*"
-}
-log-warning() {
-  echo -e "\033[0;33mWARNING:\033[0m $*"
-}
-debug-log() {
-  if "$DEBUG"; then
-    echo "$1"
-  fi
-}
-
+log-fatal(){ echo -e "\033[0;31mFATAL:\033[0m $*"; }
+log-warning(){ echo -e "\033[0;33mWARNING:\033[0m $*"; }
+debug-log(){ [[ -n $DEBUG ]] && echo "$1"; }
 while getopts 'a:cd:e:f:hH:i:l:m:o:p:qr:s:t:u:vw:xz:' FLAG; do
   case $FLAG in
     a) COMPRESSION_ALGORITHM=$OPTARG ;;
@@ -72,8 +56,7 @@ while getopts 'a:cd:e:f:hH:i:l:m:o:p:qr:s:t:u:vw:xz:' FLAG; do
       echo "-v    Verbose mode"
       echo "-w    Window manager: screen (default), tmux, RCON"
       echo "-z    Delay in seconds after save-all flush (default: 5, 0 if rcon)"
-      exit 0
-      ;;
+      exit 0 ;;
     H) RESTIC_HOSTNAME=$OPTARG ;;
     i) SERVER_WORLDS+=("$OPTARG") ;;
     l) COMPRESSION_LEVEL=$OPTARG ;;
@@ -88,136 +71,94 @@ while getopts 'a:cd:e:f:hH:i:l:m:o:p:qr:s:t:u:vw:xz:' FLAG; do
     v) DEBUG=true ;;
     w) WINDOW_MANAGER=$OPTARG ;;
     z) SAVE_ALL_WAIT_SECONDS=$OPTARG ;;
-    *)
-      log-fatal "Invalid option -$FLAG"
-      exit 1
-      ;;
+    *) log-fatal "Invalid option -$FLAG"; exit 1 ;;
   esac
 done
-
-rcon-command() {
+rcon-command(){
   HOST="$(echo "$1" | cut -d: -f1)"
   PORT="$(echo "$1" | cut -d: -f2)"
   PASSWORD="$(echo "$1" | cut -d: -f3-)"
   COMMAND="$2"
-
-  reverse-hex-endian() {
+  reverse-hex-endian(){
     # Given a 4-byte hex integer, reverse endianness
     while read -r -d '' -N 8 INTEGER; do
       echo "$INTEGER" | sed -E 's/(..)(..)(..)(..)/\4\3\2\1/'
     done
   }
-
-  decode-hex-int() {
+  decode-hex-int(){
     # decode little-endian hex integer
     while read -r -d '' -N 8 INTEGER; do
       BIG_ENDIAN_HEX=$(echo "$INTEGER" | reverse-hex-endian)
       echo "$((16#$BIG_ENDIAN_HEX))"
     done
   }
-
-  stream-to-hex() {
-    xxd -ps
-  }
-
-  hex-to-stream() {
-    xxd -ps -r
-  }
-
-  encode-int() {
+  stream-to-hex(){ xxd -ps; }
+  hex-to-stream(){ xxd -ps -r; }
+  encode-int(){
     # Encode an integer as 4 bytes in little endian and return as hex
     INT="$1"
     # Source: https://stackoverflow.com/a/9955198
     printf "%08x" "$INT" | sed -E 's/(..)(..)(..)(..)/\4\3\2\1/'
   }
-
-  encode() {
+  encode(){
     # Encode a packet type and payload for the rcon protocol
     TYPE="$1"
     PAYLOAD="$2"
     REQUEST_ID="$3"
     PAYLOAD_LENGTH="${#PAYLOAD}"
     TOTAL_LENGTH="$((4 + 4 + PAYLOAD_LENGTH + 1 + 1))"
-
     OUTPUT=""
     OUTPUT+=$(encode-int "$TOTAL_LENGTH")
     OUTPUT+=$(encode-int "$REQUEST_ID")
     OUTPUT+=$(encode-int "$TYPE")
     OUTPUT+=$(echo -n "$PAYLOAD" | stream-to-hex)
     OUTPUT+="0000"
-
     echo -n "$OUTPUT" | hex-to-stream
   }
 
-  read-response() {
+  read-response(){
     # read next response packet and return the payload text
     HEX_LENGTH=$(head -c4 <&3 | stream-to-hex | reverse-hex-endian)
     LENGTH=$((16#$HEX_LENGTH))
-
     RESPONSE_PAYLOAD=$(head -c $LENGTH <&3 | stream-to-hex)
     echo -n "$RESPONSE_PAYLOAD"
   }
-
-  response-request-id() {
-    echo -n "${1:0:8}" | decode-hex-int
-  }
-
-  response-type() {
-    echo -n "${1:8:8}" | decode-hex-int
-  }
-
-  response-payload() {
-    echo -n "${1:16:-4}" | hex-to-stream
-  }
-
-  login() {
+  response-request-id(){ echo -n "${1:0:8}" | decode-hex-int; }
+  response-type(){ echo -n "${1:8:8}" | decode-hex-int; }
+  response-payload(){ echo -n "${1:16:-4}" | hex-to-stream; }
+  login(){
     PASSWORD="$1"
     encode 3 "$PASSWORD" 12 >&3
-
     RESPONSE=$(read-response "$IN_PIPE")
-
     RESPONSE_REQUEST_ID=$(response-request-id "$RESPONSE")
     if [[ $RESPONSE_REQUEST_ID == "-1" ]] || [[ $RESPONSE_REQUEST_ID == "4294967295" ]]; then
-      log-warning "RCON connection failed: Wrong RCON password" 1>&2
-      return 1
+      log-warning "RCON connection failed: Wrong RCON password" 1>&2; return 1
     fi
   }
 
-  run-command() {
+  run-command(){
     COMMAND="$1"
-
     # encode 2 "$COMMAND" 13 >> "$OUT_PIPE"
     encode 2 "$COMMAND" 13 >&3
-
     RESPONSE=$(read-response "$IN_PIPE")
     response-payload "$RESPONSE"
   }
-
   # Open a TCP socket
   # Source: https://www.xmodulo.com/tcp-udp-socket-bash-shell.html
   if ! exec 3<>/dev/tcp/"$HOST"/"$PORT"; then
-    log-warning "RCON connection failed: Could not connect to $HOST:$PORT"
-    return 1
+    log-warning "RCON connection failed: Could not connect to $HOST:$PORT"; return 1
   fi
-
   login "$PASSWORD" || return 1
   debug-log "$(run-command "$COMMAND")"
-
   # Close the socket
-  exec 3<&-
-  exec 3>&-
+  exec 3<&-; exec 3>&-
 }
-
 if ! "$DEBUG"; then
   QUIET="-q"
 else
   QUIET=""
 fi
-
-if [[ $COMPRESSION_FILE_EXTENSION == "." ]]; then
-  COMPRESSION_FILE_EXTENSION=""
-fi
-
+[[ $COMPRESSION_FILE_EXTENSION == "." ]] && COMPRESSION_FILE_EXTENSION=""
 # Check for missing encouraged arguments
 if ! $SUPPRESS_WARNINGS; then
   if [[ $SCREEN_NAME == "" ]]; then
@@ -244,139 +185,90 @@ if [[ $RESTIC_REPO != "" ]]; then
     MISSING_CONFIGURATION=true
   fi
 fi
-
 if $MISSING_CONFIGURATION; then
   exit 1
 fi
-
 if [[ $BACKUP_DIRECTORY != "" ]]; then
   ARCHIVE_FILE_NAME="$TIMESTAMP.tar$COMPRESSION_FILE_EXTENSION"
   ARCHIVE_PATH="$BACKUP_DIRECTORY/$ARCHIVE_FILE_NAME"
 fi
-if [[ $RESTIC_REPO != "" ]]; then
-  ARCHIVE_PATH="$RESTIC_REPO $TIMESTAMP"
-fi
-
+[[ $RESTIC_REPO != "" ]] && ARCHIVE_PATH="$RESTIC_REPO $TIMESTAMP"
 # Minecraft server screen interface functions
-message-players() {
-  local MESSAGE=$1
-  local HOVER_MESSAGE=$2
+message-players(){
+  local MESSAGE=$1 HOVER_MESSAGE=$2
   message-players-color "$MESSAGE" "$HOVER_MESSAGE" "gray"
 }
-execute-command() {
+execute-command(){
   local COMMAND=$1
   if [[ $SCREEN_NAME != "" ]]; then
     case $WINDOW_MANAGER in
-      "screen")
-        screen -S "$SCREEN_NAME" -p 0 -X stuff "$COMMAND$(printf \\r)"
-        ;;
-      "tmux")
-        tmux send-keys -t "$SCREEN_NAME" "$COMMAND" ENTER
-        ;;
-      "RCON" | "rcon")
-        rcon-command "$SCREEN_NAME" "$COMMAND"
-        ;;
-      "docker-rcon")
-        docker exec "$SCREEN_NAME" rcon-cli "$COMMAND"
-        ;;
+      "screen") screen -S "$SCREEN_NAME" -p 0 -X stuff "$COMMAND$(printf \\r)" ;;
+      "tmux") tmux send-keys -t "$SCREEN_NAME" "$COMMAND" ENTER ;;
+      "RCON" | "rcon") rcon-command "$SCREEN_NAME" "$COMMAND" ;;
+      "docker-rcon") docker exec "$SCREEN_NAME" rcon-cli "$COMMAND" ;;
     esac
   fi
 }
-message-players-error() {
-  local MESSAGE=$1
-  local HOVER_MESSAGE=$2
+message-players-error(){
+  local MESSAGE=$1 HOVER_MESSAGE=$2
   message-players-color "$MESSAGE" "$HOVER_MESSAGE" "red"
 }
-message-players-success() {
-  local MESSAGE=$1
-  local HOVER_MESSAGE=$2
+message-players-success(){
+  local MESSAGE=$1 HOVER_MESSAGE=$2
   message-players-color "$MESSAGE" "$HOVER_MESSAGE" "green"
 }
-message-players-color() {
-  local MESSAGE=$1
-  local HOVER_MESSAGE=$2
-  local COLOR=$3
+message-players-color(){
+  local MESSAGE=$1 HOVER_MESSAGE=$2 COLOR=$3
   debug-log "$MESSAGE ($HOVER_MESSAGE)"
   if $ENABLE_CHAT_MESSAGES; then
     execute-command "tellraw @a [\"\",{\"text\":\"[$PREFIX] \",\"color\":\"gray\",\"italic\":true},{\"text\":\"$MESSAGE\",\"color\":\"$COLOR\",\"italic\":true,\"hoverEvent\":{\"action\":\"show_text\",\"value\":{\"text\":\"\",\"extra\":[{\"text\":\"$HOVER_MESSAGE\"}]}}}]"
   fi
 }
-save-all-flush-delay-seconds() {
-  if [[ -n $SAVE_ALL_WAIT_SECONDS ]]; then
-    echo "$SAVE_ALL_WAIT_SECONDS"
-    return
-  fi
-
+save-all-flush-delay-seconds(){
+  [[ -n $SAVE_ALL_WAIT_SECONDS ]] && { echo "$SAVE_ALL_WAIT_SECONDS"; return; }
   case "$WINDOW_MANAGER" in
     # RCON already waits for response
-    "RCON" | "rcon" | "docker-rcon")
-      echo "0"
-      ;;
-    *)
-      echo "5" # default value for all other cases
-      ;;
+    "RCON" | "rcon" | "docker-rcon") echo "0" ;;
+    *) echo "5" ;;
   esac
 }
-execute-save-all-flush() {
+execute-save-all-flush(){
   execute-command "save-all" # for versions <1.16
   execute-command "save-all flush"
   sleep "$(save-all-flush-delay-seconds)"
 }
-
 # Parse file timestamp to one readable by "date"
-parse-file-timestamp() {
-  local DATE_STRING
-  DATE_STRING="$(echo "$1" | awk -F_ '{gsub(/-/,":",$2); print $1" "$2}')"
+parse-file-timestamp(){
+  local DATE_STRING="$(echo "$1" | awk -F_ '{gsub(/-/,":",$2); print $1" "$2}')"
   echo "$DATE_STRING"
 }
-
 # Delete a backup
-delete-backup() {
+delete-backup(){
   local BACKUP=$1
   rm "$BACKUP_DIRECTORY"/"$BACKUP"
   message-players "Deleted old backup" "$BACKUP"
 }
-
 # Sequential delete method
-delete-sequentially() {
+delete-sequentially(){
   local BACKUPS=("$BACKUP_DIRECTORY"/*) # List oldest first
   while [[ $MAX_BACKUPS -ge 0 && ${#BACKUPS[@]} -gt $MAX_BACKUPS ]]; do
     delete-backup "$(basename "${BACKUPS[0]}")"
     BACKUPS=("$BACKUP_DIRECTORY"/*)
   done
 }
-
 # Functions to sort backups into correct categories based on timestamps
-is-hourly-backup() {
-  local TIMESTAMP=$*
-  local MINUTE
-  MINUTE=$(date -d "$TIMESTAMP" +%M)
-  return "$MINUTE"
-}
-is-daily-backup() {
-  local TIMESTAMP=$*
-  local HOUR
-  HOUR=$(date -d "$TIMESTAMP" +%H)
-  return "$HOUR"
-}
-is-weekly-backup() {
-  local TIMESTAMP=$*
-  local DAY
-  DAY=$(date -d "$TIMESTAMP" +%u)
-  return "$((DAY - 1))"
-}
-
+is-hourly-backup(){ local TIMESTAMP=$*; local MINUTE=$(date -d "$TIMESTAMP" +%M); return "$MINUTE"; }
+is-daily-backup(){ local TIMESTAMP=$*; local HOUR=$(date -d "$TIMESTAMP" +%H); return "$HOUR"; }
+is-weekly-backup(){ local TIMESTAMP=$*; local DAY=$(date -d "$TIMESTAMP" +%u); return "$((DAY - 1))"; }
 # Helper function to sum an array
-array-sum() {
+array-sum(){
   SUM=0
   for NUMBER in "$@"; do
     ((SUM += NUMBER))
-  done
-  echo "$SUM"
+  done; echo "$SUM"
 }
-
 # Given two exit codes, print a nonzero one if there is one
-exit-code() {
+exit-code(){
   if [[ $1 != "0" ]]; then
     echo "$1"
   else
@@ -387,15 +279,9 @@ exit-code() {
     fi
   fi
 }
-
 # Thinning delete method
-delete-thinning() {
-  # sub-hourly, hourly, daily, weekly is everything else
-  local BLOCK_SIZES=(16 24 30)
-  # First block is unconditional
-  # The next blocks will only accept files whose names cause these functions to return true (0)
-  local BLOCK_FUNCTIONS=("is-hourly-backup" "is-daily-backup" "is-weekly-backup")
-
+delete-thinning(){
+  local BLOCK_SIZES=(16 24 30) BLOCK_FUNCTIONS=("is-hourly-backup" "is-daily-backup" "is-weekly-backup")
   # Warn if $MAX_BACKUPS does not have enough room for all the blocks
   TOTAL_BLOCK_SIZE=$(array-sum "${BLOCK_SIZES[@]}")
   if [[ $MAX_BACKUPS != -1 ]] && [[ $TOTAL_BLOCK_SIZE -gt $MAX_BACKUPS ]]; then
@@ -403,47 +289,31 @@ delete-thinning() {
       log-warning "MAX_BACKUPS ($MAX_BACKUPS) is smaller than TOTAL_BLOCK_SIZE ($TOTAL_BLOCK_SIZE)"
     fi
   fi
-
-  local CURRENT_INDEX=0
-  local BACKUPS=("$BACKUP_DIRECTORY"/*) # Oldest first
-  local NUM_BACKUPS="${#BACKUPS[@]}"
-
+  local CURRENT_INDEX=0  BACKUPS=("$BACKUP_DIRECTORY"/*); local NUM_BACKUPS="${#BACKUPS[@]}"
   for BLOCK_INDEX in "${!BLOCK_SIZES[@]}"; do
     local BLOCK_SIZE=${BLOCK_SIZES[BLOCK_INDEX]}
     local BLOCK_FUNCTION=${BLOCK_FUNCTIONS[BLOCK_INDEX]}
     local OLDEST_BACKUP_IN_BLOCK_INDEX=$((NUM_BACKUPS - 1 - (BLOCK_SIZE + CURRENT_INDEX))) # Not an off-by-one error because a new backup was already saved
-    if [ "$OLDEST_BACKUP_IN_BLOCK_INDEX" -lt 0 ]; then
-      break
-    fi
+    [[ "$OLDEST_BACKUP_IN_BLOCK_INDEX" -lt 0 ]] && break
     local OLDEST_BACKUP_IN_BLOCK
     OLDEST_BACKUP_IN_BLOCK="$(basename "${BACKUPS[OLDEST_BACKUP_IN_BLOCK_INDEX]}")"
-
     local OLDEST_BACKUP_TIMESTAMP
     OLDEST_BACKUP_TIMESTAMP=$(parse-file-timestamp "${OLDEST_BACKUP_IN_BLOCK:0:19}")
     local BLOCK_COMMAND="$BLOCK_FUNCTION $OLDEST_BACKUP_TIMESTAMP"
-
     if $BLOCK_COMMAND; then
       # Oldest backup in this block satisfies the condition for placement in the next block
       debug-log "$OLDEST_BACKUP_IN_BLOCK promoted to next block"
     else
       # Oldest backup in this block does not satisfy the condition for placement in next block
-      delete-backup "$OLDEST_BACKUP_IN_BLOCK"
-      break
+      delete-backup "$OLDEST_BACKUP_IN_BLOCK"; break
     fi
-
     ((CURRENT_INDEX += BLOCK_SIZE))
   done
-
   delete-sequentially
 }
 
-delete-restic-sequential() {
-  if [ "$MAX_BACKUPS" -ge 0 ]; then
-    restic forget -r "$RESTIC_REPO" --keep-last "$MAX_BACKUPS" "$QUIET"
-  fi
-}
-
-delete-restic-thinning() {
+delete-restic-sequential(){ [[ "$MAX_BACKUPS" -ge 0 ]] && restic forget -r "$RESTIC_REPO" --keep-last "$MAX_BACKUPS" "$QUIET"; }
+delete-restic-thinning(){
   if [ "$MAX_BACKUPS" -ge 70 ]; then
     # MAX_BACKUPS >= 70
     restic forget -r "$RESTIC_REPO" --keep-last 16 --keep-hourly 24 --keep-daily 30 --keep-weekly $((MAX_BACKUPS - 70)) "$QUIET"
@@ -453,40 +323,28 @@ delete-restic-thinning() {
     restic forget -r "$RESTIC_REPO" --keep-last 16 --keep-hourly 24 --keep-daily 30 --keep-weekly 9999999 "$QUIET"
   fi
 }
-
 # Delete old backups
-delete-old-backups() {
+delete-old-backups(){
   if [[ $BACKUP_DIRECTORY != "" ]]; then
     case $DELETE_METHOD in
-      "sequential")
-        delete-sequentially
-        ;;
-      "thin")
-        delete-thinning
-        ;;
+      "sequential") delete-sequentially ;;
+      "thin") delete-thinning ;;
     esac
   fi
   if [[ $RESTIC_REPO != "" ]]; then
     case $DELETE_METHOD in
-      "sequential")
-        delete-restic-sequential
-        ;;
-      "thin")
-        delete-restic-thinning
-        ;;
+      "sequential") delete-restic-sequential ;;
+      "thin") delete-restic-thinning ;;
     esac
   fi
 }
 
-clean-up() {
+clean-up(){
   # Re-enable world autosaving
   execute-command "save-on"
-
   # Save the world
   execute-command "save-all"
-
   TIME_DELTA=$((END_TIME - START_TIME))
-
   if [[ $BACKUP_DIRECTORY != "" ]]; then
     WORLD_SIZE_BYTES=$(du --bytes --total --max-depth=0 "${SERVER_WORLDS[@]}" | tail -n 1 | awk '{print $1}')
     ARCHIVE_SIZE_BYTES=$(du -b "$ARCHIVE_PATH" | awk '{print $1}')
@@ -521,7 +379,7 @@ clean-up() {
 
 trap "clean-up" 2
 
-do-backup() {
+do-backup(){
   # Notify players of start
   message-players "Starting backup..." "$ARCHIVE_PATH"
 
