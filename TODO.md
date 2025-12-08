@@ -46,8 +46,10 @@ WantedBy=multi-user.target
 
 ### Java flags
 ```markdown
--XX:-UseAESCTRIntrinsics
+-XX:-UseAESCTRIntrinsics -Djava.locale.providers=JRE
 ```
+- https://github.com/MeowIce/meowice-flags
+
 
 ### Other repos to integrate
 
@@ -60,3 +62,7 @@ WantedBy=multi-user.target
 - https://github.com/Fenixin/Minecraft-Region-Fixer
 - https://github.com/TheRemote/MinecraftBedrockServer
 
+### Optimization
+
+- https://github.com/Radk6/MC-Optimization-Guide
+- 
