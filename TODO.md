@@ -46,9 +46,10 @@ WantedBy=multi-user.target
 
 ### Java flags
 ```markdown
--XX:-UseAESCTRIntrinsics -Djava.locale.providers=JRE
+-XX:-UseAESCTRIntrinsics -Djava.locale.providers=JRE -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -XX:+UseDynamicNumberOfGCThreads
 ```
 - https://github.com/MeowIce/meowice-flags
+- https://www.leafmc.one/docs/how-to/java-flags
 
 
 ### Other repos to integrate
