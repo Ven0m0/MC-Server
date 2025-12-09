@@ -1,42 +1,32 @@
 #!/usr/bin/env bash
 # common.sh: Shared library for Minecraft server management scripts
 # This file is sourced by all scripts in scripts/ and tools/ directories
-
 # ============================================================================
 # STANDARD INITIALIZATION
 # ============================================================================
-
 # Strict mode
 set -euo pipefail
 shopt -s nullglob globstar
 IFS=$'\n\t'
-
 # Environment normalization
 export LC_ALL=C LANG=C
 user="${SUDO_USER:-${USER:-$(id -un)}}"
 export HOME="/home/${user}"
 SHELL="$(command -v bash 2>/dev/null || echo '/usr/bin/bash')"
-
 # ============================================================================
 # OUTPUT FORMATTING FUNCTIONS
 # ============================================================================
-
 # Print header with blue arrow
 print_header(){ printf '\033[0;34m==>\033[0m %s\n' "$1"; }
-
 # Print success message with green checkmark
 print_success(){ printf '\033[0;32m✓\033[0m %s\n' "$1"; }
-
 # Print error message with red X to stderr
 print_error(){ printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
-
 # Print info message with yellow arrow
 print_info(){ printf '\033[1;33m→\033[0m %s\n' "$1"; }
-
 # ============================================================================
 # SYSTEM FUNCTIONS
 # ============================================================================
-
 # Detect system architecture
 # Usage: arch=$(detect_arch)
 # Returns: x86_64, aarch64, or armv7
@@ -50,12 +40,10 @@ detect_arch(){
     *) print_error "Unsupported architecture: $arch"; exit 1;;
   esac
 }
-
 # Check if a command exists in PATH
 # Usage: has_command <command>
 # Returns: 0 if command exists, 1 otherwise
 has_command(){ command -v "$1" &>/dev/null; }
-
 # Check if multiple commands exist
 # Usage: check_dependencies <cmd1> [cmd2] ...
 # Returns: 0 if all exist, 1 if any missing (prints missing commands to stderr)
@@ -70,11 +58,9 @@ check_dependencies(){
     return 1
   }
 }
-
 # ============================================================================
 # JSON PROCESSOR DETECTION
 # ============================================================================
-
 # Detect available JSON processor (prefer jaq over jq)
 # Usage: JSON_PROC=$(get_json_processor) || exit 1
 # Returns: Name of available JSON processor (jaq or jq)
@@ -90,11 +76,9 @@ get_json_processor(){
   printf 'Error: No JSON processor found. Please install jq or jaq.\n' >&2
   return 1
 }
-
 # ============================================================================
 # DOWNLOAD FUNCTIONS
 # ============================================================================
-
 # Fetch URL content to stdout
 # Usage: fetch_url <url>
 # Note: Prefers curl, falls back to wget
@@ -117,7 +101,6 @@ fetch_url(){
 # Note: Prefers aria2c, falls back to curl, then wget
 download_file(){
   local url="$1" output="$2" connections="${3:-8}"
-
   has_command aria2c && {
     aria2c -x "$connections" -s "$connections" -o "$output" "$url" 2>/dev/null
     return
@@ -137,14 +120,12 @@ download_file(){
 # ============================================================================
 # MEMORY CALCULATION FUNCTIONS
 # ============================================================================
-
 # Calculate total RAM in GB
 # Usage: total_ram=$(get_total_ram_gb)
 # Returns: Total RAM in gigabytes (rounded)
 get_total_ram_gb(){
   awk '/MemTotal/ {printf "%.0f\n",$2/1024/1024}' /proc/meminfo 2>/dev/null
 }
-
 # Calculate heap size (total RAM minus reserved for OS)
 # Usage: heap=$(get_heap_size_gb [reserved_gb])
 # Args: reserved_gb - GB to reserve for OS (default: 2)
@@ -157,7 +138,6 @@ get_heap_size_gb(){
   ((heap < 1)) && heap=1
   printf '%s' "$heap"
 }
-
 # Calculate Minecraft server memory allocation
 # Usage: mem=$(get_minecraft_memory_gb [reserved_gb])
 # Args: reserved_gb - GB to reserve for OS (default: 3)
@@ -165,7 +145,6 @@ get_heap_size_gb(){
 get_minecraft_memory_gb(){
   get_heap_size_gb "${1:-3}"
 }
-
 # Calculate client minimum memory (XMS)
 # Usage: xms=$(get_client_xms_gb)
 # Returns: XMS value in GB (25% of total RAM, minimum 1)
@@ -176,7 +155,6 @@ get_client_xms_gb(){
   ((xms < 1)) && xms=1
   printf '%s' "$xms"
 }
-
 # Calculate client maximum memory (XMX)
 # Usage: xmx=$(get_client_xmx_gb)
 # Returns: XMX value in GB (50% of total RAM, minimum 2)
@@ -187,7 +165,6 @@ get_client_xmx_gb(){
   ((xmx < 2)) && xmx=2
   printf '%s' "$xmx"
 }
-
 # ============================================================================
 # SYSTEM INFORMATION FUNCTIONS
 # ============================================================================
@@ -198,36 +175,30 @@ get_client_xmx_gb(){
 get_cpu_cores(){
   nproc 2>/dev/null || printf '4'
 }
-
 # ============================================================================
 # DOWNLOAD CONFIGURATION FUNCTIONS
 # ============================================================================
-
 # Get aria2c download options as string
 # Usage: opts=$(get_aria2c_opts)
 # Returns: aria2c options string
 get_aria2c_opts(){
   printf '%s' "-x 16 -s 16"
 }
-
 # Get aria2c download options as array elements (one per line)
 # Usage: mapfile -t arr < <(get_aria2c_opts_array)
 # Returns: aria2c options, one per line
 get_aria2c_opts_array(){
   printf '%s\n' "-x" "16" "-s" "16"
 }
-
 # ============================================================================
 # FILE SYSTEM FUNCTIONS
 # ============================================================================
-
 # Create directory if it doesn't exist
 # Usage: ensure_dir <path>
 # Returns: 0 (always succeeds, creates directory if needed)
 ensure_dir(){
   [[ ! -d $1 ]] && mkdir -p "$1" || return 0
 }
-
 # Format bytes to human-readable size
 # Usage: formatted=$(format_size_bytes <bytes>)
 # Returns: Human-readable size (e.g., "1.5G", "512M")
@@ -243,11 +214,9 @@ format_size_bytes(){
     printf '%dB' "$bytes"
   fi
 }
-
 # ============================================================================
 # SCRIPT DIRECTORY DETECTION
 # ============================================================================
-
 # Get the root directory of the repository
 # Usage: SCRIPT_DIR=$(get_script_dir)
 # Note: This should be called from within a script to get the repo root
@@ -257,18 +226,15 @@ get_script_dir(){
   # cd to parent of the calling script's directory (scripts/ or tools/ -> repo root)
   printf '%s' "$(cd -- "$(dirname -- "${BASH_SOURCE[1]}")/.." && pwd)"
 }
-
 # ============================================================================
 # HEALTH CHECK FUNCTIONS
 # ============================================================================
-
 # Check if Minecraft server process is running
 # Usage: is_server_running && echo "Server is running"
 # Returns: 0 if running, 1 if not
 is_server_running(){
   pgrep -f "fabric-server-launch.jar" >/dev/null || pgrep -f "server.jar" >/dev/null
 }
-
 # Check if server port is open
 # Usage: check_server_port [port]
 # Args: port - Port number to check (default: 25565)
@@ -283,7 +249,6 @@ check_server_port(){
     netstat -tuln 2>/dev/null | grep -q ":${port} "
   fi
 }
-
 # ============================================================================
 # JAVA DETECTION FUNCTIONS
 # ============================================================================
@@ -291,6 +256,9 @@ check_server_port(){
 # Usage: java_cmd=$(detect_java)
 # Returns: Full path to java or "java" if using PATH
 detect_java(){
+  if [[ -n "${JAVA_HOME:-}" ]] && [[ -x "${JAVA_HOME}/bin/java" ]]; then
+    printf '%s' "${JAVA_HOME}/bin/java"; return
+  fi
   local java_cmd="java"
   # Check for Arch Linux java-runtime-common
   if has_command archlinux-java; then
