@@ -31,3 +31,12 @@ else
   print_info "client.jar not found - skipping client preparation"
 fi
 print_success "Preparation complete!"
+
+sudo ufw allow 25565
+echo "Taking ownership of all server files/folders in ${PWD}/minecraft..."
+sudo chown -R "${USER:-$(id -un)}" "${PWD}/minecraft"
+sudo chmod -R 755 ./*.sh
+umask 077
+sudo systemctl daemon-reload
+# sudo apt-get install -y screen
+has screen || sudo pacman -Sq screen --needed --noconfirm &>/dev/null
