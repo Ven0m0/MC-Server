@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # Simplified Minecraft server backup tool
-
 # Source common library
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=lib/common.sh
