@@ -1,49 +1,17 @@
 ### Bash
 
 ```bash
-echo "Taking ownership of all server files/folders in dirname/minecraft..."
-sudo chown -R userxname dirname/minecraft
-sudo chmod -R 755 dirname/minecraft/*.sh
-umask 077
-sudo systemctl daemon-reload
-```
+game_command "save-all flush"
+game_command "save-off"
+game_command "say Starting backup..."
+# backup stuf...
+game_command "save-on"
+game_command "say Backup finished"
 
-### Service
-
-```markdown
-[Unit]
-Description=Minecraft Server Service
-After=network-online.target
-
-[Service]
-User=minecraft
-Group=minecraft
-WorkingDirectory=dirname/minecraft
-Type=forking
-ExecStart=/bin/bash dirname/minecraft/start.sh
-ExecStop=/bin/bash dirname/minecraft/stop.sh
-GuessMainPID=no
-TimeoutStartSec=1800
-ProtectKernelTunables=yes
-ProtectKernelModules=yes
-ProtectControlGroups=yes
-NoNewPrivileges=true
-PrivateUsers=true
-ProtectClock=true
-ProtectKernelLogs=true
-ProtectHostname=true
-LockPersonality=true
-RestrictSUIDSGID=true
-RestrictNamespaces=yes
-SystemCallArchitectures=native
-SystemCallFilter=@system-service
-AmbientCapabilities=CAP_KILL
-CapabilityBoundingSet=CAP_KILL
-WorkingDirectory=/var/lib/minecraft/deploy/server
-ReadWriteDirectories=/var/lib/minecraft
-
-[Install]
-WantedBy=multi-user.target
+game_command "say Server shutting down in 10 seconds"
+sleep 10
+game_command "say Shutting down..."
+game_command "stop"
 ```
 
 ### Java flags
