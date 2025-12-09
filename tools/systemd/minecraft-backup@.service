@@ -1,7 +1,6 @@
 [Unit]
 Description=Weekly backup of Minecraft server
-After=network-online.target
-Wants=network-online.target
+After=local-fs.target network.target
 
 [Service]
 Type=simple
