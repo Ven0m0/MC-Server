@@ -1,11 +1,12 @@
 [Unit]
-Description=Weekly backup of Minecraft server %i
+Description=Weekly backup of Minecraft server
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
 ExecStart=%h/MC-Server/tools/backup.sh backup all
+WorkingDirectory=%h/MC-Server
 Restart=on-failure
 RestartSec=10
 TimeoutStopSec=10
