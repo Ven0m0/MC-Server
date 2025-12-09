@@ -53,7 +53,10 @@ RestartSec=10
 StandardOutput=journal
 StandardError=journal
 
-# Resource limits
+# Performance
+Nice=-5
+IOSchedulingClass=best-effort
+IOSchedulingPriority=0
 MemoryMax=90%
 CPUQuota=95%
 
@@ -146,6 +149,11 @@ Restart=always
 RestartSec=10
 StandardOutput=journal
 StandardError=journal
+
+# Performance
+Nice=-5
+IOSchedulingClass=best-effort
+IOSchedulingPriority=0
 
 [Install]
 WantedBy=multi-user.target
