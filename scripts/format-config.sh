@@ -122,7 +122,7 @@ build_exclusions(){
     exclusions+=(-name "$pattern" -prune -o)
   done
 
-  echo "${exclusions[@]}"
+  printf '%s' "${exclusions[@]}"
 }
 
 #######################################
@@ -133,7 +133,7 @@ build_exclusions(){
 #   File size in bytes
 #######################################
 get_file_size(){
-  stat -f%z "$1" 2>/dev/null || stat -c%s "$1" 2>/dev/null || echo 0
+  stat -f%z "$1" 2>/dev/null || stat -c%s "$1" 2>/dev/null || printf '0'
 }
 
 #######################################
@@ -432,7 +432,7 @@ parse_args(){
 # Print summary statistics
 #######################################
 print_summary(){
-  echo
+  printf '\n'
   print_msg "$BLUE" "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   print_msg "$BLUE" "Summary"
   print_msg "$BLUE" "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -462,7 +462,7 @@ main(){
   parse_args "$@"
 
   print_msg "$GREEN" "Config Format/Lint/Autofix Script"
-  echo
+  printf '\n'
 
   check_dependencies
 

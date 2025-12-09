@@ -12,7 +12,7 @@ IFS=$'\n\t'
 export LC_ALL=C LANG=C
 user="${SUDO_USER:-${USER:-$(id -un)}}"
 export HOME="/home/${user}"
-SHELL="$(command -v bash 2>/dev/null || echo '/usr/bin/bash')"
+SHELL="$(command -v bash 2>/dev/null || printf '/usr/bin/bash')"
 # ============================================================================
 # OUTPUT FORMATTING FUNCTIONS
 # ============================================================================
@@ -34,9 +34,9 @@ detect_arch(){
   local arch
   arch="$(uname -m)"
   case "$arch" in
-    x86_64|amd64) echo "x86_64";;
-    aarch64|arm64) echo "aarch64";;
-    armv7l) echo "armv7";;
+    x86_64|amd64) printf 'x86_64';;
+    aarch64|arm64) printf 'aarch64';;
+    armv7l) printf 'armv7';;
     *) print_error "Unsupported architecture: $arch"; exit 1;;
   esac
 }
@@ -65,14 +65,8 @@ check_dependencies(){
 # Usage: JSON_PROC=$(get_json_processor) || exit 1
 # Returns: Name of available JSON processor (jaq or jq)
 get_json_processor(){
-  has_command jaq && {
-    printf 'jaq'
-    return
-  }
-  has_command jq && {
-    printf 'jq'
-    return
-  }
+  has_command jaq && { printf 'jaq'; return; }
+  has_command jq && { printf 'jq'; return; }
   printf 'Error: No JSON processor found. Please install jq or jaq.\n' >&2
   return 1
 }
@@ -84,14 +78,8 @@ get_json_processor(){
 # Note: Prefers curl, falls back to wget
 fetch_url(){
   local url="$1"
-  has_command curl && {
-    curl -fsSL -H "Accept-Encoding: identity" -H "Accept-Language: en" -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4.212 Safari/537.36" "$url"
-    return
-  }
-  has_command wget && {
-    wget -qO- "$url"
-    return
-  }
+  has_command curl && { curl -fsSL -H "Accept-Encoding: identity" -H "Accept-Language: en" -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4.212 Safari/537.36" "$url"; return; }
+  has_command wget && { wget -qO- "$url"; return; }
   printf 'Error: No download tool found (curl or wget)\n' >&2
   return 1
 }
@@ -101,18 +89,9 @@ fetch_url(){
 # Note: Prefers aria2c, falls back to curl, then wget
 download_file(){
   local url="$1" output="$2" connections="${3:-8}"
-  has_command aria2c && {
-    aria2c -x "$connections" -s "$connections" -o "$output" "$url" 2>/dev/null
-    return
-  }
-  has_command curl && {
-    curl -fsL -H "Accept-Encoding: identity" -H "Accept-Language: en" -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4.212 Safari/537.36" -o "$output" "$url"
-    return
-  }
-  has_command wget && {
-    wget -qO "$output" "$url"
-    return
-  }
+  has_command aria2c && { aria2c -x "$connections" -s "$connections" -o "$output" "$url" 2>/dev/null; return; }
+  has_command curl && { curl -fsL -H "Accept-Encoding: identity" -H "Accept-Language: en" -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4.212 Safari/537.36" -o "$output" "$url"; return; }
+  has_command wget && { wget -qO "$output" "$url"; return; }
   printf 'Error: No download tool found (aria2c, curl, or wget)\n' >&2
   return 1
 }
@@ -260,16 +239,13 @@ detect_java(){
     printf '%s' "${JAVA_HOME}/bin/java"; return
   fi
   local java_cmd="java"
-  # Check for Arch Linux java-runtime-common
   if has_command archlinux-java; then
     local sel_java
     sel_java="$(archlinux-java get 2>/dev/null || printf '')"
     [[ -n $sel_java ]] && java_cmd="/usr/lib/jvm/${sel_java}/bin/java"
-  # Check for mise version manager
   elif has_command mise; then
     java_cmd="$(mise which java 2>/dev/null || printf 'java')"
   fi
-  # Verify java command is executable, fallback to PATH
   [[ -x $java_cmd ]] || java_cmd="java"
   printf '%s' "$java_cmd"
 }
@@ -281,10 +257,7 @@ detect_java(){
 # Returns: 0 if root or sudo available, 1 if neither
 check_root(){
   [[ $EUID -eq 0 ]] && return 0
-  has_command sudo && {
-    print_info "Root access required. Using sudo..."
-    return 0
-  }
+  has_command sudo && { print_info "Root access required. Using sudo..."; return 0; }
   print_error "Root access required but sudo not available"
   return 1
 }

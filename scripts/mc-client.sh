@@ -12,7 +12,7 @@ extract_natives(){
   local jar_file="$1" dest_dir="$2"
   ensure_dir "$dest_dir"
   unzip -q -o "$jar_file" -d "$dest_dir" 2>/dev/null || :
-  rm -rf "${dest_dir}/META-INF"
+  rm -rf "${dest_dir:?}/META-INF"
 }
 
 # Check dependencies
@@ -28,11 +28,11 @@ USERNAME="${2:-Player}"
 
 # Show usage if no version specified
 if [[ -z $VERSION ]]; then
-  echo "Usage: $0 <VERSION> [USERNAME]"
-  echo "Example: $0 1.21.6 MyPlayer"
-  echo ""
-  echo "Environment variables:"
-  echo "  MC_DIR    : Minecraft directory (default: ~/.minecraft)"
+  printf 'Usage: %s <VERSION> [USERNAME]\n' "$0"
+  printf 'Example: %s 1.21.6 MyPlayer\n' "$0"
+  printf '\n'
+  printf 'Environment variables:\n'
+  printf '  MC_DIR    : Minecraft directory (default: ~/.minecraft)\n'
   exit 1
 fi
 
@@ -48,46 +48,46 @@ ensure_dir "$ASSETS_DIR"
 ensure_dir "$LIBRARIES_DIR"
 ensure_dir "$NATIVES_DIR"
 
-echo "[*] Minecraft Client Launcher"
-echo "→ Version: $VERSION"
-echo "→ Username: $USERNAME"
-echo "→ Directory: $MC_DIR"
-echo ""
+printf '[*] Minecraft Client Launcher\n'
+printf '→ Version: %s\n' "$VERSION"
+printf '→ Username: %s\n' "$USERNAME"
+printf '→ Directory: %s\n' "$MC_DIR"
+printf '\n'
 
 # Download version manifest
-echo "[1/5] Fetching version manifest..."
+printf '[1/5] Fetching version manifest...\n'
 VERSION_MANIFEST="$VERSIONS_DIR/version.json"
 
 if [[ ! -f $VERSION_MANIFEST ]]; then
-  echo "  Downloading version list..."
+  printf '  Downloading version list...\n'
   VERSION_LIST=$(fetch_url "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json")
-  VERSION_URL=$(echo "$VERSION_LIST" | "$JSON_PROC" -r ".versions[] | select(.id == \"$VERSION\") | .url")
+  VERSION_URL=$(printf '%s' "$VERSION_LIST" | "$JSON_PROC" -r ".versions[] | select(.id == \"$VERSION\") | .url")
 
   if [[ -z $VERSION_URL ]]; then
-    echo "Error: Version $VERSION not found" >&2
+    printf 'Error: Version %s not found\n' "$VERSION" >&2
     exit 1
   fi
 
-  echo "  Downloading version manifest..."
+  printf '  Downloading version manifest...\n'
   fetch_url "$VERSION_URL" >"$VERSION_MANIFEST"
 else
-  echo "  Using cached version manifest"
+  printf '  Using cached version manifest\n'
 fi
 
 # Download client JAR
-echo "[2/5] Downloading client JAR..."
+printf '[2/5] Downloading client JAR...\n'
 CLIENT_JAR="$VERSIONS_DIR/$VERSION.jar"
 
 if [[ ! -f $CLIENT_JAR ]]; then
   CLIENT_URL=$("$JSON_PROC" -r '.downloads.client.url' <"$VERSION_MANIFEST")
-  echo "  Downloading from Mojang servers..."
+  printf '  Downloading from Mojang servers...\n'
   download_file "$CLIENT_URL" "$CLIENT_JAR"
 else
-  echo "  Client JAR already exists"
+  printf '  Client JAR already exists\n'
 fi
 
 # Download assets
-echo "[3/5] Downloading game assets..."
+printf '[3/5] Downloading game assets...\n'
 ASSET_INDEX=$("$JSON_PROC" -r '.assetIndex.id' <"$VERSION_MANIFEST")
 ASSET_INDEX_URL=$("$JSON_PROC" -r '.assetIndex.url' <"$VERSION_MANIFEST")
 ASSET_INDEX_FILE="$ASSETS_DIR/indexes/$ASSET_INDEX.json"
@@ -96,17 +96,17 @@ ensure_dir "$ASSETS_DIR/indexes"
 ensure_dir "$ASSETS_DIR/objects"
 
 if [[ ! -f $ASSET_INDEX_FILE ]]; then
-  echo "  Downloading asset index..."
+  printf '  Downloading asset index...\n'
   download_file "$ASSET_INDEX_URL" "$ASSET_INDEX_FILE"
 fi
 
 # Download individual assets
-echo "  Downloading asset objects..."
+printf '  Downloading asset objects...\n'
 ASSET_COUNT=$("$JSON_PROC" -r '.objects | length' <"$ASSET_INDEX_FILE")
-echo "  Total assets: $ASSET_COUNT"
+printf '  Total assets: %s\n' "$ASSET_COUNT"
 
 # Create temporary file for aria2c input
-ASSET_INPUT_FILE=$(mktemp) || { echo "Failed to create temp file"; exit 1; }
+ASSET_INPUT_FILE=$(mktemp) || { printf 'Failed to create temp file\n'; exit 1; }
 trap 'rm -f "$ASSET_INPUT_FILE"' EXIT
 "$JSON_PROC" -r '.objects[] | .hash' <"$ASSET_INDEX_FILE" | while read -r hash; do
   HASH_PREFIX="${hash:0:2}"
@@ -114,16 +114,16 @@ trap 'rm -f "$ASSET_INPUT_FILE"' EXIT
 
   if [[ ! -f $ASSET_FILE ]]; then
     ensure_dir "$ASSETS_DIR/objects/$HASH_PREFIX"
-    echo "https://resources.download.minecraft.net/$HASH_PREFIX/$hash" >>"$ASSET_INPUT_FILE"
-    echo "  dir=$ASSETS_DIR/objects/$HASH_PREFIX" >>"$ASSET_INPUT_FILE"
-    echo "  out=$hash" >>"$ASSET_INPUT_FILE"
+    printf 'https://resources.download.minecraft.net/%s/%s\n' "$HASH_PREFIX" "$hash" >>"$ASSET_INPUT_FILE"
+    printf '  dir=%s/objects/%s\n' "$ASSETS_DIR" "$HASH_PREFIX" >>"$ASSET_INPUT_FILE"
+    printf '  out=%s\n' "$hash" >>"$ASSET_INPUT_FILE"
   fi
 done
 
 # Download missing assets with aria2c
 if [[ -f $ASSET_INPUT_FILE ]] && [[ -s $ASSET_INPUT_FILE ]]; then
   if ! has_command aria2c; then
-    echo "  Warning: aria2c not found, assets download may be slow"
+    printf '  Warning: aria2c not found, assets download may be slow\n'
     "$JSON_PROC" -r '.objects[] | .hash' <"$ASSET_INDEX_FILE" | while read -r hash; do
       HASH_PREFIX="${hash:0:2}"
       ASSET_FILE="$ASSETS_DIR/objects/$HASH_PREFIX/$hash"
@@ -136,12 +136,12 @@ if [[ -f $ASSET_INPUT_FILE ]] && [[ -s $ASSET_INPUT_FILE ]]; then
   fi
   rm -f "$ASSET_INPUT_FILE"
 else
-  echo "  All assets already downloaded"
+  printf '  All assets already downloaded\n'
   rm -f "$ASSET_INPUT_FILE"
 fi
 
 # Download libraries
-echo "[4/5] Downloading libraries..."
+printf '[4/5] Downloading libraries...\n'
 CLASSPATH="$CLIENT_JAR"
 
 # Extract all library info in a single JSON parse (major performance improvement)
@@ -168,7 +168,7 @@ CLASSPATH="$CLIENT_JAR"
 
     if [[ ! -f $LIB_FILE ]]; then
       ensure_dir "$(dirname "$LIB_FILE")"
-      echo "  Downloading $(basename "$lib_path")..."
+      printf '  Downloading %s...\n' "$(basename "$lib_path")"
       download_file "$lib_url" "$LIB_FILE"
     fi
 
@@ -181,7 +181,7 @@ CLASSPATH="$CLIENT_JAR"
 
     if [[ ! -f $NATIVE_FILE ]]; then
       ensure_dir "$(dirname "$NATIVE_FILE")"
-      echo "  Downloading native $(basename "$native_path")..."
+      printf '  Downloading native %s...\n' "$(basename "$native_path")"
       download_file "$native_url" "$NATIVE_FILE"
     fi
 
@@ -191,7 +191,7 @@ CLASSPATH="$CLIENT_JAR"
 done
 
 # Launch game
-echo "[5/5] Launching Minecraft..."
+printf '[5/5] Launching Minecraft...\n'
 
 # Get main class
 MAIN_CLASS=$("$JSON_PROC" -r '.mainClass' <"$VERSION_MANIFEST")
@@ -222,9 +222,9 @@ GAME_ARGS="${GAME_ARGS//\$\{auth_access_token\}/0}"
 GAME_ARGS="${GAME_ARGS//\$\{user_type\}/legacy}"
 GAME_ARGS="${GAME_ARGS//\$\{version_type\}/release}"
 
-echo ""
-echo "Starting Minecraft $VERSION..."
-echo ""
+printf '\n'
+printf 'Starting Minecraft %s...\n' "$VERSION"
+printf '\n'
 
 # Enable detailed exception messages for better debugging
 JAVA_OPTS="-XX:+ShowCodeDetailsInExceptionMessages"
