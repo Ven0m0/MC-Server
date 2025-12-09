@@ -119,13 +119,18 @@ rustic_restore() {
 # Backup world data
 backup_world(){
   print_info "Backing up world..."
-  [[ ! -d "${SCRIPT_DIR}/world" ]] && {
-    print_error "No world directory found"
-    return 1
-  }
+  [[ ! -d "${SCRIPT_DIR}/world" ]] && { print_error "No world directory found"; return 1; }
   cd "$SCRIPT_DIR"
-  tar -czf "${BACKUP_DIR}/worlds/world_${TIMESTAMP}.tar.gz" world/ world_nether/ world_the_end/ 2>/dev/null \
-    || tar -czf "${BACKUP_DIR}/worlds/world_${TIMESTAMP}.tar.gz" world/
+  local dirs_to_backup=("world")
+  [[ -d "world_nether" ]] && dirs_to_backup+=("world_nether")
+  [[ -d "world_the_end" ]] && dirs_to_backup+=("world_the_end")
+  tar -czf "${BACKUP_DIR}/worlds/world_${TIMESTAMP}.tar.gz" "${dirs_to_backup[@]}" || {
+    local rc=$?
+    if [[ $rc -ne 1 ]]; then
+      print_error "Tar failed with exit code $rc"; return 1
+    fi
+    print_info "Tar warning: files changed during read (expected for running server)"
+  }
   print_success "World backup created: world_${TIMESTAMP}.tar.gz"
 }
 # Backup configs
