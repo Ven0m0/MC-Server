@@ -1,0 +1,23 @@
+[global]
+log-level = "warning"
+log-file = "/log/rustic.log"
+
+[forget]
+keep-hourly = 1
+keep-daily = 2
+keep-weekly = 7
+keep-monthly = 24
+keep-yearly = 12
+
+[backup]
+git-ignore = true
+exclude-if-present = [".nobackup", "CACHEDIR.TAG"]
+one-file-system = true
+
+[[backup.snapshots]]
+sources = ["backups"]
+git-ignore = true
+
+[[backup.snapshots]]
+sources = ["world"]
+git-ignore = true
