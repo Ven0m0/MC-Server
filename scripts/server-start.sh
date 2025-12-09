@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
+# shellcheck enable=all shell=bash source-path=SCRIPTDIR external-sources=true
+set -euo pipefail; shopt -s nullglob globstar
+export LC_ALL=C; IFS=$'\n\t'
+s=${BASH_SOURCE[0]}; [[ $s != /* ]] && s=$PWD/$s; cd -P -- "${s%/*}/.."
+has(){ command -v -- "$1" &>/dev/null; }
 # server-start.sh: Simplified Minecraft server launcher
-# Source common library
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=lib/common.sh
-source "${SCRIPT_DIR}/lib/common.sh"
+source "${PWD}/lib/common.sh"
 # Configuration
 : "${SERVER_JAR:=server.jar}"
 : "${ENABLE_PLAYIT:=true}"
@@ -15,12 +18,13 @@ check_dependencies java || exit 1
 [[ ! -f $SERVER_JAR ]] && { print_error "Server jar not found: ${SERVER_JAR}"; exit 1; }
 # Memory Configuration
 CPU_CORES=$(get_cpu_cores)
-if (( AVAILABLE_RAM < MIN_HEAP_GB )); then
+AVAILABLE_RAM=$(get_minecraft_memory_gb)
+if ((AVAILABLE_RAM < MIN_HEAP_GB)); then
   print_info "Warning: Available RAM (${AVAILABLE_RAM}GB) is less than configured minimum (${MIN_HEAP_GB}GB)."
   print_info "Using ${AVAILABLE_RAM}GB to prevent OOM crash."
   HEAP_SIZE=$AVAILABLE_RAM
 else
-  HEAP_SIZE=$(( AVAILABLE_RAM > MIN_HEAP_GB ? AVAILABLE_RAM : MIN_HEAP_GB ))
+  HEAP_SIZE=$((AVAILABLE_RAM > MIN_HEAP_GB ? AVAILABLE_RAM : MIN_HEAP_GB))
 fi
 XMS="${HEAP_SIZE}G"
 XMX="${HEAP_SIZE}G"
@@ -29,8 +33,8 @@ print_info "Memory: ${XMS} - ${XMX} | CPU Cores: ${CPU_CORES}"
 JAVA_CMD="$(detect_java)"
 JAVA_TYPE=""
 # Fix archlinux-java if available
-if has_command archlinux-java; then
-  sudo archlinux-java fix 2>/dev/null || :
+if has archlinux-java; then
+  sudo archlinux-java fix &>/dev/null || :
 fi
 # Detect if running GraalVM
 if "$JAVA_CMD" -version 2>&1 | grep -q "GraalVM"; then
@@ -69,25 +73,24 @@ if [[ -f /sys/kernel/mm/transparent_hugepage/enabled ]]; then
   fi
 fi
 # Playit Integration
-if [[ $ENABLE_PLAYIT == "true" ]] && has_command playit; then
+if [[ $ENABLE_PLAYIT == "true" ]] && has playit; then
   print_info "Starting playit..."
-  if ! pgrep -x "playit" >/dev/null; then
+  if ! pgrep -x "playit" &>/dev/null; then
     { setsid nohup playit &>/dev/null & } || :
-    sleep 2
+    sleepy 2
   fi
 fi
 # Prepare Execution Command
 CMD=("$JAVA_CMD" "${JVM_FLAGS[@]}" -jar "$SERVER_JAR" --nogui)
 # Apply IO Priority (ionice)
-if [[ -n "${MC_IONICE}" ]] && has_command ionice; then
+if [[ -n "${MC_IONICE}" ]] && has ionice; then
   local -a ionice_args
-  # Temporarily allow space splitting for arguments
   IFS=' ' read -r -a ionice_args <<< "$MC_IONICE"
   CMD=("ionice" "${ionice_args[@]}" "${CMD[@]}")
   print_info "IO Priority: ${MC_IONICE}"
 fi
 # Apply CPU Priority (nice)
-if [[ -n "${MC_NICE}" ]] && has_command nice; then
+if [[ -n "${MC_NICE}" ]] && has nice; then
   CMD=("nice" "-n" "$MC_NICE" "${CMD[@]}")
   print_info "Nice Level: ${MC_NICE}"
 fi
