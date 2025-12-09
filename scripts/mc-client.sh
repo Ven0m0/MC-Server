@@ -106,7 +106,8 @@ ASSET_COUNT=$("$JSON_PROC" -r '.objects | length' <"$ASSET_INDEX_FILE")
 echo "  Total assets: $ASSET_COUNT"
 
 # Create temporary file for aria2c input
-ASSET_INPUT_FILE="/tmp/mc-assets-$$.txt"
+ASSET_INPUT_FILE=$(mktemp) || { echo "Failed to create temp file"; exit 1; }
+trap 'rm -f "$ASSET_INPUT_FILE"' EXIT
 "$JSON_PROC" -r '.objects[] | .hash' <"$ASSET_INDEX_FILE" | while read -r hash; do
   HASH_PREFIX="${hash:0:2}"
   ASSET_FILE="$ASSETS_DIR/objects/$HASH_PREFIX/$hash"
