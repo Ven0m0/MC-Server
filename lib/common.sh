@@ -184,6 +184,21 @@ detect_java(){
 check_root(){
   [[ $EUID -eq 0 ]] && return 0
   has sudo && { print_info "Root access required. Using sudo..."; return 0; }
-  print_error "Root access required but sudo not available"
-  return 1
+  print_error "Root access required but sudo not available"; return 1
+}
+send_command(){
+  local cmd="$1" session_name="minecraft"
+  if command -v screen &>/dev/null && screen -list | grep -q "$session_name"; then
+    # -p 0 selects the first window
+    # -X stuff injects characters
+    # $(printf \\r) simulates the Enter key
+    print_info "Sending command to Screen: $cmd"
+    screen -S "$session_name" -p 0 -X stuff "$cmd$(printf \\r)"
+  elif command -v tmux &>/dev/null && tmux has-session -t "$session_name" 2>/dev/null; then
+    # tmux send-keys targets the session and presses Enter
+    print_info "Sending command to Tmux: $cmd"
+    tmux send-keys -t "$session_name" "$cmd" Enter
+  else
+    print_error "Server session '$session_name' not found (Screen/Tmux)."; return 1
+  fi
 }
