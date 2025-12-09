@@ -34,8 +34,22 @@ print_error(){ printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
 print_info(){ printf '\033[1;33m→\033[0m %s\n' "$1"; }
 
 # ============================================================================
-# COMMAND DETECTION FUNCTIONS
+# SYSTEM FUNCTIONS
 # ============================================================================
+
+# Detect system architecture
+# Usage: arch=$(detect_arch)
+# Returns: x86_64, aarch64, or armv7
+detect_arch(){
+  local arch
+  arch="$(uname -m)"
+  case "$arch" in
+    x86_64|amd64) echo "x86_64";;
+    aarch64|arm64) echo "aarch64";;
+    armv7l) echo "armv7";;
+    *) print_error "Unsupported architecture: $arch"; exit 1;;
+  esac
+}
 
 # Check if a command exists in PATH
 # Usage: has_command <command>
@@ -273,13 +287,11 @@ check_server_port(){
 # ============================================================================
 # JAVA DETECTION FUNCTIONS
 # ============================================================================
-
 # Detect best available Java command
 # Usage: java_cmd=$(detect_java)
 # Returns: Full path to java or "java" if using PATH
 detect_java(){
   local java_cmd="java"
-
   # Check for Arch Linux java-runtime-common
   if has_command archlinux-java; then
     local sel_java
@@ -289,17 +301,13 @@ detect_java(){
   elif has_command mise; then
     java_cmd="$(mise which java 2>/dev/null || printf 'java')"
   fi
-
   # Verify java command is executable, fallback to PATH
   [[ -x $java_cmd ]] || java_cmd="java"
-
   printf '%s' "$java_cmd"
 }
-
 # ============================================================================
 # ROOT/SUDO CHECK FUNCTIONS
 # ============================================================================
-
 # Check if running as root or with sudo access
 # Usage: check_root || return 1
 # Returns: 0 if root or sudo available, 1 if neither
