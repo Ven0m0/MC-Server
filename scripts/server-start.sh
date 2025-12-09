@@ -15,8 +15,13 @@ check_dependencies java || exit 1
 [[ ! -f $SERVER_JAR ]] && { print_error "Server jar not found: ${SERVER_JAR}"; exit 1; }
 # Memory Configuration
 CPU_CORES=$(get_cpu_cores)
-HEAP_SIZE=$(get_heap_size_gb 2)
-((HEAP_SIZE < MIN_HEAP_GB)) && HEAP_SIZE=$MIN_HEAP_GB
+if (( AVAILABLE_RAM < MIN_HEAP_GB )); then
+  print_info "Warning: Available RAM (${AVAILABLE_RAM}GB) is less than configured minimum (${MIN_HEAP_GB}GB)."
+  print_info "Using ${AVAILABLE_RAM}GB to prevent OOM crash."
+  HEAP_SIZE=$AVAILABLE_RAM
+else
+  HEAP_SIZE=$(( AVAILABLE_RAM > MIN_HEAP_GB ? AVAILABLE_RAM : MIN_HEAP_GB ))
+fi
 XMS="${HEAP_SIZE}G"
 XMX="${HEAP_SIZE}G"
 print_info "Memory: ${XMS} - ${XMX} | CPU Cores: ${CPU_CORES}"
