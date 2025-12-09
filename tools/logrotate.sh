@@ -108,22 +108,22 @@ limit_archives(){
 
 # Show statistics
 show_stats(){
-  echo ""
-  echo "═══════════════════════════════════════════"
-  echo "        Log Management Statistics"
-  echo "═══════════════════════════════════════════"
-  echo ""
+  printf '\n'
+  printf '═══════════════════════════════════════════\n'
+  printf '        Log Management Statistics\n'
+  printf '═══════════════════════════════════════════\n'
+  printf '\n'
   [[ -d $LOGS_DIR ]] && {
     # Single find call for count and single du for all stats
     local count
     count=$(find "$LOGS_DIR" -maxdepth 1 -name "*.log*" -type f -print 2>/dev/null | wc -l)
     local size
     size=$(du -sh "$LOGS_DIR" 2>/dev/null | cut -f1)
-    echo "Current Logs:"
-    echo "  Count: $count"
-    echo "  Size: $size"
-    echo ""
-    echo "Active Logs:"
+    printf 'Current Logs:\n'
+    printf '  Count: %s\n' "$count"
+    printf '  Size: %s\n' "$size"
+    printf '\n'
+    printf 'Active Logs:\n'
     # Combine du calls for active logs
     local active_logs=()
     for log in latest.log debug.log watchdog.log; do
@@ -134,23 +134,23 @@ show_stats(){
       while IFS=$'\t' read -r s path; do
         local log_name lines
         log_name=$(basename "$path")
-        lines=$(wc -l <"$path" 2>/dev/null || echo 0)
-        echo "  ${log_name}: ${s} (${lines} lines)"
+        lines=$(wc -l <"$path" 2>/dev/null || printf '0')
+        printf '  %s: %s (%s lines)\n' "$log_name" "$s" "$lines"
       done < <(du -h "${active_logs[@]}" 2>/dev/null)
     fi
-    echo ""
+    printf '\n'
   }
   [[ -d $ARCHIVE_DIR ]] && {
     local count
     count=$(find "$ARCHIVE_DIR" -name "*.log.gz" -type f -print 2>/dev/null | wc -l)
     local size
     size=$(du -sh "$ARCHIVE_DIR" 2>/dev/null | cut -f1)
-    echo "Archives:"
-    echo "  Count: $count"
-    echo "  Size: $size"
-    echo ""
+    printf 'Archives:\n'
+    printf '  Count: %s\n' "$count"
+    printf '  Size: %s\n' "$size"
+    printf '\n'
   }
-  echo "═══════════════════════════════════════════"
+  printf '═══════════════════════════════════════════\n'
 }
 
 # View log
@@ -163,7 +163,7 @@ view_log(){
     return 1
   }
   print_info "Last $lines lines of $log:"
-  echo ""
+  printf '\n'
   tail -n "$lines" "$path"
 }
 
@@ -177,22 +177,22 @@ search_log(){
     return 1
   }
   print_info "Searching for '$pattern' in $log:"
-  echo ""
+  printf '\n'
   grep --color=auto -i "$pattern" "$path" || print_info "No matches"
 }
 
 # Full maintenance
 full_maintenance(){
   print_header "Full log maintenance"
-  echo ""
+  printf '\n'
   rotate_all
-  echo ""
+  printf '\n'
   compress_old
-  echo ""
+  printf '\n'
   clean_old
-  echo ""
+  printf '\n'
   limit_archives
-  echo ""
+  printf '\n'
   show_stats
 }
 

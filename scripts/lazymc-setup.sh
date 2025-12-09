@@ -5,8 +5,10 @@
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=lib/common.sh
 source "${SCRIPT_DIR}/lib/common.sh"
-LAZYMC_VERSION="${LAZYMC_VERSION:-0.2.11}"; INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"; CONFIG_DIR="${CONFIG_DIR:-$PWD/config}"; LAZYMC_CONFIG="${CONFIG_DIR}/lazymc.toml"
-detect_arch(){ local arch; arch="$(uname -m)"; case "$arch" in x86_64|amd64) echo "x86_64";; aarch64|arm64) echo "aarch64";; armv7l) echo "armv7";; *) print_error "Unsupported architecture: $arch"; exit 1;; esac; }
+LAZYMC_VERSION="${LAZYMC_VERSION:-0.2.11}"
+INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
+CONFIG_DIR="${CONFIG_DIR:-$PWD/config}"
+LAZYMC_CONFIG="${CONFIG_DIR}/lazymc.toml"
 
 # Download lazymc binary
 download_lazymc(){

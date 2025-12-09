@@ -28,12 +28,12 @@ download_chunk_cleaner(){
 
   print_info "Downloading ChunkCleaner v${CHUNK_CLEANER_VERSION}..."
 
-  if command -v wget &>/dev/null; then
+  if has_command wget; then
     wget -q --show-progress -O "$CHUNK_CLEANER_BIN" "$CHUNK_CLEANER_URL" || {
       print_error "Failed to download ChunkCleaner"
       return 1
     }
-  elif command -v curl &>/dev/null; then
+  elif has_command curl; then
     curl -L -o "$CHUNK_CLEANER_BIN" "$CHUNK_CLEANER_URL" || {
       print_error "Failed to download ChunkCleaner"
       return 1
@@ -335,8 +335,8 @@ show_stats(){
     [[ ! -d $dimension_path ]] && continue
 
     local dim_name=$(basename "$dimension_path")
-    echo ""
-    echo "=== ${dim_name} ==="
+    printf '\n'
+    printf '=== %s ===\n' "$dim_name"
 
     # Region files
     local region_dir=""
@@ -351,21 +351,21 @@ show_stats(){
     if [[ -d $region_dir ]]; then
       local region_count=$(find "$region_dir" -name "*.mca" 2>/dev/null | wc -l)
       local region_size=$(du -sh "$region_dir" 2>/dev/null | cut -f1)
-      echo "  Region files: ${region_count} (${region_size})"
+      printf '  Region files: %s (%s)\n' "$region_count" "$region_size"
     fi
 
     # Entity data
     if [[ -d "${dimension_path}/entities" ]]; then
       local entity_count=$(find "${dimension_path}/entities" -name "*.mca" 2>/dev/null | wc -l)
       local entity_size=$(du -sh "${dimension_path}/entities" 2>/dev/null | cut -f1)
-      echo "  Entity files: ${entity_count} (${entity_size})"
+      printf '  Entity files: %s (%s)\n' "$entity_count" "$entity_size"
     fi
 
     # POI data
     if [[ -d "${dimension_path}/poi" ]]; then
       local poi_count=$(find "${dimension_path}/poi" -name "*.mca" 2>/dev/null | wc -l)
       local poi_size=$(du -sh "${dimension_path}/poi" 2>/dev/null | cut -f1)
-      echo "  POI files: ${poi_count} (${poi_size})"
+      printf '  POI files: %s (%s)\n' "$poi_count" "$poi_size"
     fi
   done
 
@@ -373,28 +373,28 @@ show_stats(){
   if [[ -d "${world_path}/playerdata" ]]; then
     local player_count=$(find "${world_path}/playerdata" -name "*.dat" 2>/dev/null | wc -l)
     local player_size=$(du -sh "${world_path}/playerdata" 2>/dev/null | cut -f1)
-    echo ""
-    echo "Player data: ${player_count} players (${player_size})"
+    printf '\n'
+    printf 'Player data: %s players (%s)\n' "$player_count" "$player_size"
   fi
 
   # Statistics
   if [[ -d "${world_path}/stats" ]]; then
     local stats_count=$(find "${world_path}/stats" -name "*.json" 2>/dev/null | wc -l)
     local stats_size=$(du -sh "${world_path}/stats" 2>/dev/null | cut -f1)
-    echo "Statistics: ${stats_count} files (${stats_size})"
+    printf 'Statistics: %s files (%s)\n' "$stats_count" "$stats_size"
   fi
 
   # Advancements
   if [[ -d "${world_path}/advancements" ]]; then
     local adv_count=$(find "${world_path}/advancements" -name "*.json" 2>/dev/null | wc -l)
     local adv_size=$(du -sh "${world_path}/advancements" 2>/dev/null | cut -f1)
-    echo "Advancements: ${adv_count} files (${adv_size})"
+    printf 'Advancements: %s files (%s)\n' "$adv_count" "$adv_size"
   fi
 
   # Total size
   local total_size=$(du -sh "$world_path" 2>/dev/null | cut -f1)
-  echo ""
-  echo "Total world size: ${total_size}"
+  printf '\n'
+  printf 'Total world size: %s\n' "$total_size"
 }
 
 # Show usage

@@ -55,7 +55,7 @@ start_lazymc(){
   local pid=$!
 
   # Save PID
-  echo "$pid" >"$LAZYMC_PID_FILE"
+  printf '%s\n' "$pid" >"$LAZYMC_PID_FILE"
 
   # Wait a moment and check if still running
   sleep 2
