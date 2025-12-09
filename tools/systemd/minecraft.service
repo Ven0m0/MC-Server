@@ -1,0 +1,38 @@
+[Unit]
+Description=Minecraft Server Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=%h/MC-Server
+Type=forking
+ExecStart=/bin/bash %h/MC-Server/start.sh
+ExecStop=/bin/bash %h/MC-Server/stop.sh
+GuessMainPID=no
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=10
+TimeoutStartSec=1800
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+NoNewPrivileges=true
+PrivateUsers=true
+ProtectClock=true
+ProtectKernelLogs=true
+ProtectHostname=true
+LockPersonality=true
+RestrictSUIDSGID=true
+RestrictNamespaces=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+AmbientCapabilities=CAP_KILL
+CapabilityBoundingSet=CAP_KILL
+WorkingDirectory=/var/lib/minecraft/deploy/server
+ReadWriteDirectories=/var/lib/minecraft
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
