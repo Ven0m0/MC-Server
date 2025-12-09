@@ -11,11 +11,6 @@ sleepy(){ read -rt "${1:-1}" -- <><(:) &>/dev/null || :; }
 # common.sh: Shared library for Minecraft server management scripts
 # This file is sourced by all scripts in scripts/ and tools/ directories
 # ============================================================================
-# Environment normalization
-user="${SUDO_USER:-${USER:-$(id -un)}}"
-export HOME="/home/${user}"
-SHELL="$(has bash && command -v bash || printf '/usr/bin/bash')"
-# ============================================================================
 # OUTPUT FORMATTING FUNCTIONS
 # ============================================================================
 print_header(){ printf '\033[0;34m==>\033[0m %s\n' "$1"; }
@@ -201,4 +196,10 @@ send_command(){
   else
     print_error "Server session '$session_name' not found (Screen/Tmux)."; return 1
   fi
+}
+game_command() {
+  local cmd="$1" host="localhost" port="25575" pass=""
+  command -v mcrcon &>/dev/null || { print_error "mcrcon is not installed. Cannot send command."; return 1; }
+  # -c disables color codes in output which helps parsing
+  mcrcon -H "$host" -P "$port" -p "$pass" -c "$cmd"
 }
