@@ -28,6 +28,7 @@
 ### Systemd Service (NEW)
 
 - **Create Service**: `./tools/systemd-service.sh create`
+- **Create Infrarust Proxy Service**: `./tools/systemd-service.sh create-infrarust [dir] [user]`
 - **Enable Service**: `./tools/systemd-service.sh enable`
 - **Start Service**: `./tools/systemd-service.sh start`
 - **Stop Service**: `./tools/systemd-service.sh stop`
@@ -49,10 +50,11 @@
 ## Code Style & Standards
 
 - **Shell**: Bash 5.0+. Shebang `#!/usr/bin/env bash`.
-- **Strict Mode**: Always use `set -euo pipefail`.
+- **Shared Library**: All scripts MUST source `lib/common.sh` for common functions (output formatting, command detection, memory calculations, etc.).
+- **Strict Mode**: Provided by `lib/common.sh` - no need to redefine in individual scripts.
 - **Formatting**: 2-space indent. No tabs. Strip trailing whitespace.
 - **Variables**: `snake_case` for locals, `SCREAMING_SNAKE` for globals/exports. Quote all variables unless intentional splitting.
-- **Output**: Use `printf` over `echo`.
+- **Output**: Use `printf` over `echo`. Use `print_header`, `print_success`, `print_error`, `print_info` from `lib/common.sh`.
 - **Loops**: Prefer `while IFS= read -r` or `mapfile` over `for` loops on command output.
 - **Conditions**: Use `[[ ... ]]` over `[ ... ]`. Use `(( ... ))` for arithmetic.
 - **Functions**: Define as `func_name() { ... }`. Use `local` variables. Return values via `printf` capture or global refs if necessary.
@@ -79,6 +81,7 @@
 
 - `scripts/`: Core logic (start, updates, install).
 - `tools/`: Operational utilities (backup, monitor, watchdog, logs, mcctl, systemd).
+- `lib/`: Shared shell library (`common.sh`) with reusable functions.
 - `config/`: Plugin/Mod configurations (ServerCore, Geyser, etc.).
 - `docs/`: Documentation and JVM flag references.
 - `backups/`: Storage for compressed world/config archives.

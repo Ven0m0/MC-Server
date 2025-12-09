@@ -2,53 +2,13 @@
 # mcctl.sh: Paper/Spigot server management tool
 # Integrated from: https://github.com/Kraftland/mcctl
 
-# Initialize strict mode
-set -euo pipefail
-shopt -s nullglob globstar
-IFS=$'\n\t'
-export LC_ALL=C LANG=C
-user="${SUDO_USER:-${USER:-$(id -un)}}"
-export HOME="/home/${user}"
-SHELL="$(command -v bash 2>/dev/null || echo '/usr/bin/bash')"
-
-# Initialize SCRIPT_DIR
+# Source common library
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-export SCRIPT_DIR
+# shellcheck source=lib/common.sh
+source "${SCRIPT_DIR}/lib/common.sh"
 
 # Version
 MCCTL_VERSION="2.0.0-integrated"
-
-# Output formatting helpers
-print_header(){ printf '\033[0;34m==>\033[0m %s\n' "$1"; }
-print_success(){ printf '\033[0;32m✓\033[0m %s\n' "$1"; }
-print_error(){ printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
-print_info(){ printf '\033[1;33m→\033[0m %s\n' "$1"; }
-
-# Check if command exists
-has_command(){ command -v "$1" &>/dev/null; }
-
-# Detect JSON processor (prefer jaq over jq)
-get_json_processor(){
-  has_command jaq && { printf 'jaq'; return; }
-  has_command jq && { printf 'jq'; return; }
-  print_error "No JSON processor found. Install jq or jaq"
-  return 1
-}
-
-# Download file with preferred tool chain
-download_file(){
-  local url="$1" output="$2"
-  if has_command aria2c; then
-    aria2c -x8 -s8 --allow-overwrite=true --auto-file-renaming=false -o "$output" "$url"
-  elif has_command curl; then
-    curl -fsSL -o "$output" "$url"
-  elif has_command wget; then
-    wget -qO "$output" "$url"
-  else
-    print_error "No download tool found (aria2c, curl, or wget)"
-    return 1
-  fi
-}
 
 # Get latest git tag from repository
 get_latest_tag(){

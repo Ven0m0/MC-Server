@@ -1,41 +1,10 @@
 #!/usr/bin/env bash
 # Simplified Minecraft server backup tool
 
-# Initialize strict mode
-set -euo pipefail
-shopt -s nullglob globstar
-IFS=$'\n\t'
-export LC_ALL=C LANG=C
-user="${SUDO_USER:-${USER:-$(id -un)}}"
-export HOME="/home/${user}"
-SHELL="$(command -v bash 2>/dev/null || echo '/usr/bin/bash')"
-
-# Initialize SCRIPT_DIR
+# Source common library
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-export SCRIPT_DIR
-
-# Output formatting helpers
-print_header(){ printf '\033[0;34m==>\033[0m %s\n' "$1"; }
-print_success(){ printf '\033[0;32m✓\033[0m %s\n' "$1"; }
-print_error(){ printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
-print_info(){ printf '\033[1;33m→\033[0m %s\n' "$1"; }
-
-# Format byte sizes to human-readable form (1G, 1M, 1K, 1B)
-# Usage: format_size_bytes <size_in_bytes>
-format_size_bytes(){
-  local size="$1"
-  # Byte conversion constants
-  local KB=1024 MB=1048576 GB=1073741824
-  if ((size >= GB)); then
-    awk "BEGIN {printf \"%.1fG\", $size/$GB}"
-  elif ((size >= MB)); then
-    awk "BEGIN {printf \"%.1fM\", $size/$MB}"
-  elif ((size >= KB)); then
-    awk "BEGIN {printf \"%.1fK\", $size/$KB}"
-  else
-    printf '%dB' "$size"
-  fi
-}
+# shellcheck source=lib/common.sh
+source "${SCRIPT_DIR}/lib/common.sh"
 
 # Configuration
 BACKUP_DIR="${SCRIPT_DIR}/backups"

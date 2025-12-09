@@ -181,10 +181,6 @@ MC_DIR=/custom/path ./scripts/mc-client.sh 1.21.5 Player
 
 Initial server preparation (EULA acceptance, directory setup)
 
-### `infrarust.sh`
-
-Infrarust proxy tunnel configuration
-
 ## 🛠️ Management Tools
 
 Located in `tools/` directory:
@@ -349,6 +345,49 @@ Automated log rotation, compression, and archiving.
 0 3 * * 0 cd /path/to/MC-Server && ./tools/logrotate.sh maintenance
 ```
 
+### `systemd-service.sh` - Systemd Service Management
+
+Create and manage systemd services for Minecraft server and Infrarust proxy.
+
+**Features:**
+
+- Automated systemd service creation
+- Infrarust proxy service support
+- Service lifecycle management (enable, start, stop, restart)
+- Log viewing via journalctl
+- Auto-start on boot support
+
+**Usage:**
+
+```bash
+# Create Minecraft server service
+./tools/systemd-service.sh create
+
+# Create Infrarust proxy service (installs infrarust if needed)
+./tools/systemd-service.sh create-infrarust /opt/infrarust minecraft
+
+# Enable service (auto-start on boot)
+./tools/systemd-service.sh enable
+
+# Start service
+./tools/systemd-service.sh start
+
+# Stop service
+./tools/systemd-service.sh stop
+
+# Restart service
+./tools/systemd-service.sh restart
+
+# View status
+./tools/systemd-service.sh status
+
+# View logs
+./tools/systemd-service.sh logs 100
+
+# Follow logs in real-time
+./tools/systemd-service.sh follow
+```
+
 ## ⚙️ Configuration
 
 ### Environment Variables
@@ -405,14 +444,17 @@ MC-Server/
 │   ├── mcdl.sh                 # Fabric downloader
 │   ├── mc-client.sh            # Client launcher
 │   ├── prepare.sh              # Initial setup
-│   ├── infrarust.sh            # Proxy configuration
+│   ├── lazymc-setup.sh         # Lazymc proxy setup
 │   └── test_common.sh          # Tests
 │
 ├── tools/                      # Management utilities
 │   ├── backup.sh               # Backup automation
 │   ├── monitor.sh              # Server monitoring
 │   ├── watchdog.sh             # Auto-restart & crash recovery
-│   └── logrotate.sh            # Log management
+│   ├── logrotate.sh            # Log management
+│   ├── systemd-service.sh      # Systemd service management
+│   ├── lazymc.sh               # Lazymc proxy management
+│   └── mcctl.sh                # Paper/Spigot management
 │
 ├── config/                     # Plugin configurations
 │   ├── servercore/             # ServerCore settings

@@ -1,49 +1,10 @@
 #!/usr/bin/env bash
 # server-start.sh: Simplified Minecraft server launcher
-set -euo pipefail
-shopt -s nullglob globstar
-IFS=$'\n\t'
-user="${SUDO_USER:-${USER:-$(id -un)}}"
-export HOME="/home/${user}" LC_ALL=C LANG=C
-SHELL="$(command -v bash 2>/dev/null || echo '/usr/bin/bash')"
 
-# Check if command exists
-has_command(){ command -v "$1" &>/dev/null; }
-
-# Check if required commands are available
-check_dependencies(){
-  local missing=()
-  for cmd in "$@"; do
-    has_command "$cmd" || missing+=("$cmd")
-  done
-  ((${#missing[@]})) && {
-    printf 'Error: Missing required dependencies: %s\n' "${missing[*]}" >&2
-    printf 'Please install them before continuing.\n' >&2
-    return 1
-  }
-}
-
-# Calculate total RAM in GB
-get_total_ram_gb(){ awk '/MemTotal/ {printf "%.0f\n",$2/1024/1024}' /proc/meminfo 2>/dev/null; }
-
-# Calculate heap size (total RAM minus reserved for OS)
-get_heap_size_gb() {
-  local reserved="${1:-2}"
-  local total_ram
-  total_ram=$(get_total_ram_gb)
-  local heap=$((total_ram - reserved))
-  ((heap < 1)) && heap=1
-  printf '%d' "$heap"
-}
-
-# Get number of CPU cores
-get_cpu_cores(){ nproc 2>/dev/null || echo 4; }
-
-# Output formatting helpers
-print_header(){ printf '\033[0;34m==>\033[0m %s\n' "$1"; }
-print_success(){ printf '\033[0;32m✓\033[0m %s\n' "$1"; }
-print_error(){ printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
-print_info(){ printf '\033[1;33m→\033[0m %s\n' "$1"; }
+# Source common library
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=lib/common.sh
+source "${SCRIPT_DIR}/lib/common.sh"
 
 # Configuration
 : "${SERVER_JAR:=server.jar}"
@@ -67,15 +28,14 @@ XMX="${HEAP_SIZE}G"
 print_info "Memory: ${XMS} - ${XMX} | CPU Cores: ${CPU_CORES}"
 
 # JDK Detection
-JAVA_CMD="java"
+JAVA_CMD="$(detect_java)"
 JAVA_TYPE=""
+
+# Fix archlinux-java if available
 if has_command archlinux-java; then
   sudo archlinux-java fix 2>/dev/null || :
-  SEL_JAVA="$(archlinux-java get 2>/dev/null)"
-  [[ -n $SEL_JAVA ]] && JAVA_CMD="/usr/lib/jvm/${SEL_JAVA}/bin/java"
-elif has_command mise; then
-  JAVA_CMD="$(mise which java 2>/dev/null)" || JAVA_CMD="java"
 fi
+
 # Detect if running GraalVM
 if "$JAVA_CMD" -version 2>&1 | grep -q "GraalVM"; then
   JAVA_TYPE="graalvm"

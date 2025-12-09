@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # lazymc-setup.sh: Install and configure lazymc for automatic server sleep
-set -euo pipefail; shopt -s nullglob globstar; IFS=$'\n\t'
-print_header(){ printf '\033[0;34m==>\033[0m %s\n' "$1"; }; print_error(){ printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }; print_success(){ printf '\033[0;32m✓\033[0m %s\n' "$1"; }; print_info(){ printf '\033[1;33m→\033[0m %s\n' "$1"; }
-has_command(){ command -v "$1" &>/dev/null; }
+
+# Source common library
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=lib/common.sh
+source "${SCRIPT_DIR}/lib/common.sh"
 LAZYMC_VERSION="${LAZYMC_VERSION:-0.2.11}"; INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"; CONFIG_DIR="${CONFIG_DIR:-$PWD/config}"; LAZYMC_CONFIG="${CONFIG_DIR}/lazymc.toml"
 detect_arch(){ local arch; arch="$(uname -m)"; case "$arch" in x86_64|amd64) echo "x86_64";; aarch64|arm64) echo "aarch64";; armv7l) echo "armv7";; *) print_error "Unsupported architecture: $arch"; exit 1;; esac; }
 
