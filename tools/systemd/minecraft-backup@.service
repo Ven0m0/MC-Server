@@ -5,7 +5,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=%h/MC-Server/tools/backup.sh %i
+ExecStart=%h/MC-Server/tools/backup.sh backup all
 Restart=on-failure
 RestartSec=10
 TimeoutStopSec=10
