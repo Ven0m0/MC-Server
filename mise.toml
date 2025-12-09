@@ -24,6 +24,7 @@ bun = true
 #java = "oracle-graalvm"
 "cargo:https://github.com/ComunidadAylas/PackSquash" = "latest"
 "ubi:zeroBzeroT/ChunkCleaner" = "latest"
+"cargo:rustic-rs" = "latest"
 
 #[env]
 #_.java.GRAALVM_HOME = "${MISE_INSTALLS}/graalvm/${version}"
