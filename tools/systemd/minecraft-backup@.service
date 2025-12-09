@@ -1,0 +1,19 @@
+[Unit]
+Description=Weekly backup of Minecraft server %i
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=%h/MC-Server/tools/backup.sh %i
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=10
+OnCalendar=weekly
+Persistent=true
+LimitNOFILE=65536
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
