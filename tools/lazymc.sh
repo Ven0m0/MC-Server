@@ -1,17 +1,10 @@
 #!/usr/bin/env bash
 # lazymc.sh: Manage lazymc for automatic server sleep/wake
-set -euo pipefail
-shopt -s nullglob globstar
-IFS=$'\n\t'
 
-# Output formatting helpers
-print_header(){ printf '\033[0;34m==>\033[0m %s\n' "$1"; }
-print_error(){ printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
-print_success(){ printf '\033[0;32m✓\033[0m %s\n' "$1"; }
-print_info(){ printf '\033[1;33m→\033[0m %s\n' "$1"; }
-
-# Check if command exists
-has_command(){ command -v "$1" &>/dev/null; }
+# Source common library
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=lib/common.sh
+source "${SCRIPT_DIR}/lib/common.sh"
 
 # Configuration
 CONFIG_DIR="${CONFIG_DIR:-$PWD/config}"

@@ -1,15 +1,10 @@
 #!/usr/bin/env bash
 # Simplified Minecraft server watchdog
-set -euo pipefail
-shopt -s nullglob globstar
-IFS=$'\n\t'
-user="${SUDO_USER:-${USER:-$(id -un)}}"
-export HOME="/home/${user}" LC_ALL=C LANG=C
-SHELL="$(command -v bash 2>/dev/null || echo '/usr/bin/bash')"
 
-# Initialize SCRIPT_DIR
+# Source common library
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-export SCRIPT_DIR
+# shellcheck source=lib/common.sh
+source "${SCRIPT_DIR}/lib/common.sh"
 
 # Configuration
 SERVER_START_SCRIPT="${SCRIPT_DIR}/scripts/server-start.sh"
@@ -26,12 +21,6 @@ LAST_RESTART_TIME=0
 # Logging
 mkdir -p "$(dirname "$LOG_FILE")"
 log(){ printf '[%(%Y-%m-%d %H:%M:%S)T] %s\n' -1 "$*" | tee -a "$LOG_FILE"; }
-
-# Check if command exists
-has_command(){ command -v "$1" &>/dev/null; }
-
-# Check if server is running
-is_server_running(){ pgrep -f "fabric-server-launch.jar" >/dev/null || pgrep -f "server.jar" >/dev/null; }
 
 check_network(){
   # If nc is available, check if port is actually open

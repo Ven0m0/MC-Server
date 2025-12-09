@@ -2,77 +2,10 @@
 # mc-client.sh: Minecraft client launcher with automatic version management
 # Based on https://github.com/Sushkyn/mc-launcher
 
-# Initialize strict mode
-set -euo pipefail
-shopt -s nullglob globstar
-IFS=$'\n\t'
-export LC_ALL=C LANG=C
-user="${SUDO_USER:-${USER:-$(id -un)}}"
-export HOME="/home/${user}"
-SHELL="$(command -v bash 2>/dev/null || echo '/usr/bin/bash')"
-
-# Check if command exists
-has_command(){ command -v "$1" &>/dev/null; }
-
-# Check if required commands are available
-check_dependencies(){
-  local missing=()
-  for cmd in "$@"; do
-    has_command "$cmd" || missing+=("$cmd")
-  done
-  ((${#missing[@]})) && {
-    echo "Error: Missing required dependencies: ${missing[*]}" >&2
-    echo "Please install them before continuing." >&2
-    return 1
-  }
-}
-
-# Detect JSON processor (prefer jaq over jq)
-get_json_processor(){
-  has_command jaq && {
-    echo "jaq"
-    return
-  }
-  has_command jq && {
-    echo "jq"
-    return
-  }
-  echo "Error: No JSON processor found. Please install jq or jaq." >&2
-  return 1
-}
-
-# Fetch URL to stdout
-fetch_url(){
-  local url="$1"
-  has_command curl && {
-    curl -fsSL -H "Accept-Encoding: identity" -H "Accept-Language: en" -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4.212 Safari/537.36" "$url"
-    return
-  }
-  has_command wget && {
-    wget -qO- "$url"
-    return
-  }
-  echo "Error: No download tool found (aria2c, curl, or wget)" >&2
-  return 1
-}
-
-# Download file with aria2c or curl fallback
-download_file(){
-  local url="$1" output="$2" connections="${3:-8}"
-  has_command curl && {
-    curl -fsL -H "Accept-Encoding: identity" -H "Accept-Language: en" -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4.212 Safari/537.36" -o "$output" "$url"
-    return
-  }
-  has_command wget && {
-    wget -qO "$output" "$url"
-    return
-  }
-  echo "Error: No download tool found (aria2c, curl, or wget)" >&2
-  return 1
-}
-
-# Create directory if it doesn't exist
-ensure_dir(){ [[ ! -d $1 ]] && mkdir -p "$1" || return 0; }
+# Source common library
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=lib/common.sh
+source "${SCRIPT_DIR}/lib/common.sh"
 
 # Extract natives from JAR file
 extract_natives(){
@@ -80,26 +13,6 @@ extract_natives(){
   ensure_dir "$dest_dir"
   unzip -q -o "$jar_file" -d "$dest_dir" 2>/dev/null || :
   rm -rf "${dest_dir}/META-INF"
-}
-
-# Calculate total RAM in GB
-get_total_ram_gb(){ awk '/MemTotal/ {printf "%.0f\n",$2/1024/1024}' /proc/meminfo 2>/dev/null; }
-
-# Calculate client memory allocation
-get_client_xms_gb(){
-  local total_ram
-  total_ram=$(get_total_ram_gb)
-  local xms=$((total_ram / 4))
-  ((xms < 1)) && xms=1
-  echo "$xms"
-}
-
-get_client_xmx_gb(){
-  local total_ram
-  total_ram=$(get_total_ram_gb)
-  local xmx=$((total_ram / 2))
-  ((xmx < 2)) && xmx=2
-  echo "$xmx"
 }
 
 # Check dependencies

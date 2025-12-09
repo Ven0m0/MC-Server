@@ -1,23 +1,10 @@
 #!/usr/bin/env bash
 # Simplified Minecraft server monitor
 
-# Initialize strict mode
-set -euo pipefail
-shopt -s nullglob globstar
-IFS=$'\n\t'
-export LC_ALL=C LANG=C
-user="${SUDO_USER:-${USER:-$(id -un)}}"
-export HOME="/home/${user}"
-SHELL="$(command -v bash 2>/dev/null || echo '/usr/bin/bash')"
-
-# Initialize SCRIPT_DIR
+# Source common library
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-export SCRIPT_DIR
-
-# Output formatting helpers
-print_header(){ printf '\033[0;34m==>\033[0m %s\n' "$1"; }
-print_success(){ printf '\033[0;32m✓\033[0m %s\n' "$1"; }
-print_error(){ printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
+# shellcheck source=lib/common.sh
+source "${SCRIPT_DIR}/lib/common.sh"
 
 # Configuration
 LOG_FILE="${SCRIPT_DIR}/logs/latest.log"

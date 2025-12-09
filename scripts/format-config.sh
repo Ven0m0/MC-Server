@@ -3,7 +3,10 @@
 # Formats and minifies JSON, YAML, and other configuration files
 # Inspired by https://github.com/Ven0m0/Linux-OS/blob/main/Cachyos/Scripts/other/minify.sh
 
-set -euo pipefail
+# Source common library
+SCRIPT_DIR_REAL="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=lib/common.sh
+source "${SCRIPT_DIR_REAL}/lib/common.sh"
 
 # Colors for output
 readonly RED='\033[0;31m'
@@ -68,16 +71,6 @@ print_msg(){
 #######################################
 error_exit(){ print_msg "$RED" "ERROR: $1" >&2; exit 1; }
 
-#######################################
-# Check if command exists
-# Arguments:
-#   $1 - Command name
-# Returns:
-#   0 if exists, 1 otherwise
-#######################################
-command_exists(){
-  command -v "$1" &>/dev/null
-}
 
 #######################################
 # Check required dependencies
@@ -86,7 +79,7 @@ check_dependencies(){
   local missing_deps=()
 
   # Check for jq (required for JSON)
-  if ! command_exists jq; then
+  if ! has_command jq; then
     missing_deps+=("jq")
   fi
 
@@ -96,8 +89,8 @@ check_dependencies(){
   fi
 
   # Check for optional tools
-  if ! command_exists yamlfmt; then
-    if command_exists yq; then
+  if ! has_command yamlfmt; then
+    if has_command yq; then
       if ! yq --version 2>&1 | grep -q "mikefarah"; then
         print_msg "$YELLOW" "Warning: Found old Python-based yq. Install mikefarah/yq or yamlfmt for YAML formatting."
       fi
@@ -106,7 +99,7 @@ check_dependencies(){
     fi
   fi
 
-  if ! command_exists parallel && ! command_exists rust-parallel; then
+  if ! has_command parallel && ! has_command rust-parallel; then
     print_msg "$YELLOW" "Warning: No parallel processing tool found. Will use sequential processing."
   fi
 }
@@ -228,7 +221,7 @@ format_yaml(){
   size_before=$(get_file_size "$file")
 
   # Try yamlfmt first (best formatter)
-  if command_exists yamlfmt; then
+  if has_command yamlfmt; then
     if [[ ${MODE} == "check" ]]; then
       if yamlfmt -lint "$file" 2>/dev/null; then
         print_msg "$GREEN" "✓ Valid: ${file}"
@@ -246,7 +239,7 @@ format_yaml(){
       fi
     fi
   # Try yq as fallback (check if it's mikefarah/yq, not python yq)
-  elif command_exists yq && yq --version 2>&1 | grep -q "mikefarah"; then
+  elif has_command yq && yq --version 2>&1 | grep -q "mikefarah"; then
     if [[ ${MODE} == "check" ]]; then
       if yq eval . "$file" &>/dev/null; then
         print_msg "$GREEN" "✓ Valid: ${file}"
@@ -339,12 +332,12 @@ process_directory(){
   print_msg "$BLUE" "Found ${#files[@]} config file(s)"
 
   # Process files (with or without parallelization)
-  if command_exists parallel && [[ ${#files[@]} -gt 3 ]]; then
+  if has_command parallel && [[ ${#files[@]} -gt 3 ]]; then
     # GNU parallel
     printf '%s\n' "${files[@]}" | parallel -j "$PARALLEL_JOBS" "$(declare -f process_file format_json format_yaml get_file_size print_msg); $(declare -p MODE DRY_RUN VERBOSE GREEN RED YELLOW BLUE NC); process_file {}"
     # Note: parallel processing doesn't update counters in parent shell
     PROCESSED_FILES=${#files[@]}
-  elif command_exists rust-parallel && [[ ${#files[@]} -gt 3 ]]; then
+  elif has_command rust-parallel && [[ ${#files[@]} -gt 3 ]]; then
     # Rust parallel
     printf '%s\n' "${files[@]}" | rust-parallel -j "$PARALLEL_JOBS" bash -c "$(declare -f process_file format_json format_yaml get_file_size print_msg); $(declare -p MODE DRY_RUN VERBOSE GREEN RED YELLOW BLUE NC); process_file {}"
     PROCESSED_FILES=${#files[@]}

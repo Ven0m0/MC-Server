@@ -2,59 +2,14 @@
 # systemd-service.sh: Minecraft server systemd service management
 # Extracted from mcctl and modernized
 
-# Initialize strict mode
-set -euo pipefail
-shopt -s nullglob globstar
-IFS=$'\n\t'
-export LC_ALL=C LANG=C
-user="${SUDO_USER:-${USER:-$(id -un)}}"
-export HOME="/home/${user}"
-SHELL="$(command -v bash 2>/dev/null || echo '/usr/bin/bash')"
-
-# Initialize SCRIPT_DIR
+# Source common library
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-export SCRIPT_DIR
+# shellcheck source=lib/common.sh
+source "${SCRIPT_DIR}/lib/common.sh"
 
 # Service configuration
 SERVICE_NAME="minecraft-server"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
-
-# Output formatting helpers
-print_header(){ printf '\033[0;34m==>\033[0m %s\n' "$1"; }
-print_success(){ printf '\033[0;32m✓\033[0m %s\n' "$1"; }
-print_error(){ printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
-print_info(){ printf '\033[1;33m→\033[0m %s\n' "$1"; }
-
-# Check if command exists
-has_command(){ command -v "$1" &>/dev/null; }
-
-# Check if running as root or with sudo
-check_root(){
-  [[ $EUID -eq 0 ]] && return 0
-  has_command sudo && {
-    print_info "Root access required. Using sudo..."
-    return 0
-  }
-  print_error "Root access required but sudo not available"
-  return 1
-}
-
-# Detect Java command
-detect_java(){
-  local java_cmd="java"
-
-  if has_command archlinux-java; then
-    local sel_java
-    sel_java="$(archlinux-java get 2>/dev/null || echo '')"
-    [[ -n $sel_java ]] && java_cmd="/usr/lib/jvm/${sel_java}/bin/java"
-  elif has_command mise; then
-    java_cmd="$(mise which java 2>/dev/null || echo 'java')"
-  fi
-
-  [[ -x $java_cmd ]] || java_cmd="java"
-
-  printf '%s' "$java_cmd"
-}
 
 # Create systemd service file
 create_service(){
@@ -132,6 +87,84 @@ EOF
   print_success "Service created: ${SERVICE_NAME}"
   print_info "Enable with: sudo systemctl enable ${SERVICE_NAME}"
   print_info "Start with: sudo systemctl start ${SERVICE_NAME}"
+}
+
+# Create Infrarust proxy systemd service
+create_infrarust_service(){
+  local infrarust_dir="${1:-/opt/infrarust}"
+  local run_user="${2:-minecraft}"
+
+  check_root || return 1
+
+  print_header "Setting up Infrarust Minecraft Proxy"
+
+  # Install infrarust if not already installed
+  if ! has_command infrarust; then
+    print_info "Installing infrarust via cargo..."
+    check_dependencies cargo || return 1
+    cargo install --locked infrarust || {
+      print_error "Failed to install infrarust"
+      return 1
+    }
+    print_success "Infrarust installed successfully"
+  else
+    print_info "Infrarust already installed"
+  fi
+
+  # Create working directory
+  if [[ $EUID -eq 0 ]]; then
+    mkdir -p "$infrarust_dir"
+    chown "$run_user:$run_user" "$infrarust_dir" 2>/dev/null || true
+  else
+    sudo mkdir -p "$infrarust_dir"
+    sudo chown "$run_user:$run_user" "$infrarust_dir" 2>/dev/null || true
+  fi
+
+  # Detect infrarust binary location
+  local infrarust_bin
+  infrarust_bin="$(command -v infrarust 2>/dev/null || echo '/usr/local/bin/infrarust')"
+
+  print_info "Creating infrarust systemd service..."
+  print_info "User: ${run_user}"
+  print_info "Working directory: ${infrarust_dir}"
+  print_info "Binary: ${infrarust_bin}"
+
+  # Create service file
+  local service_content
+  read -r -d '' service_content <<EOF || true
+[Unit]
+Description=Infrarust Minecraft Proxy
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=${run_user}
+WorkingDirectory=${infrarust_dir}
+ExecStart=${infrarust_bin}
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+  local infrarust_service="/etc/systemd/system/infrarust.service"
+
+  if [[ $EUID -eq 0 ]]; then
+    printf '%s\n' "$service_content" > "$infrarust_service"
+    systemctl daemon-reload
+  else
+    printf '%s\n' "$service_content" | sudo tee "$infrarust_service" >/dev/null
+    sudo systemctl daemon-reload
+  fi
+
+  print_success "Infrarust service created"
+  print_info "Enable with: sudo systemctl enable infrarust"
+  print_info "Start with: sudo systemctl start infrarust"
+  print_info "Check status with: sudo systemctl status infrarust"
 }
 
 # Remove systemd service
@@ -276,6 +309,7 @@ USAGE:
 
 COMMANDS:
     create [script] [dir] [user]   Create systemd service
+    create-infrarust [dir] [user]  Create Infrarust proxy service
     remove                         Remove systemd service
     enable                         Enable service (auto-start on boot)
     start                          Start service
@@ -289,6 +323,7 @@ COMMANDS:
 EXAMPLES:
     $0 create
     $0 create ./scripts/server-start.sh /opt/minecraft minecraft
+    $0 create-infrarust /opt/infrarust minecraft
     $0 enable
     $0 start
     $0 status
@@ -300,12 +335,14 @@ NOTES:
     - Service name: ${SERVICE_NAME}
     - Service file: ${SERVICE_FILE}
     - Logs via journalctl
+    - create-infrarust also installs infrarust via cargo if needed
 EOF
 }
 
 # Command dispatcher
 case "${1:-help}" in
   create) create_service "${2:-}" "${3:-}" "${4:-}" ;;
+  create-infrarust) create_infrarust_service "${2:-}" "${3:-}" ;;
   remove) remove_service ;;
   enable) enable_service ;;
   start) start_service ;;
