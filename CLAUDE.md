@@ -4,9 +4,9 @@
 
 ### Fabric Server Management
 
-- **Start Server**: `./scripts/server-start.sh`
-- **Install/Update Fabric**: `./scripts/mcdl.sh [version]`
-- **Update Mods**: `./scripts/mod-updates.sh upgrade`
+- **Start Server**: `./tools/server-start.sh`
+- **Install/Update Fabric**: `./tools/mod-updates.sh install-fabric [version]`
+- **Update Mods**: `./tools/mod-updates.sh ferium`
 
 ### Paper/Spigot Server Management (NEW)
 
@@ -39,12 +39,12 @@
 
 - **Monitor**: `./tools/monitor.sh [status|watch|alert]`
 - **Log Maintenance**: `./tools/logrotate.sh maintenance`
-- **Lint/Format Configs**: `./scripts/format-config.sh --mode [format|check|minify]`
-- **Test**: `./scripts/test_common.sh`
+- **Lint/Format Configs**: `./tools/format-config.sh --mode [format|check|minify]`
 
 ### Proxy & Tunneling
 
-- **Setup lazymc**: `./scripts/lazymc-setup.sh [install|config]`
+- **Setup lazymc**: `./tools/prepare.sh lazymc-install`
+- **Generate lazymc config**: `./tools/prepare.sh lazymc-config`
 - **Manage lazymc**: `./tools/lazymc.sh [start|stop|restart|status|logs|follow]`
 
 ## Code Style & Standards
@@ -79,8 +79,7 @@
 
 ## Directory Structure
 
-- `scripts/`: Core logic (start, updates, install).
-- `tools/`: Operational utilities (backup, monitor, watchdog, logs, mcctl, systemd).
+- `tools/`: All operational scripts (server management, backup, monitor, watchdog, logs, mcctl, systemd).
 - `lib/`: Shared shell library (`common.sh`) with reusable functions.
 - `config/`: Plugin/Mod configurations (ServerCore, Geyser, etc.).
 - `docs/`: Documentation and JVM flag references.

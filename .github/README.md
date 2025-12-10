@@ -41,13 +41,13 @@ git clone <your-repo-url>
 cd MC-Server
 
 # 2. Download and install Fabric server
-./scripts/mcdl.sh
+./tools/mod-updates.sh install-fabric
 
 # 3. Accept EULA and prepare server
-./scripts/prepare.sh
+./tools/prepare.sh
 
 # 4. Start the server
-./scripts/server-start.sh
+./tools/server-start.sh
 ```
 
 ### Quick Operations
@@ -102,7 +102,7 @@ sudo apt install -y netcat-openbsd
 
 ## 🎮 Server Scripts
 
-Located in `scripts/` directory:
+Located in `tools/` directory:
 
 ### `server-start.sh`
 
@@ -120,50 +120,40 @@ Main server launcher with advanced optimizations
 **Usage:**
 
 ```bash
-./scripts/server-start.sh
+./tools/server-start.sh
 
 # Use specific JDK
-MC_JDK=graalvm ./scripts/server-start.sh
-MC_JDK=temurin ./scripts/server-start.sh
-```
-
-### `mcdl.sh`
-
-Fabric server downloader and installer
-
-**Usage:**
-
-```bash
-./scripts/mcdl.sh [version]    # Downloads specified version
-./scripts/mcdl.sh              # Downloads latest version
+MC_JDK=graalvm ./tools/server-start.sh
+MC_JDK=temurin ./tools/server-start.sh
 ```
 
 ### `mod-updates.sh`
 
-Comprehensive mod manager with Modrinth and CurseForge support
+Fabric server installer and comprehensive mod management system
 
 **Features:**
 
-- Profile-based mod organization
-- Automatic version compatibility checking
-- Parallel mod downloading
-- Configuration management
+- Fabric server installation with version selection
+- Ferium mod updates
+- mc-repack mod compression
+- GeyserConnect extension updates
+- Full workflow automation
 
 **Usage:**
 
 ```bash
-# Create profile
-./scripts/mod-updates.sh profile create my-mods 1.21.5 fabric ./mods
+# Install Fabric server
+./tools/mod-updates.sh install-fabric              # Latest stable
+./tools/mod-updates.sh install-fabric 1.21.5       # Specific version
+./tools/mod-updates.sh install-fabric 1.21.5 0.16.10  # With loader version
 
-# Add mods
-./scripts/mod-updates.sh add modrinth sodium
-./scripts/mod-updates.sh add modrinth lithium
+# Mod management
+./tools/mod-updates.sh ferium                      # Update mods via Ferium
+./tools/mod-updates.sh repack ./mods ./mods-repacked  # Repack mods
+./tools/mod-updates.sh geyser                      # Update GeyserConnect
 
-# Download/update all mods
-./scripts/mod-updates.sh upgrade
-
-# List mods
-./scripts/mod-updates.sh list
+# Full workflow
+./tools/mod-updates.sh full-update                 # Complete update cycle
 ```
 
 ### `mc-client.sh`
@@ -173,8 +163,8 @@ Minecraft Java Edition client launcher
 **Usage:**
 
 ```bash
-./scripts/mc-client.sh 1.21.5 YourUsername
-MC_DIR=/custom/path ./scripts/mc-client.sh 1.21.5 Player
+./tools/mc-client.sh 1.21.5 YourUsername
+MC_DIR=/custom/path ./tools/mc-client.sh 1.21.5 Player
 ```
 
 ### `prepare.sh`
@@ -438,23 +428,20 @@ Detailed documentation available in `docs/`:
 
 ```
 MC-Server/
-├── scripts/                    # Server management scripts
+├── tools/                      # All operational scripts
 │   ├── server-start.sh         # Main server launcher
-│   ├── mod-updates.sh          # Mod management
-│   ├── mcdl.sh                 # Fabric downloader
+│   ├── mod-updates.sh          # Fabric installer & mod management
 │   ├── mc-client.sh            # Client launcher
-│   ├── prepare.sh              # Initial setup
-│   ├── lazymc-setup.sh         # Lazymc proxy setup
-│   └── test_common.sh          # Tests
-│
-├── tools/                      # Management utilities
+│   ├── prepare.sh              # Initial setup & lazymc installation
 │   ├── backup.sh               # Backup automation
 │   ├── monitor.sh              # Server monitoring
 │   ├── watchdog.sh             # Auto-restart & crash recovery
 │   ├── logrotate.sh            # Log management
 │   ├── systemd-service.sh      # Systemd service management
 │   ├── lazymc.sh               # Lazymc proxy management
-│   └── mcctl.sh                # Paper/Spigot management
+│   ├── mcctl.sh                # Paper/Spigot management
+│   ├── format-config.sh        # Config formatting & validation
+│   └── world-optimize.sh       # World optimization
 │
 ├── config/                     # Plugin configurations
 │   ├── servercore/             # ServerCore settings
@@ -498,7 +485,7 @@ MC-Server/
 
 - Create backup: `./tools/backup.sh backup`
 - Rotate logs: `./tools/logrotate.sh maintenance`
-- Update mods: `./scripts/mod-updates.sh upgrade`
+- Update mods: `./tools/mod-updates.sh upgrade`
 
 ### Monthly
 
