@@ -443,13 +443,12 @@ MC-Server/
 │   ├── mcdl.sh                 # Fabric downloader
 │   ├── mod-updates.sh          # Mod management
 │   ├── mc-client.sh            # Client launcher
-│   ├── prepare.sh              # Initial setup
+│   ├── prepare.sh              # Initial setup & lazymc installation
 │   ├── backup.sh               # Backup automation
 │   ├── monitor.sh              # Server monitoring
 │   ├── watchdog.sh             # Auto-restart & crash recovery
 │   ├── logrotate.sh            # Log management
 │   ├── systemd-service.sh      # Systemd service management
-│   ├── lazymc-setup.sh         # Lazymc proxy setup
 │   ├── lazymc.sh               # Lazymc proxy management
 │   ├── mcctl.sh                # Paper/Spigot management
 │   ├── format-config.sh        # Config formatting & validation

@@ -43,7 +43,8 @@
 
 ### Proxy & Tunneling
 
-- **Setup lazymc**: `./tools/lazymc-setup.sh [install|config]`
+- **Setup lazymc**: `./tools/prepare.sh lazymc-install`
+- **Generate lazymc config**: `./tools/prepare.sh lazymc-config`
 - **Manage lazymc**: `./tools/lazymc.sh [start|stop|restart|status|logs|follow]`
 
 ## Code Style & Standards
