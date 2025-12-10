@@ -1,19 +1,20 @@
 [Unit]
 Description=Minecraft Server Service
 After=local-fs.target network.target
+StartLimitBurst=5
 
 [Service]
 User=root
 Group=root
 WorkingDirectory=%h/MC-Server
 Type=forking
-ExecStart=/bin/bash %h/MC-Server/scripts/server-start.sh
-ExecStop=/bin/bash %h/MC-Server/scripts/server-stop.sh
+ExecStart=screen -dmS %i '/bin/bash %h/MC-Server/scripts/server-start.sh'
+ExecStop=screen -dmS %i '/bin/bash %h/MC-Server/scripts/server-stop.sh'
 GuessMainPID=no
-Restart=on-failure
-RestartSec=10
-TimeoutStopSec=10
-TimeoutStartSec=1800
+Restart=always
+RestartSec=10s
+TimeoutStopSec=10s
+TimeoutStartSec=1800s
 ProtectKernelTunables=yes
 ProtectKernelModules=yes
 ProtectControlGroups=yes
@@ -34,4 +35,4 @@ ReadWriteDirectories=/var/lib/minecraft
 LimitNOFILE=65536
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
