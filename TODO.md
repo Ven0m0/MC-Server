@@ -38,9 +38,12 @@ game_command "stop"
 ### Optimization
 
 - https://github.com/Radk6/MC-Optimization-Guide
+- https://github.com/hpi-swa/native-minecraft-server
 - https://www.graalvm.org/22.2/reference-manual/native-image/guides/optimize-native-executable-with-pgo
 - https://www.graalvm.org/22.2/reference-manual/native-image/optimizations-and-performance/MemoryManagement
 
 ### Texture packs
 
 - https://github.com/Mickey42302/JavaEditionCorrections
+
+
