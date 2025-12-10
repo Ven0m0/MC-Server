@@ -14,14 +14,14 @@ LAZYMC_LOG_FILE="logs/lazymc.log"
 check_lazymc(){
   if ! has lazymc; then
     print_error "lazymc not found"
-    print_info "Run './scripts/lazymc-setup.sh install' to install"
+    print_info "Run './tools/lazymc-setup.sh install' to install"
     exit 1
   fi
 }
 check_config(){
   if [[ ! -f $LAZYMC_CONFIG ]]; then
     print_error "Configuration not found: ${LAZYMC_CONFIG}"
-    print_info "Run './scripts/lazymc-setup.sh config' to generate"
+    print_info "Run './tools/lazymc-setup.sh config' to generate"
     exit 1
   fi
 }

@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 source "${SCRIPT_DIR}/lib/common.sh"
 
 # Configuration
-SERVER_START_SCRIPT="${SCRIPT_DIR}/scripts/server-start.sh"
+SERVER_START_SCRIPT="${SCRIPT_DIR}/tools/server-start.sh"
 CHECK_INTERVAL=30
 MAX_RESTART_ATTEMPTS=3
 RESTART_COOLDOWN=300

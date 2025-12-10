@@ -13,7 +13,7 @@ SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 
 # Create systemd service file
 create_service(){
-  local start_script="${1:-${SCRIPT_DIR}/scripts/server-start.sh}"
+  local start_script="${1:-${SCRIPT_DIR}/tools/server-start.sh}"
   local working_dir="${2:-${SCRIPT_DIR}}"
   local run_user="${3:-${user}}"
 
@@ -330,7 +330,7 @@ COMMANDS:
 
 EXAMPLES:
     $0 create
-    $0 create ./scripts/server-start.sh /opt/minecraft minecraft
+    $0 create ./tools/server-start.sh /opt/minecraft minecraft
     $0 create-infrarust /opt/infrarust minecraft
     $0 enable
     $0 start

@@ -26,7 +26,7 @@ You need to agree to the EULA in order to run the server
 
 ```bash
 # Run prepare script
-./scripts/prepare.sh
+./tools/prepare.sh
 
 # Or manually
 echo "eula=true" > eula.txt
@@ -73,7 +73,7 @@ free -h
 # The script auto-calculates, but you can override:
 export MIN_RAM="4G"
 export MAX_RAM="8G"
-./scripts/server-start.sh
+./tools/server-start.sh
 ```
 
 ### Issue: Java version mismatch
@@ -110,7 +110,7 @@ Error: Unable to access jarfile fabric-server-launch.jar
 
 ```bash
 # Re-download Fabric server
-./scripts/mcdl.sh
+./tools/mcdl.sh
 
 # Or manually download
 wget https://meta.fabricmc.net/v2/versions/loader/1.21.5/0.16.2/1.0.1/server/jar -O fabric-server-launch.jar
@@ -191,7 +191,7 @@ dynamic:
 **Solution:**
 
 ```bash
-# Adjust GC settings in scripts/server-start.sh
+# Adjust GC settings in tools/server-start.sh
 # Add these flags:
 -XX:+UseG1GC \
 -XX:MaxGCPauseMillis=200 \
@@ -357,7 +357,7 @@ export MAX_RAM="8G"
 1. **Update mods:**
 
 ```bash
-./scripts/mod-updates.sh upgrade
+./tools/mod-updates.sh upgrade
 ```
 
 1. **Check mod compatibility:**
@@ -471,13 +471,13 @@ Mod X requires mod Y version Z
 
 ```bash
 # Check mod dependencies
-./scripts/mod-updates.sh list
+./tools/mod-updates.sh list
 
 # Add missing dependency
-./scripts/mod-updates.sh add modrinth <mod-slug>
+./tools/mod-updates.sh add modrinth <mod-slug>
 
 # Download
-./scripts/mod-updates.sh upgrade
+./tools/mod-updates.sh upgrade
 ```
 
 ### Issue: Mod version incompatible
@@ -495,7 +495,7 @@ Incompatible mod set!
 rm mods/incompatible-mod.jar
 
 # Or update to compatible version
-./scripts/mod-updates.sh upgrade
+./tools/mod-updates.sh upgrade
 ```
 
 ### Issue: Mod conflicts
@@ -518,7 +518,7 @@ mv mods/*.jar mods-test/
 mv mods-test/mod1.jar mods-test/mod2.jar ... mods/
 
 # 3. Test
-./scripts/server-start.sh
+./tools/server-start.sh
 
 # 4. Repeat until found
 ```
@@ -543,10 +543,10 @@ pgrep -f fabric-server-launch > .server.pid
 
 ```bash
 # Start server in screen/tmux
-screen -dmS minecraft ./scripts/server-start.sh
+screen -dmS minecraft ./tools/server-start.sh
 
 # Or in tmux
-tmux new-session -d -s minecraft ./scripts/server-start.sh
+tmux new-session -d -s minecraft ./tools/server-start.sh
 ```
 
 ### Issue: Watchdog not restarting server

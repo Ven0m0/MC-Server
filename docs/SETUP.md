@@ -78,17 +78,17 @@ git clone <your-repo-url>
 cd MC-Server
 
 # Make scripts executable (if not already)
-chmod +x scripts/*.sh tools/*.sh
+chmod +x tools/*.sh tools/*.sh
 ```
 
 ### 2. Download Fabric Server
 
 ```bash
 # Download latest version
-./scripts/mcdl.sh
+./tools/mcdl.sh
 
 # Or specify version
-./scripts/mcdl.sh 1.21.5
+./tools/mcdl.sh 1.21.5
 ```
 
 This will download:
@@ -101,7 +101,7 @@ This will download:
 ### 3. Accept EULA and Prepare
 
 ```bash
-./scripts/prepare.sh
+./tools/prepare.sh
 ```
 
 This script:
@@ -113,7 +113,7 @@ This script:
 ### 4. First Server Start
 
 ```bash
-./scripts/server-start.sh
+./tools/server-start.sh
 ```
 
 First start will:
@@ -202,7 +202,7 @@ mobcap:
 
 The server uses optimized flags automatically. To customize:
 
-Edit `scripts/server-start.sh` and modify the JVM_OPTS section:
+Edit `tools/server-start.sh` and modify the JVM_OPTS section:
 
 ```bash
 # Memory settings (auto-calculated by default)
@@ -353,7 +353,7 @@ sudo chown -R minecraft:minecraft /opt/minecraft/
 # Run as minecraft user
 sudo -u minecraft bash
 cd /opt/minecraft/MC-Server
-./scripts/server-start.sh
+./tools/server-start.sh
 ```
 
 ### Whitelist Setup
@@ -428,7 +428,7 @@ nano MC-Server-2/server.properties
 
 # Start second server
 cd MC-Server-2
-./scripts/server-start.sh
+./tools/server-start.sh
 ```
 
 ### Mod Management
@@ -437,25 +437,25 @@ cd MC-Server-2
 
 ```bash
 # Create mod profile
-./scripts/mod-updates.sh profile create my-server 1.21.5 fabric ./mods
+./tools/mod-updates.sh profile create my-server 1.21.5 fabric ./mods
 
 # Add performance mods
-./scripts/mod-updates.sh add modrinth lithium
-./scripts/mod-updates.sh add modrinth ferritecore
-./scripts/mod-updates.sh add modrinth krypton
+./tools/mod-updates.sh add modrinth lithium
+./tools/mod-updates.sh add modrinth ferritecore
+./tools/mod-updates.sh add modrinth krypton
 
 # Download all mods
-./scripts/mod-updates.sh upgrade
+./tools/mod-updates.sh upgrade
 ```
 
 #### Updating Mods
 
 ```bash
 # Update all mods to latest compatible versions
-./scripts/mod-updates.sh upgrade
+./tools/mod-updates.sh upgrade
 
 # List installed mods
-./scripts/mod-updates.sh list
+./tools/mod-updates.sh list
 ```
 
 ### Custom World Generation

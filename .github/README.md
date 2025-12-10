@@ -41,13 +41,13 @@ git clone <your-repo-url>
 cd MC-Server
 
 # 2. Download and install Fabric server
-./scripts/mcdl.sh
+./tools/mcdl.sh
 
 # 3. Accept EULA and prepare server
-./scripts/prepare.sh
+./tools/prepare.sh
 
 # 4. Start the server
-./scripts/server-start.sh
+./tools/server-start.sh
 ```
 
 ### Quick Operations
@@ -102,7 +102,7 @@ sudo apt install -y netcat-openbsd
 
 ## 🎮 Server Scripts
 
-Located in `scripts/` directory:
+Located in `tools/` directory:
 
 ### `server-start.sh`
 
@@ -120,11 +120,11 @@ Main server launcher with advanced optimizations
 **Usage:**
 
 ```bash
-./scripts/server-start.sh
+./tools/server-start.sh
 
 # Use specific JDK
-MC_JDK=graalvm ./scripts/server-start.sh
-MC_JDK=temurin ./scripts/server-start.sh
+MC_JDK=graalvm ./tools/server-start.sh
+MC_JDK=temurin ./tools/server-start.sh
 ```
 
 ### `mcdl.sh`
@@ -134,8 +134,8 @@ Fabric server downloader and installer
 **Usage:**
 
 ```bash
-./scripts/mcdl.sh [version]    # Downloads specified version
-./scripts/mcdl.sh              # Downloads latest version
+./tools/mcdl.sh [version]    # Downloads specified version
+./tools/mcdl.sh              # Downloads latest version
 ```
 
 ### `mod-updates.sh`
@@ -153,17 +153,17 @@ Comprehensive mod manager with Modrinth and CurseForge support
 
 ```bash
 # Create profile
-./scripts/mod-updates.sh profile create my-mods 1.21.5 fabric ./mods
+./tools/mod-updates.sh profile create my-mods 1.21.5 fabric ./mods
 
 # Add mods
-./scripts/mod-updates.sh add modrinth sodium
-./scripts/mod-updates.sh add modrinth lithium
+./tools/mod-updates.sh add modrinth sodium
+./tools/mod-updates.sh add modrinth lithium
 
 # Download/update all mods
-./scripts/mod-updates.sh upgrade
+./tools/mod-updates.sh upgrade
 
 # List mods
-./scripts/mod-updates.sh list
+./tools/mod-updates.sh list
 ```
 
 ### `mc-client.sh`
@@ -173,8 +173,8 @@ Minecraft Java Edition client launcher
 **Usage:**
 
 ```bash
-./scripts/mc-client.sh 1.21.5 YourUsername
-MC_DIR=/custom/path ./scripts/mc-client.sh 1.21.5 Player
+./tools/mc-client.sh 1.21.5 YourUsername
+MC_DIR=/custom/path ./tools/mc-client.sh 1.21.5 Player
 ```
 
 ### `prepare.sh`
@@ -438,23 +438,22 @@ Detailed documentation available in `docs/`:
 
 ```
 MC-Server/
-├── scripts/                    # Server management scripts
+├── tools/                      # All operational scripts
 │   ├── server-start.sh         # Main server launcher
-│   ├── mod-updates.sh          # Mod management
 │   ├── mcdl.sh                 # Fabric downloader
+│   ├── mod-updates.sh          # Mod management
 │   ├── mc-client.sh            # Client launcher
 │   ├── prepare.sh              # Initial setup
-│   ├── lazymc-setup.sh         # Lazymc proxy setup
-│   └── test_common.sh          # Tests
-│
-├── tools/                      # Management utilities
 │   ├── backup.sh               # Backup automation
 │   ├── monitor.sh              # Server monitoring
 │   ├── watchdog.sh             # Auto-restart & crash recovery
 │   ├── logrotate.sh            # Log management
 │   ├── systemd-service.sh      # Systemd service management
+│   ├── lazymc-setup.sh         # Lazymc proxy setup
 │   ├── lazymc.sh               # Lazymc proxy management
-│   └── mcctl.sh                # Paper/Spigot management
+│   ├── mcctl.sh                # Paper/Spigot management
+│   ├── format-config.sh        # Config formatting & validation
+│   └── world-optimize.sh       # World optimization
 │
 ├── config/                     # Plugin configurations
 │   ├── servercore/             # ServerCore settings
@@ -498,7 +497,7 @@ MC-Server/
 
 - Create backup: `./tools/backup.sh backup`
 - Rotate logs: `./tools/logrotate.sh maintenance`
-- Update mods: `./scripts/mod-updates.sh upgrade`
+- Update mods: `./tools/mod-updates.sh upgrade`
 
 ### Monthly
 

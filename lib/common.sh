@@ -9,7 +9,7 @@ fcat(){ printf '%s\n' "$(<${1})"; }
 sleepy(){ read -rt "${1:-1}" -- <><(:) &>/dev/null || :; }
 # ============================================================================
 # common.sh: Shared library for Minecraft server management scripts
-# This file is sourced by all scripts in scripts/ and tools/ directories
+# This file is sourced by all scripts in the tools/ directory
 # ============================================================================
 # OUTPUT FORMATTING FUNCTIONS
 # ============================================================================

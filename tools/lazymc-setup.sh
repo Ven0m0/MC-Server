@@ -42,7 +42,7 @@ generate_config(){
 # Directory containing the Minecraft server
 directory = "."
 # Command to start the Minecraft server
-command = "./scripts/server-start.sh"
+command = "./tools/server-start.sh"
 [public]
 # Public address for server status queries (optional)
 # address = "example.com:25565"
