@@ -8,13 +8,16 @@
 - **Install/Update Fabric**: `./tools/mod-updates.sh install-fabric [version]`
 - **Update Mods**: `./tools/mod-updates.sh ferium`
 
-### Paper/Spigot Server Management (NEW)
+### Paper/Spigot Server Management
 
 - **Build Paper**: `./tools/mcctl.sh build-paper [version]`
 - **Build Spigot**: `./tools/mcctl.sh build-spigot [version]`
 - **Update Plugin**: `./tools/mcctl.sh update <plugin>`
 - **Update All Plugins**: `./tools/mcctl.sh update-all`
 - **Initialize Server**: `./tools/mcctl.sh init`
+- **Accept EULA**: `./tools/mcctl.sh accept-eula`
+
+**Supported Plugins**: viaversion, viabackwards, multilogin, floodgate, geyser, protocollib, vault, luckperms, griefprevention, freedomchat, deluxemenus, noencryption, craftgui, globalmarket
 
 ### Backup & Snapshots
 
@@ -92,11 +95,15 @@
 
 ## mcctl Integration
 
-This repository includes an integrated version of [Kraftland/mcctl](https://github.com/Kraftland/mcctl) for Paper/Spigot server management. The tool has been modernized to follow this repository's code standards:
+This repository includes an integrated version of [Kraftland/mcctl](https://github.com/Kraftland/mcctl) (v2.1.0-integrated, based on upstream v1.6-stable) for Paper/Spigot server management. The tool has been modernized to follow this repository's code standards:
 
 - Modern bash with strict mode (`set -euo pipefail`)
 - Consistent code style (2-space indent, snake_case)
 - Modular design with clear separation of concerns
 - Compatible with existing Fabric-focused tooling
+- Extended plugin support (14 plugins including ViaVersion, Geyser, LuckPerms, and more)
+- Proper GPL-3.0 license attribution (see CREDITS.md)
 
 Use `./tools/mcctl.sh help` for Paper/Spigot commands.
+
+**Original Author**: Kimiblock | **License**: GPL-3.0
