@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 # mcctl.sh: Paper/Spigot server management tool
 # Integrated from: https://github.com/Kraftland/mcctl
+#
+# Original Author: Kimiblock (https://github.com/Kimiblock/mcctl)
+# Original Version: v1.6-stable
+# License: GPL-3.0 (inherited from upstream)
+#
+# This is a modernized integration that follows the MC-Server repository's
+# code standards while preserving the core functionality of the original mcctl.
 
 # Source common library
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -8,7 +15,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 source "${SCRIPT_DIR}/lib/common.sh"
 
 # Version
-MCCTL_VERSION="2.0.0-integrated"
+MCCTL_VERSION="2.1.0-integrated"
 
 # Get latest git tag from repository
 get_latest_tag(){
@@ -73,6 +80,31 @@ get_url(){
       ;;
     griefprevention)
       url="https://github.com/TechFortress/GriefPrevention/releases/latest/download/GriefPrevention.jar"
+      ;;
+    freedomchat)
+      url="https://cdn.modrinth.com/data/MubyTbnA/versions/qGaisS0d/FreedomChat-1.3.1.jar"
+      ;;
+    deluxemenus)
+      url="https://ci.extendedclip.com/job/DeluxeMenus/lastStableBuild/artifact/build/libs/DeluxeMenus-1.13.7-DEV-152.jar"
+      ;;
+    noencryption)
+      local tag
+      tag=$(get_latest_tag "https://github.com/Doclic/NoEncryption.git" || echo "1.0.0")
+      url="https://github.com/Doclic/NoEncryption/releases/latest/download/NoEncryption-${tag}.jar"
+      ;;
+    craftgui)
+      local tag
+      tag=$(get_latest_tag "https://github.com/Fireflyest/CraftGUI.git" || echo "1.0.0")
+      local version_num
+      version_num=$(echo "$tag" | cut -c 2-)
+      url="https://github.com/Fireflyest/CraftGUI/releases/download/${tag}/CraftGUI-${version_num}.jar"
+      ;;
+    globalmarket)
+      local tag
+      tag=$(get_latest_tag "https://github.com/Fireflyest/GlobalMarket.git" || echo "1.0.0")
+      local version_num
+      version_num=$(echo "$tag" | cut -c 2-)
+      url="https://github.com/Fireflyest/GlobalMarket/releases/download/${tag}/GlobalMarket-${version_num}.jar"
       ;;
     *)
       print_error "Unknown component: $component"
@@ -185,6 +217,11 @@ update_plugin(){
     vault) jar_name="Vault.jar" ;;
     luckperms) jar_name="LuckPerms.jar" ;;
     griefprevention) jar_name="GriefPrevention.jar" ;;
+    freedomchat) jar_name="FreedomChat.jar" ;;
+    deluxemenus) jar_name="DeluxeMenus.jar" ;;
+    noencryption) jar_name="NoEncryption.jar" ;;
+    craftgui) jar_name="CraftGUI.jar" ;;
+    globalmarket) jar_name="GlobalMarket.jar" ;;
     *) jar_name="${plugin}.jar" ;;
   esac
 
@@ -258,7 +295,8 @@ COMMANDS:
 
     Available Plugins:
         viaversion, viabackwards, multilogin, floodgate, geyser,
-        protocollib, vault, luckperms, griefprevention
+        protocollib, vault, luckperms, griefprevention, freedomchat,
+        deluxemenus, noencryption, craftgui, globalmarket
 
     Info:
         version                     Show version
@@ -279,4 +317,4 @@ NOTES:
 EOF
 }
 
-case "${1:-help}" in build-paper) build_paper "${2:-1.21.1}";; build-spigot) build_spigot "${2:-latest}";; init) init_server;; accept-eula) accept_eula;; update) [[ -z ${2:-} ]] && { print_error "Plugin name required"; printf "Available plugins: viaversion, viabackwards, multilogin, floodgate, geyser, protocollib, vault, luckperms, griefprevention\n"; exit 1; }; update_plugin "$2";; update-all) update_all_plugins;; version) print_header "mcctl version ${MCCTL_VERSION}"; printf "Integrated from: https://github.com/Kraftland/mcctl\n";; help|--help|-h) show_usage;; *) print_error "Unknown command: $1"; show_usage; exit 1;; esac
+case "${1:-help}" in build-paper) build_paper "${2:-1.21.1}";; build-spigot) build_spigot "${2:-latest}";; init) init_server;; accept-eula) accept_eula;; update) [[ -z ${2:-} ]] && { print_error "Plugin name required"; printf "Available plugins: viaversion, viabackwards, multilogin, floodgate, geyser, protocollib, vault, luckperms, griefprevention, freedomchat, deluxemenus, noencryption, craftgui, globalmarket\n"; exit 1; }; update_plugin "$2";; update-all) update_all_plugins;; version) print_header "mcctl version ${MCCTL_VERSION}"; printf "Integrated from: https://github.com/Kraftland/mcctl\n";; help|--help|-h) show_usage;; *) print_error "Unknown command: $1"; show_usage; exit 1;; esac
