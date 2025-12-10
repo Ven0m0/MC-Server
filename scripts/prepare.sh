@@ -38,5 +38,7 @@ sudo chown -R "${USER:-$(id -un)}" "${PWD}/minecraft"
 sudo chmod -R 755 ./*.sh
 umask 077
 sudo systemctl daemon-reload
+# Allow user to start systemd services/timers without logging in
+loginctl enable-linger "$USER"
 # sudo apt-get install -y screen
 has screen || sudo pacman -Sq screen --needed --noconfirm &>/dev/null
