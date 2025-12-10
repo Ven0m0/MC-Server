@@ -47,3 +47,12 @@ game_command "stop"
 - https://github.com/Mickey42302/JavaEditionCorrections
 
 
+### Mod updater/manager
+
+- https://github.com/minepkg/minepkg
+- https://github.com/juraj-hrivnak/Pakku
+- https://github.com/talwat/pap
+- https://github.com/morr0ne/podzol
+- https://github.com/mrquantumoff/quadrant
+- https://github.com/crispyricepc/mcpkg
+- https://github.com/Kraftland/mcctl
