@@ -60,6 +60,15 @@ setup_server(){
   sudo chmod -R 755 ./*.sh &>/dev/null || :
   print_success "Server setup complete"
 }
+setup_ferium(){
+  # Create a profile for your server (e.g., Minecraft 1.20.1, Fabric)
+  ferium profile create --name server-mods --game-version 1.21.5 --mod-loader fabric
+  # Add your mods (You can use IDs or names, Ferium searches for them)
+  ferium add fabric-api
+  ferium add lithium
+  ferium add phosphor
+  # TODO: extend
+}
 
 # ============================================================================
 # MC-REPACK CONFIGURATION
@@ -103,7 +112,6 @@ repack_mods(){
   mc-repack jars -c "$MC_REPACK_CONFIG" --in "$mods_src" --out "$mods_dst"
   print_success "Repack complete: $mods_dst"
 }
-
 update_geyserconnect(){
   print_header "Updating GeyserConnect"
   local dest_dir="${1:-$HOME/Documents/MC/Minecraft/config/Geyser-Fabric/extensions}"
