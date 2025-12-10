@@ -85,10 +85,10 @@ chmod +x tools/*.sh tools/*.sh
 
 ```bash
 # Download latest version
-./tools/mcdl.sh
+./tools/mod-updates.sh install-fabric
 
 # Or specify version
-./tools/mcdl.sh 1.21.5
+./tools/mod-updates.sh install-fabric 1.21.5
 ```
 
 This will download:

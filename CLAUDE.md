@@ -5,8 +5,8 @@
 ### Fabric Server Management
 
 - **Start Server**: `./tools/server-start.sh`
-- **Install/Update Fabric**: `./tools/mcdl.sh [version]`
-- **Update Mods**: `./tools/mod-updates.sh upgrade`
+- **Install/Update Fabric**: `./tools/mod-updates.sh install-fabric [version]`
+- **Update Mods**: `./tools/mod-updates.sh ferium`
 
 ### Paper/Spigot Server Management (NEW)
 

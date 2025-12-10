@@ -41,7 +41,7 @@ git clone <your-repo-url>
 cd MC-Server
 
 # 2. Download and install Fabric server
-./tools/mcdl.sh
+./tools/mod-updates.sh install-fabric
 
 # 3. Accept EULA and prepare server
 ./tools/prepare.sh
@@ -127,43 +127,33 @@ MC_JDK=graalvm ./tools/server-start.sh
 MC_JDK=temurin ./tools/server-start.sh
 ```
 
-### `mcdl.sh`
-
-Fabric server downloader and installer
-
-**Usage:**
-
-```bash
-./tools/mcdl.sh [version]    # Downloads specified version
-./tools/mcdl.sh              # Downloads latest version
-```
-
 ### `mod-updates.sh`
 
-Comprehensive mod manager with Modrinth and CurseForge support
+Fabric server installer and comprehensive mod management system
 
 **Features:**
 
-- Profile-based mod organization
-- Automatic version compatibility checking
-- Parallel mod downloading
-- Configuration management
+- Fabric server installation with version selection
+- Ferium mod updates
+- mc-repack mod compression
+- GeyserConnect extension updates
+- Full workflow automation
 
 **Usage:**
 
 ```bash
-# Create profile
-./tools/mod-updates.sh profile create my-mods 1.21.5 fabric ./mods
+# Install Fabric server
+./tools/mod-updates.sh install-fabric              # Latest stable
+./tools/mod-updates.sh install-fabric 1.21.5       # Specific version
+./tools/mod-updates.sh install-fabric 1.21.5 0.16.10  # With loader version
 
-# Add mods
-./tools/mod-updates.sh add modrinth sodium
-./tools/mod-updates.sh add modrinth lithium
+# Mod management
+./tools/mod-updates.sh ferium                      # Update mods via Ferium
+./tools/mod-updates.sh repack ./mods ./mods-repacked  # Repack mods
+./tools/mod-updates.sh geyser                      # Update GeyserConnect
 
-# Download/update all mods
-./tools/mod-updates.sh upgrade
-
-# List mods
-./tools/mod-updates.sh list
+# Full workflow
+./tools/mod-updates.sh full-update                 # Complete update cycle
 ```
 
 ### `mc-client.sh`
@@ -440,8 +430,7 @@ Detailed documentation available in `docs/`:
 MC-Server/
 ├── tools/                      # All operational scripts
 │   ├── server-start.sh         # Main server launcher
-│   ├── mcdl.sh                 # Fabric downloader
-│   ├── mod-updates.sh          # Mod management
+│   ├── mod-updates.sh          # Fabric installer & mod management
 │   ├── mc-client.sh            # Client launcher
 │   ├── prepare.sh              # Initial setup & lazymc installation
 │   ├── backup.sh               # Backup automation

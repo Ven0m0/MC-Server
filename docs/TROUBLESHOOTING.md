@@ -110,7 +110,7 @@ Error: Unable to access jarfile fabric-server-launch.jar
 
 ```bash
 # Re-download Fabric server
-./tools/mcdl.sh
+./tools/mod-updates.sh install-fabric
 
 # Or manually download
 wget https://meta.fabricmc.net/v2/versions/loader/1.21.5/0.16.2/1.0.1/server/jar -O fabric-server-launch.jar
