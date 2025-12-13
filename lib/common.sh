@@ -123,12 +123,19 @@ ensure_dir(){
 }
 format_size_bytes(){
   local bytes="$1"
+  # Use pure bash integer division (much faster than spawning awk)
   if ((bytes >= 1073741824)); then
-    printf '%.1fG' "$(awk "BEGIN {printf \"%.1f\", $bytes/1073741824}")"
+    local gb=$((bytes / 1073741824))
+    local decimal=$(( (bytes % 1073741824) * 10 / 1073741824 ))
+    printf '%d.%dG' "$gb" "$decimal"
   elif ((bytes >= 1048576)); then
-    printf '%.1fM' "$(awk "BEGIN {printf \"%.1f\", $bytes/1048576}")"
+    local mb=$((bytes / 1048576))
+    local decimal=$(( (bytes % 1048576) * 10 / 1048576 ))
+    printf '%d.%dM' "$mb" "$decimal"
   elif ((bytes >= 1024)); then
-    printf '%.1fK' "$(awk "BEGIN {printf \"%.1f\", $bytes/1024}")"
+    local kb=$((bytes / 1024))
+    local decimal=$(( (bytes % 1024) * 10 / 1024 ))
+    printf '%d.%dK' "$kb" "$decimal"
   else
     printf '%dB' "$bytes"
   fi

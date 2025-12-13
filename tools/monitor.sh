@@ -39,8 +39,9 @@ get_status(){
 
 # Get memory usage
 get_memory(){
-  local pid
-  pid=$(pgrep -f "fabric-server-launch.jar" | head -1)
+  local pid="${1:-}"
+  # Accept PID as parameter to avoid repeated pgrep calls
+  [[ -z $pid ]] && pid=$(pgrep -f "fabric-server-launch.jar" | head -1)
   [[ -z $pid ]] && {
     printf 'Server not running\n'
     return 1
@@ -81,7 +82,8 @@ get_players(){
     return 1
   }
   print_header "Recent Player Activity"
-  tail -200 "$LOG_FILE" 2>/dev/null | grep -E '(joined|left) the game' | tail -5 || printf 'No recent activity\n'
+  # Use tac (reverse) to find last 5 matches efficiently (avoids reading 200 lines)
+  tac "$LOG_FILE" 2>/dev/null | grep -E '(joined|left) the game' -m 5 | tac || printf 'No recent activity\n'
   printf '\n'
 }
 
@@ -92,10 +94,13 @@ check_errors(){
     return 1
   }
   print_header "Recent Errors"
-  local errors
-  errors=$(tail -100 "$LOG_FILE" 2>/dev/null | grep -ci 'ERROR\|SEVERE' || echo 0)
-  local warns
-  warns=$(tail -100 "$LOG_FILE" 2>/dev/null | grep -ci 'WARN' || echo 0)
+  # Single awk pass for both counts (avoids reading file twice)
+  local errors warns
+  read -r errors warns < <(tail -100 "$LOG_FILE" 2>/dev/null | awk '
+    /ERROR|SEVERE/{errors++}
+    /WARN/{warns++}
+    END{print errors+0, warns+0}
+  ')
   printf '  Errors in last 100 lines: %s\n' "$errors"
   printf '  Warnings in last 100 lines: %s\n' "$warns"
   ((errors > 0)) && {
@@ -107,8 +112,9 @@ check_errors(){
 
 # Get uptime
 get_uptime(){
-  local pid
-  pid=$(pgrep -f "fabric-server-launch.jar" | head -1)
+  local pid="${1:-}"
+  # Accept PID as parameter to avoid repeated pgrep calls
+  [[ -z $pid ]] && pid=$(pgrep -f "fabric-server-launch.jar" | head -1)
   [[ -z $pid ]] && {
     printf 'Server not running\n'
     return 1
@@ -127,8 +133,11 @@ show_status(){
   printf '      Minecraft Server Monitor - %(%Y-%m-%d %H:%M:%S)T\n' -1
   printf '════════════════════════════════════════════════════════\n\n'
   get_status
-  get_uptime
-  get_memory
+  # Cache PID to avoid multiple pgrep calls
+  local server_pid
+  server_pid=$(pgrep -f "fabric-server-launch.jar" | head -1)
+  get_uptime "$server_pid"
+  get_memory "$server_pid"
   get_disk
   get_players
   check_errors

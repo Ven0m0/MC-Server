@@ -20,13 +20,28 @@ MCCTL_VERSION="2.1.0-integrated"
 # Get latest git tag from repository
 get_latest_tag(){
   local repo_url="$1"
-  local temp_dir
-  temp_dir=$(mktemp -d)
-  git clone --depth 1 --branch "$(git ls-remote --tags --sort=v:refname "$repo_url" | tail -1 | sed 's/.*\///')" "$repo_url" "$temp_dir" &>/dev/null || return 1
-  cd "$temp_dir"
-  git describe --tags --abbrev=0
-  cd - &>/dev/null
-  rm -rf "$temp_dir"
+
+  # Try GitHub API first (much faster, no clone needed)
+  if [[ $repo_url == *"github.com"* ]]; then
+    local api_url="${repo_url/github.com/api.github.com\/repos}"
+    api_url="${api_url%.git}/releases/latest"
+    local tag
+    tag=$(curl -fsSL "$api_url" 2>/dev/null | jq -r '.tag_name // empty' 2>/dev/null)
+    if [[ -n $tag ]]; then
+      printf '%s' "$tag"
+      return 0
+    fi
+  fi
+
+  # Fallback to git ls-remote only (no clone needed)
+  local tag
+  tag=$(git ls-remote --tags --sort=v:refname "$repo_url" 2>/dev/null | tail -1 | sed 's/.*\///' | sed 's/\^{}//')
+  if [[ -n $tag ]]; then
+    printf '%s' "$tag"
+    return 0
+  fi
+
+  return 1
 }
 
 # Get download URLs for various components
@@ -266,9 +281,21 @@ update_all_plugins(){
 
   print_header "Updating all plugins"
 
-  for plugin in "${plugins[@]}"; do
-    update_plugin "$plugin" || print_error "Failed to update ${plugin}"
-  done
+  # Parallel downloads with xargs (network-bound operations benefit from parallelism)
+  if has_command xargs; then
+    printf '%s\n' "${plugins[@]}" | xargs -P 4 -I {} bash -c '
+      source "'"${SCRIPT_DIR}"'/lib/common.sh"
+      plugins_dir="'"${SCRIPT_DIR}"'/plugins"
+      '"$(declare -f get_url download_file print_header print_info print_success print_error)"'
+      '"$(declare -f update_plugin)"'
+      update_plugin "{}" "$plugins_dir" || print_error "Failed: {}"
+    '
+  else
+    # Fallback to sequential if xargs not available
+    for plugin in "${plugins[@]}"; do
+      update_plugin "$plugin" || print_error "Failed to update ${plugin}"
+    done
+  fi
 
   print_success "All plugins updated"
 }
