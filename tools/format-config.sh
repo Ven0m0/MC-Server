@@ -331,15 +331,19 @@ process_directory(){
 
   print_msg "$BLUE" "Found ${#files[@]} config file(s)"
 
+  # Export functions for parallel processing (avoids serialization overhead)
+  export -f process_file format_json format_yaml get_file_size print_msg
+  export MODE DRY_RUN VERBOSE GREEN RED YELLOW BLUE NC
+
   # Process files (with or without parallelization)
   if has_command parallel && [[ ${#files[@]} -gt 3 ]]; then
-    # GNU parallel
-    printf '%s\n' "${files[@]}" | parallel -j "$PARALLEL_JOBS" "$(declare -f process_file format_json format_yaml get_file_size print_msg); $(declare -p MODE DRY_RUN VERBOSE GREEN RED YELLOW BLUE NC); process_file {}"
+    # GNU parallel with exported functions (much faster)
+    printf '%s\n' "${files[@]}" | parallel -j "$PARALLEL_JOBS" process_file
     # Note: parallel processing doesn't update counters in parent shell
     PROCESSED_FILES=${#files[@]}
   elif has_command rust-parallel && [[ ${#files[@]} -gt 3 ]]; then
-    # Rust parallel
-    printf '%s\n' "${files[@]}" | rust-parallel -j "$PARALLEL_JOBS" bash -c "$(declare -f process_file format_json format_yaml get_file_size print_msg); $(declare -p MODE DRY_RUN VERBOSE GREEN RED YELLOW BLUE NC); process_file {}"
+    # Rust parallel with xargs (more efficient)
+    printf '%s\n' "${files[@]}" | xargs -P "$PARALLEL_JOBS" -I {} bash -c 'process_file "$@"' _ {}
     PROCESSED_FILES=${#files[@]}
   else
     # Sequential processing

@@ -9,6 +9,18 @@ source "${SCRIPT_DIR}/lib/common.sh"
 # Additional formatting helper (not in common.sh)
 print_warning(){ printf '\033[1;33m⚠\033[0m %s\n' "$1"; }
 
+# Directory size cache to avoid multiple du calls
+declare -A dir_size_cache
+
+# Get directory size with caching
+get_dir_size(){
+  local dir="$1"
+  if [[ -z ${dir_size_cache[$dir]:-} ]]; then
+    dir_size_cache[$dir]=$(du -sb "$dir" 2>/dev/null | cut -f1)
+  fi
+  printf '%s' "${dir_size_cache[$dir]}"
+}
+
 # Configuration
 CHUNK_CLEANER_VERSION="1.0.0"
 CHUNK_CLEANER_URL="https://github.com/zeroBzeroT/ChunkCleaner/releases/download/v${CHUNK_CLEANER_VERSION}/ChunkCleaner-Linux64"
@@ -79,7 +91,7 @@ clean_chunks(){
   for dimension_path in "$world_path" "${world_path}_nether" "${world_path}_the_end"; do
     [[ ! -d $dimension_path ]] && continue
 
-    local dim_name=$(basename "$dimension_path")
+    local dim_name="${dimension_path##*/}"  # Pure bash, no subshell
     local region_dir=""
 
     # Determine region directory based on dimension
@@ -112,8 +124,8 @@ clean_chunks(){
 
       # Calculate space saved
       if [[ -d $backup_region ]]; then
-        local old_size=$(du -sb "$backup_region" 2>/dev/null | cut -f1)
-        local new_size=$(du -sb "$region_dir" 2>/dev/null | cut -f1)
+        local old_size=$(get_dir_size "$backup_region")
+        local new_size=$(get_dir_size "$region_dir")
         local saved=$((old_size - new_size))
         local saved_mb=$((saved / 1024 / 1024))
         print_success "${dim_name}: Saved ${saved_mb}MB (backup: ${backup_region})"
@@ -286,7 +298,7 @@ optimize_regions(){
   for dimension_path in "$world_path" "${world_path}_nether" "${world_path}_the_end"; do
     [[ ! -d $dimension_path ]] && continue
 
-    local dim_name=$(basename "$dimension_path")
+    local dim_name="${dimension_path##*/}"  # Pure bash, no subshell
     local region_dir=""
 
     if [[ $dim_name == "world" ]]; then
@@ -299,22 +311,22 @@ optimize_regions(){
 
     [[ ! -d $region_dir ]] && continue
 
-    local before=$(du -sb "$region_dir" 2>/dev/null | cut -f1)
+    local before=$(get_dir_size "$region_dir")
     total_before=$((total_before + before))
 
     # Find and report small/potentially empty region files
+    # Use find's -printf to get size directly (avoids N+1 stat calls)
     local small_count=0
-    while IFS= read -r region_file; do
-      local size=$(stat -f%z "$region_file" 2>/dev/null || stat -c%s "$region_file" 2>/dev/null || echo 0)
+    while IFS='|' read -r size name; do
       if [[ $size -lt 8192 ]]; then # Less than 8KB is likely empty or nearly empty
         ((small_count++))
         if [[ $DRY_RUN == "true" ]]; then
-          print_info "[DRY RUN] Small region file: $(basename "$region_file") (${size} bytes)"
+          print_info "[DRY RUN] Small region file: $name (${size} bytes)"
         fi
       fi
-    done < <(find "$region_dir" -name "*.mca" -type f 2>/dev/null)
+    done < <(find "$region_dir" -name "*.mca" -type f -printf '%s|%f\n' 2>/dev/null)
 
-    local after=$(du -sb "$region_dir" 2>/dev/null | cut -f1)
+    local after=$(get_dir_size "$region_dir")
     total_after=$((total_after + after))
 
     if [[ $small_count -gt 0 ]]; then
@@ -334,7 +346,7 @@ show_stats(){
   for dimension_path in "$world_path" "${world_path}_nether" "${world_path}_the_end"; do
     [[ ! -d $dimension_path ]] && continue
 
-    local dim_name=$(basename "$dimension_path")
+    local dim_name="${dimension_path##*/}"  # Pure bash, no subshell
     printf '\n'
     printf '=== %s ===\n' "$dim_name"
 
