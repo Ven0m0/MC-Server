@@ -22,14 +22,7 @@ LAST_RESTART_TIME=0
 mkdir -p "$(dirname "$LOG_FILE")"
 log(){ printf '[%(%Y-%m-%d %H:%M:%S)T] %s\n' -1 "$*" | tee -a "$LOG_FILE"; }
 
-check_network(){
-  # If nc is available, check if port is actually open
-  if has_command nc; then
-    nc -z localhost "$SERVER_PORT" &>/dev/null
-    return $?
-  fi
-  return 0 # Skip check if nc not installed
-}
+check_network(){ check_server_port "$SERVER_PORT"; }
 check_health(){
   if ! is_server_running; then
     log "Process not running."
