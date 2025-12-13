@@ -11,29 +11,11 @@ LOG_FILE="${SCRIPT_DIR}/logs/latest.log"
 SERVER_PORT=25565
 CHECK_INTERVAL=60
 
-# Check if process is running
-check_process(){
-  pgrep -f "fabric-server-launch.jar" >/dev/null || pgrep -f "server.jar" >/dev/null
-}
-
-# Check if port is listening
-check_port(){
-  command -v nc &>/dev/null && {
-    nc -z localhost "$SERVER_PORT" 2>/dev/null
-    return
-  }
-  command -v ss &>/dev/null && {
-    ss -tuln | grep -q ":${SERVER_PORT} "
-    return
-  }
-  netstat -tuln 2>/dev/null | grep -q ":${SERVER_PORT} "
-}
-
 # Get server status
 get_status(){
   print_header "Server Status"
-  check_process && printf '  Process: Running\n' || printf '  Process: Not Running\n'
-  check_port && printf '  Port %s: Listening\n' "$SERVER_PORT" || printf '  Port %s: Not Listening\n' "$SERVER_PORT"
+  is_server_running && printf '  Process: Running\n' || printf '  Process: Not Running\n'
+  check_server_port "$SERVER_PORT" && printf '  Port %s: Listening\n' "$SERVER_PORT" || printf '  Port %s: Not Listening\n' "$SERVER_PORT"
   printf '\n'
 }
 
@@ -158,11 +140,11 @@ watch_mode(){
 # Alert mode
 alert_mode(){
   local issues=0
-  check_process || {
+  is_server_running || {
     print_error "Process not running"
     ((issues++))
   }
-  check_port || {
+  check_server_port "$SERVER_PORT" || {
     print_error "Port not listening"
     ((issues++))
   }
