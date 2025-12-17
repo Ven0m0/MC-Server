@@ -22,10 +22,11 @@ mkdir -p "${BACKUP_DIR}/worlds" "${BACKUP_DIR}/configs"
 # RUSTIC FUNCTIONS
 # ----------------------------------------------------------------------------
 # Install rustic binary
-install_rustic() {
+install_rustic(){
   if [[ -f "$RUSTIC_BIN" ]]; then return 0; fi
   if has_command rustic; then
-    RUSTIC_BIN="rustic"; return 0
+    RUSTIC_BIN="rustic"
+    return 0
   fi
   print_info "Installing rustic v${RUSTIC_VERSION}..."
   local arch
@@ -35,7 +36,10 @@ install_rustic() {
     x86_64) target="x86_64-unknown-linux-gnu" ;;
     aarch64) target="aarch64-unknown-linux-musl" ;;
     armv7) target="armv7-unknown-linux-musleabihf" ;;
-    *) print_error "Unsupported arch for rustic download: $arch"; return 1 ;;
+    *)
+      print_error "Unsupported arch for rustic download: $arch"
+      return 1
+      ;;
   esac
   local url="https://github.com/rustic-rs/rustic/releases/download/v${RUSTIC_VERSION}/rustic-v${RUSTIC_VERSION}-${target}.tar.gz"
   local tmp_dir
@@ -57,16 +61,16 @@ install_rustic() {
   fi
 }
 # Wrapper for rustic command
-rustic_cmd() {
+rustic_cmd(){
   install_rustic || exit 1
   "$RUSTIC_BIN" "$@"
 }
 # Initialize rustic repository
-rustic_init() {
+rustic_init(){
   mkdir -p "$RUSTIC_REPO"
   if [[ ! -f "$RUSTIC_PASS_FILE" ]]; then
     print_info "Generating rustic password..."
-    tr -dc A-Za-z0-9 </dev/urandom | head -c 32 > "$RUSTIC_PASS_FILE"
+    tr -dc A-Za-z0-9 </dev/urandom | head -c 32 >"$RUSTIC_PASS_FILE"
     chmod 600 "$RUSTIC_PASS_FILE"
   fi
   if [[ -z "$(ls -A "$RUSTIC_REPO" 2>/dev/null)" ]]; then
@@ -78,7 +82,7 @@ rustic_init() {
   fi
 }
 # Perform rustic backup
-rustic_backup() {
+rustic_backup(){
   local tag="${1:-manual}"
   rustic_init
   print_header "Running Rustic Backup"
@@ -99,7 +103,7 @@ rustic_backup() {
   print_success "Rustic backup complete"
 }
 # Restore from rustic
-rustic_restore() {
+rustic_restore(){
   local snapshot="${1:-latest}"
   local dest="${2:-${SCRIPT_DIR}}"
   print_header "Restoring from Rustic"
@@ -119,7 +123,10 @@ rustic_restore() {
 # Backup world data
 backup_world(){
   print_info "Backing up world..."
-  [[ ! -d "${SCRIPT_DIR}/world" ]] && { print_error "No world directory found"; return 1; }
+  [[ ! -d "${SCRIPT_DIR}/world" ]] && {
+    print_error "No world directory found"
+    return 1
+  }
   cd "$SCRIPT_DIR"
   local dirs_to_backup=("world")
   [[ -d "world_nether" ]] && dirs_to_backup+=("world_nether")
@@ -127,7 +134,8 @@ backup_world(){
   tar -czf "${BACKUP_DIR}/worlds/world_${TIMESTAMP}.tar.gz" "${dirs_to_backup[@]}" || {
     local rc=$?
     if [[ $rc -ne 1 ]]; then
-      print_error "Tar failed with exit code $rc"; return 1
+      print_error "Tar failed with exit code $rc"
+      return 1
     fi
     print_info "Tar warning: files changed during read (expected for running server)"
   }
@@ -396,20 +404,32 @@ Notes:
     - Rustic password is auto-generated in backups/.rustic_pass
 EOF
 }
-case "${1:-backup}" in 
-  backup) case "${2:-all}" in world) backup_world;; config) backup_configs;; mods) backup_mods;; all|*) backup_world; backup_configs; backup_mods;; esac; cleanup_old_backups;; 
-  list) list_backups;; 
-  restore) restore_backup "$2";; 
-  cleanup) cleanup_old_backups;; 
-  rustic-init) rustic_init;;
-  rustic-backup) rustic_backup "${2:-}";;
-  rustic-restore) rustic_restore "${2:-}" "${3:-}";;
-  rustic-list) rustic_cmd snapshots;;
-  rustic-prune) rustic_cmd forget --prune --keep-last "$MAX_BACKUPS";;
-  snapshot) create_btrfs_snapshot "${2:-}" "${3:-}";; 
-  snapshot-list) list_btrfs_snapshots;; 
-  snapshot-restore) restore_btrfs_snapshot "$2" "${3:-}";; 
-  snapshot-delete) delete_btrfs_snapshot "$2";; 
-  help|--help|-h) show_usage;; 
-  *) print_error "Unknown command: $1"; show_usage; exit 1;; 
+case "${1:-backup}" in
+  backup)
+    case "${2:-all}" in world) backup_world ;; config) backup_configs ;; mods) backup_mods ;; all | *)
+      backup_world
+      backup_configs
+      backup_mods
+      ;;
+    esac
+    cleanup_old_backups
+    ;;
+  list) list_backups ;;
+  restore) restore_backup "$2" ;;
+  cleanup) cleanup_old_backups ;;
+  rustic-init) rustic_init ;;
+  rustic-backup) rustic_backup "${2:-}" ;;
+  rustic-restore) rustic_restore "${2:-}" "${3:-}" ;;
+  rustic-list) rustic_cmd snapshots ;;
+  rustic-prune) rustic_cmd forget --prune --keep-last "$MAX_BACKUPS" ;;
+  snapshot) create_btrfs_snapshot "${2:-}" "${3:-}" ;;
+  snapshot-list) list_btrfs_snapshots ;;
+  snapshot-restore) restore_btrfs_snapshot "$2" "${3:-}" ;;
+  snapshot-delete) delete_btrfs_snapshot "$2" ;;
+  help | --help | -h) show_usage ;;
+  *)
+    print_error "Unknown command: $1"
+    show_usage
+    exit 1
+    ;;
 esac

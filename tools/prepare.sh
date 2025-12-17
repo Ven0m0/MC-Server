@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
-# shellcheck enable=all shell=bash source-path=SCRIPTDIR external-sources=true
-set -euo pipefail; shopt -s nullglob globstar
-export LC_ALL=C; IFS=$'\n\t'
-s=${BASH_SOURCE[0]}; [[ $s != /* ]] && s=$PWD/$s; cd -P -- "${s%/*}/.."
+# shellcheck enable=all shell=bash source-path=SCRIPTDIR
+set -euo pipefail
+shopt -s nullglob globstar
+export LC_ALL=C
+IFS=$'\n\t'
+s=${BASH_SOURCE[0]}
+[[ $s != /* ]] && s=$PWD/$s
+cd -P -- "${s%/*}/.."
 has(){ command -v -- "$1" &>/dev/null; }
 # prepare.sh: Prepare Minecraft server environment and optional components
 # shellcheck source=lib/common.sh
@@ -228,11 +232,16 @@ main(){
   local cmd="${1:-server}"
 
   case "$cmd" in
-    server) prepare_server;;
-    lazymc-install|lazymc) install_lazymc;;
-    lazymc-config) generate_lazymc_config;;
-    help|--help|-h) show_help;;
-    *) print_error "Unknown command: $cmd"; printf '\n'; show_help; exit 1;;
+    server) prepare_server ;;
+    lazymc-install | lazymc) install_lazymc ;;
+    lazymc-config) generate_lazymc_config ;;
+    help | --help | -h) show_help ;;
+    *)
+      print_error "Unknown command: $cmd"
+      printf '\n'
+      show_help
+      exit 1
+      ;;
   esac
 }
 

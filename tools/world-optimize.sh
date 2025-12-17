@@ -91,7 +91,7 @@ clean_chunks(){
   for dimension_path in "$world_path" "${world_path}_nether" "${world_path}_the_end"; do
     [[ ! -d $dimension_path ]] && continue
 
-    local dim_name="${dimension_path##*/}"  # Pure bash, no subshell
+    local dim_name="${dimension_path##*/}" # Pure bash, no subshell
     local region_dir=""
 
     # Determine region directory based on dimension
@@ -298,7 +298,7 @@ optimize_regions(){
   for dimension_path in "$world_path" "${world_path}_nether" "${world_path}_the_end"; do
     [[ ! -d $dimension_path ]] && continue
 
-    local dim_name="${dimension_path##*/}"  # Pure bash, no subshell
+    local dim_name="${dimension_path##*/}" # Pure bash, no subshell
     local region_dir=""
 
     if [[ $dim_name == "world" ]]; then
@@ -346,7 +346,7 @@ show_stats(){
   for dimension_path in "$world_path" "${world_path}_nether" "${world_path}_the_end"; do
     [[ ! -d $dimension_path ]] && continue
 
-    local dim_name="${dimension_path##*/}"  # Pure bash, no subshell
+    local dim_name="${dimension_path##*/}" # Pure bash, no subshell
     printf '\n'
     printf '=== %s ===\n' "$dim_name"
 

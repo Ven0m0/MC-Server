@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
-# shellcheck enable=all shell=bash source-path=SCRIPTDIR external-sources=true
-set -euo pipefail; shopt -s nullglob globstar
-export LC_ALL=C; IFS=$'\n\t'
-s=${BASH_SOURCE[0]}; [[ $s != /* ]] && s=$PWD/$s; cd -P -- "${s%/*}/.."
+# shellcheck enable=all shell=bash source-path=SCRIPTDIR
+set -euo pipefail
+shopt -s nullglob globstar
+export LC_ALL=C
+IFS=$'\n\t'
+s=${BASH_SOURCE[0]}
+[[ $s != /* ]] && s=$PWD/$s
+cd -P -- "${s%/*}/.."
 has(){ command -v -- "$1" &>/dev/null; }
 # lazymc.sh: Manage lazymc for automatic server sleep/wake
 # shellcheck source=lib/common.sh
@@ -153,14 +157,19 @@ show_usage(){
 main(){
   local cmd="${1:-help}"
   case "$cmd" in
-    start) start_lazymc;;
-    stop) stop_lazymc;;
-    restart) restart_lazymc;;
-    status) status_lazymc;;
-    logs) show_logs "${2:-50}";;
-    follow) follow_logs;;
-    help|--help|-h) show_usage;;
-    *) print_error "Unknown command: $cmd"; printf '\n'; show_usage; exit 1;;
+    start) start_lazymc ;;
+    stop) stop_lazymc ;;
+    restart) restart_lazymc ;;
+    status) status_lazymc ;;
+    logs) show_logs "${2:-50}" ;;
+    follow) follow_logs ;;
+    help | --help | -h) show_usage ;;
+    *)
+      print_error "Unknown command: $cmd"
+      printf '\n'
+      show_usage
+      exit 1
+      ;;
   esac
 }
 main "$@"

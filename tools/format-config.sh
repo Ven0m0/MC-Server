@@ -69,8 +69,10 @@ print_msg(){
 # Arguments:
 #   $1 - Error message
 #######################################
-error_exit(){ print_msg "$RED" "ERROR: $1" >&2; exit 1; }
-
+error_exit(){
+  print_msg "$RED" "ERROR: $1" >&2
+  exit 1
+}
 
 #######################################
 # Check required dependencies
