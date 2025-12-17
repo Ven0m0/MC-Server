@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
-# shellcheck enable=all shell=bash source-path=SCRIPTDIR external-sources=true
-set -euo pipefail; shopt -s nullglob globstar
-export LC_ALL=C; IFS=$'\n\t'
-s=${BASH_SOURCE[0]}; [[ $s != /* ]] && s=$PWD/$s; cd -P -- "${s%/*}/.."
+# shellcheck enable=all shell=bash source-path=SCRIPTDIR
+set -euo pipefail
+shopt -s nullglob globstar
+export LC_ALL=C
+IFS=$'\n\t'
+s=${BASH_SOURCE[0]}
+[[ $s != /* ]] && s=$PWD/$s
+cd -P -- "${s%/*}/.."
 has(){ command -v -- "$1" &>/dev/null; }
 # server-start.sh: Simplified Minecraft server launcher
 # shellcheck source=lib/common.sh
@@ -15,7 +19,10 @@ source "${PWD}/lib/common.sh"
 : "${MC_IONICE:=}"
 # Validation
 check_dependencies java || exit 1
-[[ ! -f $SERVER_JAR ]] && { print_error "Server jar not found: ${SERVER_JAR}"; exit 1; }
+[[ ! -f $SERVER_JAR ]] && {
+  print_error "Server jar not found: ${SERVER_JAR}"
+  exit 1
+}
 # Memory Configuration
 CPU_CORES=$(get_cpu_cores)
 AVAILABLE_RAM=$(get_minecraft_memory_gb)
@@ -84,8 +91,8 @@ fi
 CMD=("$JAVA_CMD" "${JVM_FLAGS[@]}" -jar "$SERVER_JAR" --nogui)
 # Apply IO Priority (ionice)
 if [[ -n "${MC_IONICE}" ]] && has ionice; then
-  local -a ionice_args
-  IFS=' ' read -r -a ionice_args <<< "$MC_IONICE"
+  ionice_args=()
+  IFS=' ' read -r -a ionice_args <<<"$MC_IONICE"
   CMD=("ionice" "${ionice_args[@]}" "${CMD[@]}")
   print_info "IO Priority: ${MC_IONICE}"
 fi

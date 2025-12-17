@@ -75,7 +75,7 @@ WantedBy=multi-user.target
 EOF
 
   if [[ $EUID -eq 0 ]]; then
-    printf '%s\n' "$service_content" > "$SERVICE_FILE"
+    printf '%s\n' "$service_content" >"$SERVICE_FILE"
   else
     printf '%s\n' "$service_content" | sudo tee "$SERVICE_FILE" >/dev/null
   fi
@@ -162,7 +162,7 @@ EOF
   local infrarust_service="/etc/systemd/system/infrarust.service"
 
   if [[ $EUID -eq 0 ]]; then
-    printf '%s\n' "$service_content" > "$infrarust_service"
+    printf '%s\n' "$service_content" >"$infrarust_service"
     systemctl daemon-reload
   else
     printf '%s\n' "$service_content" | sudo tee "$infrarust_service" >/dev/null

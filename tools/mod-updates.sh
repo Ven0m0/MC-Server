@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
-# shellcheck enable=all shell=bash source-path=SCRIPTDIR external-sources=true
-set -euo pipefail; shopt -s nullglob globstar
-export LC_ALL=C; IFS=$'\n\t'
-s=${BASH_SOURCE[0]}; [[ $s != /* ]] && s=$PWD/$s; cd -P -- "${s%/*}/.."
+# shellcheck enable=all shell=bash source-path=SCRIPTDIR
+set -euo pipefail
+shopt -s nullglob globstar
+export LC_ALL=C
+IFS=$'\n\t'
+s=${BASH_SOURCE[0]}
+[[ $s != /* ]] && s=$PWD/$s
+cd -P -- "${s%/*}/.."
 has(){ command -v -- "$1" &>/dev/null; }
-date(){ local x="${1:-%d/%m/%y-%R}"; printf "%($x)T\n" '-1'; }
+date(){
+  local x="${1:-%d/%m/%y-%R}"
+  printf "%($x)T\n" '-1'
+}
 # mod-updates.sh: Fabric server and mod management system
 # shellcheck source=lib/common.sh
 source "${PWD}/lib/common.sh"
@@ -96,7 +103,10 @@ EOF
 # MOD MANAGEMENT
 # ============================================================================
 ferium_update(){
-  has ferium || { print_error "Ferium not installed"; return 1; }
+  has ferium || {
+    print_error "Ferium not installed"
+    return 1
+  }
   print_header "Running Ferium update"
   ferium scan && ferium upgrade
   [[ -d mods/.old ]] && rm -rf mods/.old
@@ -104,11 +114,17 @@ ferium_update(){
 }
 
 repack_mods(){
-  has mc-repack || { print_error "mc-repack not installed"; return 1; }
+  has mc-repack || {
+    print_error "mc-repack not installed"
+    return 1
+  }
   print_header "Repacking mods"
   local mods_src="${1:-$HOME/Documents/MC/Minecraft/mods}"
   local mods_dst="${2:-$HOME/Documents/MC/Minecraft/mods-$(date %Y%m%d_%H%M)}"
-  [[ ! -d $mods_src ]] && { print_error "Source not found: $mods_src"; return 1; }
+  [[ ! -d $mods_src ]] && {
+    print_error "Source not found: $mods_src"
+    return 1
+  }
   mc-repack jars -c "$MC_REPACK_CONFIG" --in "$mods_src" --out "$mods_dst"
   print_success "Repack complete: $mods_dst"
 }
@@ -137,9 +153,18 @@ full_update(){
   print_header "Running full update"
   setup_server
   setup_mc_repack
-  has ferium && { ferium_update; printf '\n'; }
-  has mc-repack && { repack_mods; printf '\n'; }
-  [[ -d "$HOME/Documents/MC/Minecraft/config/Geyser-Fabric" ]] && { update_geyserconnect; printf '\n'; }
+  has ferium && {
+    ferium_update
+    printf '\n'
+  }
+  has mc-repack && {
+    repack_mods
+    printf '\n'
+  }
+  [[ -d "$HOME/Documents/MC/Minecraft/config/Geyser-Fabric" ]] && {
+    update_geyserconnect
+    printf '\n'
+  }
   print_success "Full update complete!"
 }
 
@@ -182,13 +207,19 @@ EOF
 # MAIN
 # ============================================================================
 case "${1:-}" in
-  install-fabric|install|fabric) install_fabric "${2:-}" "${3:-}";;
-  setup) setup_server;;
-  setup-repack) setup_mc_repack;;
-  ferium) ferium_update;;
-  repack) repack_mods "${2:-}" "${3:-}";;
-  geyser|geyserconnect) update_geyserconnect "${2:-}";;
-  full-update) full_update;;
-  help|--help|-h) show_help;;
-  *) [[ -z ${1:-} ]] && show_help || { print_error "Unknown command: $1"; show_help; }; exit 1;;
+  install-fabric | install | fabric) install_fabric "${2:-}" "${3:-}" ;;
+  setup) setup_server ;;
+  setup-repack) setup_mc_repack ;;
+  ferium) ferium_update ;;
+  repack) repack_mods "${2:-}" "${3:-}" ;;
+  geyser | geyserconnect) update_geyserconnect "${2:-}" ;;
+  full-update) full_update ;;
+  help | --help | -h) show_help ;;
+  *)
+    [[ -z ${1:-} ]] && show_help || {
+      print_error "Unknown command: $1"
+      show_help
+    }
+    exit 1
+    ;;
 esac
