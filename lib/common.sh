@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# shellcheck enable=all shell=bash source-path=SCRIPTDIR external-sources=true
+# shellcheck enable=all shell=bash source-path=SCRIPTDIR
 set -euo pipefail; shopt -s nullglob globstar
 export LC_ALL=C; IFS=$'\n\t'
 s=${BASH_SOURCE[0]}; [[ $s != /* ]] && s=$PWD/$s; cd -P -- "${s%/*}"
@@ -21,8 +21,7 @@ print_info(){ printf '\033[1;33m→\033[0m %s\n' "$1"; }
 # SYSTEM FUNCTIONS
 # ============================================================================
 detect_arch(){
-  local arch
-  arch="$(uname -m)"
+  local arch; arch="$(uname -m)"
   case "$arch" in
     x86_64|amd64) printf 'x86_64';;
     aarch64|arm64) printf 'aarch64';;
@@ -76,28 +75,21 @@ get_total_ram_gb(){
   awk '/MemTotal/{printf "%.0f\n",$2/1024/1024}' /proc/meminfo &>/dev/null
 }
 get_heap_size_gb(){
-  local reserved="${1:-2}"
-  local total_ram
-  total_ram=$(get_total_ram_gb)
-  local heap=$((total_ram - reserved))
-  ((heap < 1)) && heap=1
+  local reserved="${1:-2}" total_ram; total_ram=$(get_total_ram_gb)
+  local heap=$((total_ram - reserved)); ((heap < 1)) && heap=1
   printf '%s' "$heap"
 }
 get_minecraft_memory_gb(){
   get_heap_size_gb "${1:-3}"
 }
 get_client_xms_gb(){
-  local total_ram
-  total_ram=$(get_total_ram_gb)
-  local xms=$((total_ram / 4))
-  ((xms < 1)) && xms=1
+  local total_ram; total_ram=$(get_total_ram_gb)
+  local xms=$((total_ram / 4)); ((xms < 1)) && xms=1
   printf '%s' "$xms"
 }
 get_client_xmx_gb(){
-  local total_ram
-  total_ram=$(get_total_ram_gb)
-  local xmx=$((total_ram / 2))
-  ((xmx < 2)) && xmx=2
+  local total_ram; total_ram=$(get_total_ram_gb)
+  local xmx=$((total_ram / 2)); ((xmx < 2)) && xmx=2
   printf '%s' "$xmx"
 }
 # ============================================================================
@@ -123,18 +115,14 @@ ensure_dir(){
 }
 format_size_bytes(){
   local bytes="$1"
-  # Use pure bash integer division (much faster than spawning awk)
   if ((bytes >= 1073741824)); then
-    local gb=$((bytes / 1073741824))
-    local decimal=$(( (bytes % 1073741824) * 10 / 1073741824 ))
+    local gb=$((bytes / 1073741824)) decimal=$(((bytes % 1073741824) * 10 / 1073741824))
     printf '%d.%dG' "$gb" "$decimal"
   elif ((bytes >= 1048576)); then
-    local mb=$((bytes / 1048576))
-    local decimal=$(( (bytes % 1048576) * 10 / 1048576 ))
+    local mb=$((bytes / 1048576)) decimal=$(((bytes % 1048576) * 10 / 1048576))
     printf '%d.%dM' "$mb" "$decimal"
   elif ((bytes >= 1024)); then
-    local kb=$((bytes / 1024))
-    local decimal=$(( (bytes % 1024) * 10 / 1024 ))
+    local kb=$((bytes / 1024)) decimal=$(((bytes % 1024) * 10 / 1024))
     printf '%d.%dK' "$kb" "$decimal"
   else
     printf '%dB' "$bytes"
@@ -157,9 +145,9 @@ check_server_port(){
   if has nc; then
     nc -z localhost "$port" &>/dev/null
   elif has ss; then
-    ss -tuln | grep -q ":${port} "
+    ss -tuln 2>/dev/null | rg -q ":${port} "
   else
-    netstat -tuln &>/dev/null | grep -q ":${port} "
+    netstat -tuln 2>/dev/null | rg -q ":${port} "
   fi
 }
 # ============================================================================
@@ -171,8 +159,7 @@ detect_java(){
   fi
   local java_cmd="java"
   if has archlinux-java; then
-    local sel_java
-    sel_java="$(archlinux-java get &>/dev/null || printf '')"
+    local sel_java; sel_java="$(archlinux-java get &>/dev/null || printf '')"
     [[ -n $sel_java ]] && java_cmd="/usr/lib/jvm/${sel_java}/bin/java"
   elif has mise; then
     java_cmd="$(mise which java &>/dev/null || printf 'java')"
@@ -190,23 +177,18 @@ check_root(){
 }
 send_command(){
   local cmd="$1" session_name="minecraft"
-  if command -v screen &>/dev/null && screen -list | grep -q "$session_name"; then
-    # -p 0 selects the first window
-    # -X stuff injects characters
-    # $(printf \\r) simulates the Enter key
+  if command -v screen &>/dev/null && screen -list | rg -q "$session_name" &>/dev/null; then
     print_info "Sending command to Screen: $cmd"
     screen -S "$session_name" -p 0 -X stuff "$cmd$(printf \\r)"
-  elif command -v tmux &>/dev/null && tmux has-session -t "$session_name" 2>/dev/null; then
-    # tmux send-keys targets the session and presses Enter
+  elif command -v tmux &>/dev/null && tmux has-session -t "$session_name" &>/dev/null; then
     print_info "Sending command to Tmux: $cmd"
     tmux send-keys -t "$session_name" "$cmd" Enter
   else
     print_error "Server session '$session_name' not found (Screen/Tmux)."; return 1
   fi
 }
-game_command() {
+game_command(){
   local cmd="$1" host="localhost" port="25575" pass=""
   command -v mcrcon &>/dev/null || { print_error "mcrcon is not installed. Cannot send command."; return 1; }
-  # -c disables color codes in output which helps parsing
   mcrcon -H "$host" -P "$port" -p "$pass" -c "$cmd"
 }
