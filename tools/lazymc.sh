@@ -7,7 +7,6 @@ IFS=$'\n\t'
 s=${BASH_SOURCE[0]}
 [[ $s != /* ]] && s=$PWD/$s
 cd -P -- "${s%/*}/.."
-has(){ command -v -- "$1" &>/dev/null; }
 # lazymc.sh: Manage lazymc for automatic server sleep/wake
 # shellcheck source=lib/common.sh
 source "${PWD}/lib/common.sh"

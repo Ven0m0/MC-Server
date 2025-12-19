@@ -13,6 +13,8 @@
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=lib/common.sh
 source "${SCRIPT_DIR}/lib/common.sh"
+# shellcheck source=config/versions.sh
+source "${SCRIPT_DIR}/config/versions.sh"
 
 # Version
 MCCTL_VERSION="2.1.0-integrated"
@@ -69,13 +71,16 @@ get_url(){
       url="https://github.com/CaaMoe/MultiLogin/releases/latest/download/MultiLogin-Bukkit.jar"
       ;;
     buildtools)
+      # BuildTools only available via Jenkins - pin to stable build
       url="https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools.jar"
       ;;
     floodgate)
-      url="https://ci.opencollab.dev/job/GeyserMC/job/Floodgate/job/master/lastSuccessfulBuild/artifact/spigot/target/floodgate-spigot.jar"
+      # Use GitHub releases instead of Jenkins builds
+      url="https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot"
       ;;
     geyser)
-      url="https://ci.opencollab.dev/job/GeyserMC/job/Geyser/job/master/lastSuccessfulBuild/artifact/bootstrap/spigot/target/Geyser-Spigot.jar"
+      # Use GitHub releases instead of Jenkins builds
+      url="https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot"
       ;;
     paper)
       [[ -z $version || -z $build ]] && {
@@ -85,22 +90,23 @@ get_url(){
       url="https://papermc.io/api/v2/projects/paper/versions/${version}/builds/${build}/downloads/paper-${version}-${build}.jar"
       ;;
     protocollib)
-      url="https://ci.dmulloy2.net/job/ProtocolLib/lastSuccessfulBuild/artifact/target/ProtocolLib.jar"
+      # Use GitHub releases instead of Jenkins
+      url="https://github.com/dmulloy2/ProtocolLib/releases/latest/download/ProtocolLib.jar"
       ;;
     vault)
       url="https://github.com/MilkBowl/Vault/releases/latest/download/Vault.jar"
       ;;
     luckperms)
-      url="https://download.luckperms.net/1464/bukkit/loader/LuckPerms-Bukkit-5.4.56.jar"
+      url="https://download.luckperms.net/1564/bukkit/loader/LuckPerms-Bukkit-${LUCKPERMS_VERSION}.jar"
       ;;
     griefprevention)
       url="https://github.com/TechFortress/GriefPrevention/releases/latest/download/GriefPrevention.jar"
       ;;
     freedomchat)
-      url="https://cdn.modrinth.com/data/MubyTbnA/versions/qGaisS0d/FreedomChat-1.3.1.jar"
+      url="https://cdn.modrinth.com/data/MubyTbnA/versions/v${FREEDOMCHAT_VERSION}/FreedomChat-${FREEDOMCHAT_VERSION}.jar"
       ;;
     deluxemenus)
-      url="https://ci.extendedclip.com/job/DeluxeMenus/lastStableBuild/artifact/build/libs/DeluxeMenus-1.13.7-DEV-152.jar"
+      url="https://github.com/HelpChat/DeluxeMenus/releases/latest/download/DeluxeMenus.jar"
       ;;
     noencryption)
       local tag
