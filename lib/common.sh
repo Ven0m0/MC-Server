@@ -68,6 +68,20 @@ download_file(){
   printf 'Error: No download tool found (aria2c, curl, or wget)\n' >&2
   return 1
 }
+verify_checksum(){
+  local file="$1" expected_sha256="$2"
+  [[ -z $expected_sha256 ]] && { print_info "No checksum provided, skipping verification"; return 0; }
+  [[ ! -f $file ]] && { print_error "File not found: $file"; return 1; }
+  has sha256sum || { print_info "sha256sum not available, skipping verification"; return 0; }
+  local actual_sha256; actual_sha256=$(sha256sum "$file" | awk '{print $1}')
+  [[ $actual_sha256 == "$expected_sha256" ]] || {
+    print_error "Checksum verification failed for $file"
+    print_error "Expected: $expected_sha256"
+    print_error "Actual:   $actual_sha256"
+    return 1
+  }
+  print_success "Checksum verified for $(basename "$file")"
+}
 # ============================================================================
 # MEMORY CALCULATION FUNCTIONS
 # ============================================================================

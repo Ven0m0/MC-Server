@@ -7,15 +7,15 @@ IFS=$'\n\t'
 s=${BASH_SOURCE[0]}
 [[ $s != /* ]] && s=$PWD/$s
 cd -P -- "${s%/*}/.."
-has(){ command -v -- "$1" &>/dev/null; }
 # prepare.sh: Prepare Minecraft server environment and optional components
 # shellcheck source=lib/common.sh
 source "${PWD}/lib/common.sh"
+# shellcheck source=config/versions.sh
+source "${PWD}/config/versions.sh"
 
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
-LAZYMC_VERSION="${LAZYMC_VERSION:-0.2.11}"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
 CONFIG_DIR="${CONFIG_DIR:-$PWD/config}"
 LAZYMC_CONFIG="${CONFIG_DIR}/lazymc.toml"
@@ -105,13 +105,14 @@ prepare_server(){
 # LAZYMC FUNCTIONS
 # ============================================================================
 download_lazymc(){
-  local arch version url target_file
+  local arch version url target_file expected_checksum
   arch="$(detect_arch)"
   version="$1"
 
   print_header "Downloading lazymc v${version}"
   url="https://github.com/timvisee/lazymc/releases/download/v${version}/lazymc-v${version}-linux-${arch}"
   target_file="${INSTALL_DIR}/lazymc"
+  expected_checksum=$(get_checksum_for_arch "lazymc" "$arch")
 
   mkdir -p "$INSTALL_DIR"
 
@@ -125,6 +126,12 @@ download_lazymc(){
     print_error "No download tool found (aria2c, curl, or wget required)"
     exit 1
   fi
+
+  verify_checksum "$target_file" "$expected_checksum" || {
+    print_error "Checksum verification failed - removing downloaded file"
+    rm -f "$target_file"
+    exit 1
+  }
 
   chmod +x "$target_file"
   print_success "lazymc installed to ${target_file}"

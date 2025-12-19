@@ -7,11 +7,6 @@ IFS=$'\n\t'
 s=${BASH_SOURCE[0]}
 [[ $s != /* ]] && s=$PWD/$s
 cd -P -- "${s%/*}/.."
-has(){ command -v -- "$1" &>/dev/null; }
-date(){
-  local x="${1:-%d/%m/%y-%R}"
-  printf "%($x)T\n" '-1'
-}
 # mod-updates.sh: Fabric server and mod management system
 # shellcheck source=lib/common.sh
 source "${PWD}/lib/common.sh"

@@ -7,7 +7,6 @@ IFS=$'\n\t'
 s=${BASH_SOURCE[0]}
 [[ $s != /* ]] && s=$PWD/$s
 cd -P -- "${s%/*}/.."
-has(){ command -v -- "$1" &>/dev/null; }
 # server-start.sh: Simplified Minecraft server launcher
 # shellcheck source=lib/common.sh
 source "${PWD}/lib/common.sh"
