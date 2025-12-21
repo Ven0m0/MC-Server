@@ -49,26 +49,17 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y jq
-
           # Install yq for YAML processing
           sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
           sudo chmod +x /usr/local/bin/yq
-
           # Install yamlfmt for better YAML formatting
           go install github.com/google/yamlfmt/cmd/yamlfmt@latest
           echo "${HOME}/go/bin" >> "$GITHUB_PATH"
-      - name: Install GNU Parallel
-        run: |
-          sudo apt-get install -y parallel
-          # Disable citation notice
-          mkdir -p ~/.parallel
-          touch ~/.parallel/will-cite
       - name: Check config formatting
         id: check
         run: |
           MODE="${{ github.event.inputs.mode || 'check' }}"
           echo "Running in mode: ${MODE}"
-
           if [[ "${MODE}" == "check" ]]; then
             ./tools/format-config.sh --mode check --verbose
           else
@@ -89,7 +80,6 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-
           if [[ -n "$(git status --porcelain)" ]]; then
             git add -A
             git commit -m "chore: Auto-format config files [skip ci]"
@@ -110,17 +100,14 @@ jobs:
             })
   validate-json:
     name: Validate JSON Syntax
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
       - name: Validate all JSON files
         run: |
           echo "Validating JSON files..."
           EXIT_CODE=0
-
           while IFS= read -r -d '' file; do
             echo "Checking: ${file}"
             if ! jq empty "${file}" 2>/dev/null; then
@@ -136,11 +123,10 @@ jobs:
                     -not -path "*/build/*" \
                     -not -name "*-lock.json" \
                     -print0)
-
           exit ${EXIT_CODE}
   validate-yaml:
     name: Validate YAML Syntax
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
@@ -152,7 +138,6 @@ jobs:
         run: |
           echo "Validating YAML files..."
           EXIT_CODE=0
-
           while IFS= read -r -d '' file; do
             echo "Checking: ${file}"
             if ! yq eval . "${file}" > /dev/null 2>&1; then
@@ -167,5 +152,4 @@ jobs:
                     -not -path "*/dist/*" \
                     -not -path "*/build/*" \
                     -print0)
-
           exit ${EXIT_CODE}
