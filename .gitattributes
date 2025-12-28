@@ -1,114 +1,81 @@
-# Auto detect text files and normalize line endings to LF
-* text=auto eol=lf
+* text=auto eol=lf linguist-detectable
 
-# =============================================================================
-# Shell Scripts
-# =============================================================================
+# Shell / scripts
 *.sh text eol=lf diff=bash
 *.bash text eol=lf diff=bash
-*.zsh text eol=lf
-*.fish text eol=lf
-.bashrc text eol=lf
-.bash_profile text eol=lf
-.bash_logout text eol=lf
-.zshrc text eol=lf
-.zprofile text eol=lf
-.zshenv text eol=lf
-.profile text eol=lf
+.bashrc text eol=lf diff=bash
+*.zsh text eol=lf diff=bash
+.zshrc text eol=lf diff=bash
+
+# Windows shell scripts keep CRLF
 *.bat text eol=crlf
 *.cmd text eol=crlf
 *.ps1 text eol=crlf
+*.psm1 text eol=crlf
+*.ahk text eol=crlf
 
-# =============================================================================
-# Programming Languages
-# =============================================================================
+# Programming languages
 *.py text diff=python
 *.py3 text diff=python
-*.pyc text diff=python
-*.js diff=java
-*.lua linguist-language=Lua
-*.nix linguist-language=Nix
+*.js text diff=java
+*.lua text linguist-language=Lua
+*.nix text linguist-language=Nix
 
-# =============================================================================
-# Configuration & Data Formats
-# =============================================================================
-*.json diff=json
-*.jsonc diff=json linguist-language=JSONC
-*.yaml diff=yaml
-*.yml diff=yaml
-*.toml diff=toml linguist-language=TOML
-*.ron linguist-language=RON
-*.xml diff=xml
-*.html diff=html
-*.css diff=css
+# Configuration & data formats
+*.json text diff=json linguist-language=JSON
+*.jsonc text diff=json linguist-language=JSONC
+*.yaml text diff=yaml linguist-language=YAML
+*.yml text diff=yaml linguist-language=YAML
+*.toml text diff=toml linguist-language=TOML
+*.ron text linguist-language=RON
+*.xml text diff=xml
+*.html text diff=html
+*.css text diff=css
 *.md text diff=markdown linguist-detectable linguist-documentation
 *.mdx text diff=markdown linguist-detectable linguist-documentation
+*.markdown text diff=markdown linguist-detectable linguist-documentation
 *.txt text linguist-documentation
-*.ini text
-*.cfg text
-*.conf text
-*.service text
-*.rules text
 *.csv text eol=crlf
+*.doc diff=astextplain
+*.docx diff=astextplain
+*.dot diff=astextplain
+*.pdf diff=astextplain
+*.rtf diff=astextplain
 
-# =============================================================================
-# Binary Files
-# =============================================================================
 # Images
 *.jpg binary diff=exif
 *.jpeg binary diff=exif
+*.png binary diff=exif
 *.webp binary diff=exif
 *.avif binary diff=exif
-*.ico binary diff=exif
-*.bmp binary diff=exif
+*.jxl binary diff=exif
 *.svg text
 
 # Archives
+*.gpg binary
 *.7z binary
 *.gz binary
-*.tar binary
 *.tgz binary
+*.tar binary
+*.tar.* binary
 *.zip binary
 *.zstd binary
-
-# Fonts
 *.ttf binary
 
-# =============================================================================
-# Special Cases
-# =============================================================================
-# Makefiles must use tabs
+# Build / tooling specifics
 Makefile text eol=lf whitespace=blank-at-eol,-blank-at-eof,-space-before-tab,tab-in-indent,tabwidth=4
-
-# Patches
-*.patch -text diff=patch
-
-# Git files
-.gitignore export-ignore
-.gitattributes export-ignore
-.gitkeep export-ignore
-.editorconfig text
+*.diff binary diff=patch linguist-language=Diff
+*.patch binary diff=patch linguist-language=Diff
+*.patch32   binary diff=patch linguist-language=Diff
+*.patch64   binary diff=patch linguist-language=Diff
+*.patch.*   binary diff=patch linguist-language=Diff
 
 # Visual Studio
 *.dsp text eol=crlf
 *.dsw text eol=crlf
 *.manifest text eol=crlf
 
-# Windows
-*.bat text eol=crlf
-*.cmd text eol=crlf
-*.hhp text eol=crlf
-*.inf text eol=crlf
-*.nsi text eol=crlf
-*.wxs text eol=crlf
-
-*.doc diff=astextplain
-*.DOC diff=astextplain
-*.docx diff=astextplain
-*.DOCX diff=astextplain
-*.dot diff=astextplain
-*.DOT diff=astextplain
-*.pdf diff=astextplain
-*.PDF diff=astextplain
-*.rtf diff=astextplain
-*.RTF diff=astextplain
+# Git / repo files
+.gitignore export-ignore
+.gitkeep export-ignore
+.ignore export-ignore
