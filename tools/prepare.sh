@@ -19,20 +19,16 @@ source "${PWD}/config/versions.sh"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
 CONFIG_DIR="${CONFIG_DIR:-$PWD/config}"
 LAZYMC_CONFIG="${CONFIG_DIR}/lazymc.toml"
-
 # ============================================================================
 # SERVER PREPARATION FUNCTIONS
 # ============================================================================
 prepare_server(){
   print_header "Minecraft Environment Preparation"
-
   local total_ram server_heap client_heap
   total_ram=$(get_total_ram_gb)
   server_heap=$(get_heap_size_gb 2)
   client_heap=$(get_client_xmx_gb)
-
   print_info "Total RAM: ${total_ram}G | Server heap: ${server_heap}G | Client heap: ${client_heap}G"
-
   # Generate AppCDS archive for server
   if [[ -f server.jar ]]; then
     print_info "Generating AppCDS archive for server..."
@@ -43,7 +39,6 @@ prepare_server(){
   else
     print_error "server.jar not found - skipping server preparation"
   fi
-
   # Generate AppCDS archive for client
   if [[ -f client.jar ]]; then
     print_info "Generating AppCDS archive for client..."
@@ -54,39 +49,31 @@ prepare_server(){
   else
     print_info "client.jar not found - skipping client preparation"
   fi
-
   # System configuration
   print_header "Configuring system"
-
   # Firewall
   if has ufw; then
     sudo ufw allow 25565 &>/dev/null || print_error "Failed to configure firewall"
     print_success "Firewall configured (port 25565)"
   fi
-
   # File permissions
   if [[ -d minecraft ]]; then
     print_info "Setting ownership of minecraft directory..."
     sudo chown -R "${USER:-$(id -un)}" "${PWD}/minecraft" || :
   fi
-
   print_info "Setting executable permissions on scripts..."
   sudo chmod -R 755 ./*.sh &>/dev/null || chmod -R 755 ./*.sh &>/dev/null || :
-
   umask 077
-
   # Systemd
   if has systemctl; then
     sudo systemctl daemon-reload &>/dev/null || :
     print_success "Systemd configuration reloaded"
   fi
-
   # Enable linger for user systemd services
   if has loginctl; then
     loginctl enable-linger "$USER" &>/dev/null || :
     print_success "User linger enabled for systemd services"
   fi
-
   # Install screen if missing
   if ! has screen; then
     print_info "Installing screen..."
@@ -97,10 +84,8 @@ prepare_server(){
     fi
     has screen && print_success "Screen installed"
   fi
-
   print_success "Server preparation complete!"
 }
-
 # ============================================================================
 # LAZYMC FUNCTIONS
 # ============================================================================
@@ -108,14 +93,11 @@ download_lazymc(){
   local arch version url target_file expected_checksum
   arch="$(detect_arch)"
   version="$1"
-
   print_header "Downloading lazymc v${version}"
   url="https://github.com/timvisee/lazymc/releases/download/v${version}/lazymc-v${version}-linux-${arch}"
   target_file="${INSTALL_DIR}/lazymc"
   expected_checksum=$(get_checksum_for_arch "lazymc" "$arch")
-
   mkdir -p "$INSTALL_DIR"
-
   if has aria2c; then
     aria2c -x 16 -s 16 -k 1M -d "$INSTALL_DIR" -o lazymc "$url"
   elif has curl; then
@@ -126,32 +108,24 @@ download_lazymc(){
     print_error "No download tool found (aria2c, curl, or wget required)"
     exit 1
   fi
-
   verify_checksum "$target_file" "$expected_checksum" || {
     print_error "Checksum verification failed - removing downloaded file"
     rm -f "$target_file"
     exit 1
   }
-
   chmod +x "$target_file"
   print_success "lazymc installed to ${target_file}"
 }
-
 generate_lazymc_config(){
   print_header "Generating lazymc configuration"
   mkdir -p "$CONFIG_DIR"
-
   cat >"$LAZYMC_CONFIG" <<'EOF'
-# lazymc configuration
-# https://github.com/timvisee/lazymc
+# lazymc configuration https://github.com/timvisee/lazymc
 [server]
-# Directory containing the Minecraft server
 directory = "."
-# Command to start the Minecraft server
 command = "./tools/server-start.sh"
 
 [public]
-# Public address for server status queries (optional)
 # address = "example.com:25565"
 
 [join]
@@ -159,27 +133,21 @@ command = "./tools/server-start.sh"
 methods = ["lobby", "kick"]
 
 [time]
-# Time in seconds before server sleeps when empty
 sleep_after = 600
-# Minimum uptime in seconds before server can sleep
 minimum_online_time = 60
 
 [advanced]
 # Port to listen on (must match Minecraft server port)
-# Lazymc will proxy connections on this port
 bind_address = "0.0.0.0:25565"
 # Actual Minecraft server address when running
-# Set to different port if needed
-server_address = "127.0.0.1:25566"
+server_address = "127.0.0.1:25565"
 # Logging verbosity (off, error, warn, info, debug, trace)
-log_level = "info"
+log_level = "warn"
 EOF
-
   print_success "Configuration created at ${LAZYMC_CONFIG}"
   print_info "NOTE: You may need to adjust server port configuration"
   print_info "lazymc listens on 25565, server should run on 25566"
 }
-
 show_lazymc_usage(){
   print_header "lazymc Setup Complete!"
   printf '\n'
@@ -198,13 +166,11 @@ show_lazymc_usage(){
   print_info "4. Edit ${LAZYMC_CONFIG} to customize settings"
   printf '\n'
 }
-
 install_lazymc(){
   download_lazymc "$LAZYMC_VERSION"
   generate_lazymc_config
   show_lazymc_usage
 }
-
 # ============================================================================
 # HELP
 # ============================================================================
@@ -231,25 +197,17 @@ show_help(){
   printf '  %s lazymc-config    # Generate lazymc config\n' "$0"
   printf '\n'
 }
-
 # ============================================================================
 # MAIN
 # ============================================================================
 main(){
   local cmd="${1:-server}"
-
   case "$cmd" in
     server) prepare_server ;;
     lazymc-install | lazymc) install_lazymc ;;
     lazymc-config) generate_lazymc_config ;;
     help | --help | -h) show_help ;;
-    *)
-      print_error "Unknown command: $cmd"
-      printf '\n'
-      show_help
-      exit 1
-      ;;
+    *) print_error "Unknown command: $cmd"; printf '\n'; show_help; exit 1 ;;
   esac
 }
-
 main "$@"
