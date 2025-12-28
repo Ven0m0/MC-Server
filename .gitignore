@@ -1,10 +1,13 @@
 # Build artifacts
 *.jar
 *.log
+*.log*
 *.bak
 *.old
 *.tmp
 /tmp/
+false.*
+nohup.out
 
 # Server files
 eula.txt
@@ -14,8 +17,6 @@ banned-*.json
 ops.json
 usercache.json
 whitelist.json
-server.log*
-debug.log*
 
 # Mod files
 mods/
@@ -23,11 +24,12 @@ mods/
 versions/
 libraries/
 assets/
+*.jar
 
 # Backup files (keep backup scripts and structure)
-backups/*.tar.gz
-backups/*.zip
-backups/*.7z
+*.tar.gz
+*.zip
+*.7z
 backups/worlds/
 backups/temp/
 !backups/.gitkeep
@@ -51,6 +53,16 @@ megalinter-reports/
 # OS files
 .DS_Store
 Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+ehthumbs.db
+.directory
+.Trash-*
+.Trashes
+.fuse_hidden*
+*~
+.nfs*
+.LSOverride
 
 # Local configuration overrides
 local.properties
