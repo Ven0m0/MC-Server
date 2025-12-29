@@ -18,7 +18,7 @@ All performance fixes have been applied to optimize the codebase for better effi
 - **Issue:** 14+ separate `du` calls scanning the same world data repeatedly
 - **Fix:** Single batched `du` call for all paths, results stored in associative array
 - **Impact:** ~14x reduction in disk I/O operations
-- **Lines:** 262-338
+- **Lines:** 289-364
 
 #### 3. **world-optimize.sh: Parallelized Dimension Processing**
 - **Issue:** Sequential chunk cleaning of 3 dimensions
