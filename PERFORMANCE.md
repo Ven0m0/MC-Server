@@ -12,7 +12,7 @@ All performance fixes have been applied to optimize the codebase for better effi
 - **Issue:** Multiple `stat` system calls in loops (1000+ files = 1000+ stat calls)
 - **Fix:** Use `find -printf '%s|%p\0'` to get file sizes without separate stat calls
 - **Impact:** 10-100x faster for large file sets
-- **Lines:** 103-197
+- **Lines:** 129-220 (player data cleanup: 129-158, statistics cleanup: 160-191, advancements cleanup: 192-220)
 
 #### 2. **world-optimize.sh: Batched All du Calls**
 - **Issue:** 14+ separate `du` calls scanning the same world data repeatedly
