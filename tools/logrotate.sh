@@ -22,11 +22,11 @@ rotate_log(){
   [[ ! -f $log_file ]] && return 1
   local size_mb=$(du -m "$log_file" 2>/dev/null | cut -f1)
   ((size_mb == 0)) && return 0
-  print_info "Rotating $(basename "$log_file") (${size_mb}MB)..."
+  local name="${log_file##*/}"
+  name="${name%.log}"
+  print_info "Rotating ${name} (${size_mb}MB)..."
   local timestamp
   timestamp=$(printf '%(%Y%m%d_%H%M%S)T' -1)
-  local name
-  name=$(basename "$log_file" .log)
   local archived="${ARCHIVE_DIR}/${name}_${timestamp}.log"
   cp "$log_file" "$archived"
   gzip "$archived"
@@ -50,21 +50,16 @@ rotate_all(){
 compress_old(){
   print_header "Compressing old logs"
   local count=0
-  # Use process substitution to preserve count variable
+  # Single find call for both directories
   while IFS= read -r -d '' log; do
-    local name
-    name=$(basename "$log")
-    [[ $name != "latest.log" && $name != "debug.log" && $name != "watchdog.log" ]] && {
-      print_info "Compressing: $name"
-      gzip "$log"
-      ((count++))
-    }
-  done < <(find "$LOGS_DIR" -maxdepth 1 -name "*.log" -type f -mtime +1 -print0 2>/dev/null)
-  while IFS= read -r -d '' log; do
-    print_info "Compressing: $(basename "$log")"
+    local name="${log##*/}"
+    # Skip active logs
+    [[ $name == "latest.log" || $name == "debug.log" || $name == "watchdog.log" ]] && continue
+    print_info "Compressing: $name"
     gzip "$log"
     ((count++))
-  done < <(find "$ARCHIVE_DIR" -name "*.log" -type f -print0 2>/dev/null)
+  done < <(find "$LOGS_DIR" -maxdepth 1 -name "*.log" -type f -mtime +1 -print0 \
+           -o -path "$ARCHIVE_DIR" -name "*.log" -type f -print0 2>/dev/null)
   ((count > 0)) && print_success "Compressed $count files" || print_info "Nothing to compress"
 }
 
@@ -72,17 +67,13 @@ compress_old(){
 clean_old(){
   print_header "Cleaning logs older than ${MAX_LOG_AGE_DAYS} days"
   local count=0
-  # Use process substitution to preserve count variable
+  # Single find call for both directories
   while IFS= read -r -d '' log; do
-    print_info "Deleting: $(basename "$log")"
+    print_info "Deleting: ${log##*/}"
     rm -f "$log"
     ((count++))
-  done < <(find "$LOGS_DIR" -maxdepth 1 \( -name "*.log.gz" -o -name "*.log" \) -type f -mtime +"$MAX_LOG_AGE_DAYS" -print0 2>/dev/null)
-  while IFS= read -r -d '' log; do
-    print_info "Deleting: $(basename "$log")"
-    rm -f "$log"
-    ((count++))
-  done < <(find "$ARCHIVE_DIR" -name "*.log.gz" -type f -mtime +"$MAX_LOG_AGE_DAYS" -print0 2>/dev/null)
+  done < <(find "$LOGS_DIR" -maxdepth 1 \( -name "*.log.gz" -o -name "*.log" \) -type f -mtime +"$MAX_LOG_AGE_DAYS" -print0 \
+           -o -path "$ARCHIVE_DIR" -name "*.log.gz" -type f -mtime +"$MAX_LOG_AGE_DAYS" -print0 2>/dev/null)
   ((count > 0)) && print_success "Deleted $count files" || print_info "Nothing to clean"
 }
 
@@ -158,13 +149,12 @@ view_log(){
   local log="${1:-latest.log}"
   local lines="${2:-50}"
   local path="${LOGS_DIR}/${log}"
-  [[ ! -f $path ]] && {
+  print_info "Last $lines lines of $log:"
+  printf '\n'
+  tail -n "$lines" "$path" 2>/dev/null || {
     print_error "Log not found: $log"
     return 1
   }
-  print_info "Last $lines lines of $log:"
-  printf '\n'
-  tail -n "$lines" "$path"
 }
 
 # Search logs
@@ -172,13 +162,12 @@ search_log(){
   local pattern="$1"
   local log="${2:-latest.log}"
   local path="${LOGS_DIR}/${log}"
-  [[ ! -f $path ]] && {
+  print_info "Searching for '$pattern' in $log:"
+  printf '\n'
+  grep --color=auto -i "$pattern" "$path" 2>/dev/null || {
     print_error "Log not found: $log"
     return 1
   }
-  print_info "Searching for '$pattern' in $log:"
-  printf '\n'
-  grep --color=auto -i "$pattern" "$path" || print_info "No matches"
 }
 
 # Full maintenance
@@ -240,7 +229,7 @@ case "${1:-help}" in
   stats) show_stats ;;
   view) view_log "${2:-latest.log}" "${3:-50}" ;;
   search)
-    [[ -z $2 ]] && {
+    [[ -z ${2:-} ]] && {
       print_error "Provide search pattern"
       exit 1
     }

@@ -59,35 +59,33 @@ get_disk(){
 
 # Get player activity
 get_players(){
-  [[ ! -f $LOG_FILE ]] && {
-    printf 'Log file not found\n'
-    return 1
-  }
   print_header "Recent Player Activity"
-  # Use tac (reverse) to find last 5 matches efficiently (avoids reading 200 lines)
+  # Use tac (reverse) to find last 5 matches efficiently
   tac "$LOG_FILE" 2>/dev/null | grep -E '(joined|left) the game' -m 5 | tac || printf 'No recent activity\n'
   printf '\n'
 }
 
 # Check for errors
 check_errors(){
-  [[ ! -f $LOG_FILE ]] && {
+  print_header "Recent Errors"
+  # Cache log content to avoid reading file multiple times
+  local log_tail
+  log_tail=$(tail -100 "$LOG_FILE" 2>/dev/null) || {
     printf 'Log file not found\n'
     return 1
   }
-  print_header "Recent Errors"
-  # Single awk pass for both counts (avoids reading file twice)
+  # Single awk pass for both counts
   local errors warns
-  read -r errors warns < <(tail -100 "$LOG_FILE" 2>/dev/null | awk '
+  read -r errors warns < <(awk '
     /ERROR|SEVERE/{errors++}
     /WARN/{warns++}
     END{print errors+0, warns+0}
-  ')
+  ' <<<"$log_tail")
   printf '  Errors in last 100 lines: %s\n' "$errors"
   printf '  Warnings in last 100 lines: %s\n' "$warns"
   ((errors > 0)) && {
     printf '\n  Last 3 errors:\n'
-    tail -100 "$LOG_FILE" 2>/dev/null | grep -i 'ERROR\|SEVERE' | tail -3 | sed 's/^/    /'
+    grep -i 'ERROR\|SEVERE' <<<"$log_tail" | tail -3 | sed 's/^/    /'
   }
   printf '\n'
 }
@@ -148,14 +146,14 @@ alert_mode(){
     print_error "Port not listening"
     ((issues++))
   }
-  [[ -f $LOG_FILE ]] && {
+  if [[ -f $LOG_FILE ]]; then
     local errors
     errors=$(tail -20 "$LOG_FILE" 2>/dev/null | grep -ci 'ERROR\|SEVERE' || echo 0)
     ((errors > 5)) && {
       print_error "High error rate: $errors errors"
       ((issues++))
     }
-  }
+  fi
   local disk
   disk=$(df -h "$SCRIPT_DIR" | tail -1 | awk '{print $5}' | sed 's/%//')
   ((disk > 90)) && {
