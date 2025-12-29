@@ -1,5 +1,6 @@
 - https://github.com/hpi-swa/native-minecraft-server
 - https://github.com/deniz-blue/mcman
+- https://github.com/Neocky/pluGET
 - https://github.com/Pugmatt/BedrockConnect
 
 ### Bash
