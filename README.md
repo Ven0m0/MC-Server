@@ -202,7 +202,7 @@ Automated backup solution for worlds, configurations, and mods.
 ./tools/backup.sh list
 
 # Restore backup
-./tools/backup.sh restore backups/worlds/world_20250119_120000.tar.gz
+./tools/backup.sh restore minecraft/backups/worlds/world_20250119_120000.tar.gz
 
 # Clean old backups
 ./tools/backup.sh cleanup --max-backups 10
@@ -407,11 +407,11 @@ Edit `server.properties` to configure:
 
 ### Plugin Configuration
 
-All plugin configs are in `config/` directory:
+All plugin configs are in `minecraft/config/` directory:
 
-- **ServerCore** (`config/servercore/`) - Performance optimization settings
-- **Geyser** (`config/Geyser-Fabric/`) - Bedrock Edition support
-- **Floodgate** (`config/floodgate/`) - Bedrock authentication
+- **ServerCore** (`minecraft/config/servercore/`) - Performance optimization settings
+- **Geyser** (`minecraft/config/Geyser-Fabric/`) - Bedrock Edition support
+- **Floodgate** (`minecraft/config/floodgate/`) - Bedrock authentication
 - And more...
 
 ## 📚 Documentation
@@ -440,37 +440,44 @@ MC-Server/
 │   ├── systemd-service.sh      # Systemd service management
 │   ├── lazymc.sh               # Lazymc proxy management
 │   ├── mcctl.sh                # Paper/Spigot management
-│   ├── format-config.sh        # Config formatting & validation
+│   ├── rcon.sh                 # RCON protocol handler
 │   └── world-optimize.sh       # World optimization
 │
-├── config/                     # Plugin configurations
-│   ├── servercore/             # ServerCore settings
-│   ├── Geyser-Fabric/          # Geyser configuration
-│   ├── floodgate/              # Floodgate settings
-│   └── ...                     # Other plugin configs
+├── minecraft/                  # Minecraft-specific data
+│   ├── config/                 # Plugin/mod configurations
+│   │   ├── servercore/         # ServerCore settings
+│   │   ├── Geyser-Fabric/      # Geyser configuration
+│   │   ├── floodgate/          # Floodgate settings
+│   │   ├── versions.sh         # Mod version tracker
+│   │   └── ...                 # Other plugin configs
+│   ├── backups/                # Backup storage
+│   │   ├── worlds/             # World backups
+│   │   ├── configs/            # Config backups
+│   │   └── btrfs-snapshots/    # Btrfs snapshots (if supported)
+│   ├── server.properties       # Minecraft server config
+│   └── packsquash.toml         # Resource pack optimization config
 │
 ├── docs/                       # Documentation
 │   ├── SETUP.md                # Setup guide
 │   ├── TROUBLESHOOTING.md      # Troubleshooting guide
-│   ├── TOOLS.md                # Tools documentation
 │   ├── Flags.txt               # JVM flags reference
 │   ├── mods.txt                # Mod list
-│   └── TODO.md                 # Development TODO
-│
-├── backups/                    # Backup storage
-│   ├── worlds/                 # World backups
-│   └── configs/                # Config backups
+│   └── mods-links.txt          # Mod download links
 │
 ├── lib/                        # Shared utilities
 │   └── common.sh               # Common functions
 │
 ├── .github/                    # GitHub configuration
 │   ├── workflows/              # CI/CD pipelines
-│   └── ISSUE_TEMPLATE/         # Issue templates
+│   ├── ISSUE_TEMPLATE/         # Issue templates
+│   └── instructions/           # AI assistant context
+│       ├── claude.md           # Claude AI instructions
+│       ├── gemini.md           # Gemini AI instructions
+│       └── copilot.md          # Copilot instructions
 │
-├── server.properties           # Minecraft server config
-├── config.yaml                 # Infrarust config
-├── gamemode.ini                # GameMode settings
+├── .config/                    # Application configs
+│   └── rustic/                 # Rustic backup config
+│
 └── README.md                   # This file
 ```
 

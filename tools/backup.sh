@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=lib/common.sh
 source "${SCRIPT_DIR}/lib/common.sh"
 # Configuration
-BACKUP_DIR="${SCRIPT_DIR}/backups"
+BACKUP_DIR="${SCRIPT_DIR}/minecraft/backups"
 TIMESTAMP=$(printf '%(%Y%m%d_%H%M%S)T' -1)
 MAX_BACKUPS=10
 # Rustic Configuration
@@ -148,7 +148,7 @@ backup_configs(){
   tar -czf "${BACKUP_DIR}/configs/config_${TIMESTAMP}.tar.gz" \
     --exclude='*.jar' --exclude='mods' --exclude='world*' --exclude='logs' \
     --exclude='crash-reports' --exclude='backups' \
-    config/ server.properties ./*.yml ./*.yaml ./*.toml ./*.ini ./*.json ./*.json5 2>/dev/null
+    minecraft/config/ minecraft/server.properties ./*.yml ./*.yaml ./*.toml ./*.ini ./*.json ./*.json5 2>/dev/null
   print_success "Config backup created: config_${TIMESTAMP}.tar.gz"
 }
 # Backup mods

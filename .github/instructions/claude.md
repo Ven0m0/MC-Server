@@ -42,7 +42,6 @@
 
 - **Monitor**: `./tools/monitor.sh [status|watch|alert]`
 - **Log Maintenance**: `./tools/logrotate.sh maintenance`
-- **Lint/Format Configs**: `./tools/format-config.sh --mode [format|check|minify]`
 
 ### Proxy & Tunneling
 
@@ -84,14 +83,17 @@
 
 - `tools/`: All operational scripts (server management, backup, monitor, watchdog, logs, mcctl, systemd).
 - `lib/`: Shared shell library (`common.sh`) with reusable functions.
-- `config/`: Plugin/Mod configurations (ServerCore, Geyser, etc.).
+- `minecraft/`: Minecraft-specific data directory.
+  - `config/`: Plugin/Mod configurations (ServerCore, Geyser, etc.).
+  - `backups/`: Storage for compressed world/config archives.
+    - `worlds/`: Tar-based world backups
+    - `configs/`: Tar-based config backups
+    - `btrfs-snapshots/`: Btrfs snapshots (if filesystem supports)
+  - `server.properties`: Minecraft server configuration.
+  - `packsquash.toml`: Resource pack optimization config.
 - `docs/`: Documentation and JVM flag references.
-- `backups/`: Storage for compressed world/config archives.
-  - `worlds/`: Tar-based world backups
-  - `configs/`: Tar-based config backups
-  - `btrfs-snapshots/`: Btrfs snapshots (if filesystem supports)
 - `plugins/`: Paper/Spigot plugins (when using mcctl).
-- `.github/`: CI/CD workflows, issue templates, agent definitions.
+- `.github/`: CI/CD workflows, issue templates, AI instructions.
 
 ## mcctl Integration
 
