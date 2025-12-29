@@ -1,2 +1,3 @@
-- https://hostingmitherz.de/
-- https://gameserver.gratis/
+- https://hostingmitherz.de
+- https://gameserver.gratis
+- https://aternos.org
