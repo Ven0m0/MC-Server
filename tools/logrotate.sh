@@ -162,10 +162,14 @@ search_log(){
   local path="${LOGS_DIR}/${log}"
   print_info "Searching for '$pattern' in $log:"
   printf '\n'
-  grep --color=auto -i "$pattern" "$path" 2>/dev/null || {
-    print_error "Log not found: $log"
-    return 1
-  }
+grep --color=auto -i "$pattern" "$path" 2>/dev/null
+local status=$?
+if (( status == 1 )); then
+  print_info "No matches found for '$pattern'"
+elif (( status > 1 )); then
+  print_error "Log not found: $log"
+  return 1
+fi
 }
 
 # Full maintenance
