@@ -1,0 +1,2 @@
+- https://hostingmitherz.de/
+- https://gameserver.gratis/
