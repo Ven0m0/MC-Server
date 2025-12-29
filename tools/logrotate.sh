@@ -71,8 +71,7 @@ clean_old(){
     print_info "Deleting: ${log##*/}"
     rm -f "$log"
     ((count++))
-  done < <(find "$LOGS_DIR" -maxdepth 1 \( -name "*.log.gz" -o -name "*.log" \) -type f -mtime +"$MAX_LOG_AGE_DAYS" -print0 \
-           -o -path "$ARCHIVE_DIR" -name "*.log.gz" -type f -mtime +"$MAX_LOG_AGE_DAYS" -print0 2>/dev/null)
+           -o -path "$ARCHIVE_DIR/*.log.gz" -type f -mtime +"$MAX_LOG_AGE_DAYS" -print0 2>/dev/null)
   ((count > 0)) && print_success "Deleted $count files" || print_info "Nothing to clean"
 }
 
