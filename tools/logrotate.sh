@@ -58,8 +58,7 @@ compress_old(){
     print_info "Compressing: $name"
     gzip "$log"
     ((count++))
-  done < <(find "$LOGS_DIR" -maxdepth 1 -name "*.log" -type f -mtime +1 -print0 \
-           -o -path "$ARCHIVE_DIR" -name "*.log" -type f -print0 2>/dev/null)
+           -o -path "$ARCHIVE_DIR/*" -name "*.log" -type f -print0 2>/dev/null)
   ((count > 0)) && print_success "Compressed $count files" || print_info "Nothing to compress"
 }
 
