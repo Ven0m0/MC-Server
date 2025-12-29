@@ -4,8 +4,8 @@
 
 # Source common library
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-# shellcheck source=lib/common.sh
-source "${SCRIPT_DIR}/lib/common.sh"
+# shellcheck source=tools/common.sh
+source "${SCRIPT_DIR}/tools/common.sh"
 
 # Service configuration
 SERVICE_NAME="minecraft-server"

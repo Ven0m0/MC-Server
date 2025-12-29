@@ -11,8 +11,8 @@
 
 # Source common library
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-# shellcheck source=lib/common.sh
-source "${SCRIPT_DIR}/lib/common.sh"
+# shellcheck source=tools/common.sh
+source "${SCRIPT_DIR}/tools/common.sh"
 # shellcheck source=minecraft/config/versions.sh
 source "${SCRIPT_DIR}/minecraft/config/versions.sh"
 
@@ -291,7 +291,7 @@ update_all_plugins(){
   # Parallel downloads with xargs (network-bound operations benefit from parallelism)
   if has_command xargs; then
     printf '%s\n' "${plugins[@]}" | xargs -P 4 -I {} bash -c '
-      source "'"${SCRIPT_DIR}"'/lib/common.sh"
+      source "'"${SCRIPT_DIR}"'/tools/common.sh"
       plugins_dir="'"${SCRIPT_DIR}"'/plugins"
       '"$(declare -f get_url download_file print_header print_info print_success print_error)"'
       '"$(declare -f update_plugin)"'

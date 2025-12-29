@@ -8,8 +8,8 @@ s=${BASH_SOURCE[0]}
 [[ $s != /* ]] && s=$PWD/$s
 cd -P -- "${s%/*}/.."
 # server-start.sh: Simplified Minecraft server launcher
-# shellcheck source=lib/common.sh
-source "${PWD}/lib/common.sh"
+# shellcheck source=tools/common.sh
+source "${PWD}/tools/common.sh"
 # Configuration
 : "${SERVER_JAR:=server.jar}"
 : "${ENABLE_PLAYIT:=true}"

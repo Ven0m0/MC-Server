@@ -4,8 +4,8 @@ s=${BASH_SOURCE[0]}
 [[ $s != /* ]] && s=$PWD/$s
 cd -P -- "${s%/*}/.."
 # lazymc.sh: Manage lazymc for automatic server sleep/wake
-# shellcheck source=lib/common.sh
-source "${PWD}/lib/common.sh"
+# shellcheck source=tools/common.sh
+source "${PWD}/tools/common.sh"
 CONFIG_DIR="${CONFIG_DIR:-$PWD/config}"
 LAZYMC_CONFIG="${CONFIG_DIR}/lazymc.toml"
 LAZYMC_PID_FILE="/tmp/lazymc.pid"

@@ -4,8 +4,8 @@ s=${BASH_SOURCE[0]}
 [[ $s != /* ]] && s=$PWD/$s
 cd -P -- "${s%/*}/.."
 # mod-updates.sh: Fabric server and mod management system
-# shellcheck source=lib/common.sh
-source "${PWD}/lib/common.sh"
+# shellcheck source=tools/common.sh
+source "${PWD}/tools/common.sh"
 MC_REPACK_CONFIG="${HOME}/.config/mc-repack.toml"
 JSON_PROC=$(get_json_processor) || exit 1
 
