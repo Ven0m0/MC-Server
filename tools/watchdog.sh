@@ -18,9 +18,14 @@ SERVER_PORT=25565
 RESTART_COUNT=0
 LAST_RESTART_TIME=0
 
-# Logging
-mkdir -p "$(dirname "$LOG_FILE")"
-log(){ printf '[%(%Y-%m-%d %H:%M:%S)T] %s\n' -1 "$*" | tee -a "$LOG_FILE"; }
+# Logging - use exec for better performance
+mkdir -p "${LOG_FILE%/*}"
+exec 3>>"$LOG_FILE"  # Open log file once
+log(){ printf '[%(%Y-%m-%d %H:%M:%S)T] %s\n' -1 "$*" | tee /dev/fd/3; }
+cleanup(){
+  exec 3>&-
+}
+trap cleanup EXIT
 
 check_network(){ check_server_port "$SERVER_PORT"; }
 check_health(){

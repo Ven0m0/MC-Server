@@ -4,8 +4,6 @@ set -euo pipefail; shopt -s nullglob globstar
 IFS=$'\n\t' LC_ALL=C
 s=${BASH_SOURCE[0]}; [[ $s != /* ]] && s=$PWD/$s; cd -P -- "${s%/*}"
 has(){ command -v -- "$1" &>/dev/null; }
-date(){ local x="${1:-%d/%m/%y-%R}"; printf "%($x)T\n" '-1'; }
-fcat(){ printf '%s\n' "$(<${1})"; }
 sleepy(){ read -rt "${1:-1}" -- <><(:) &>/dev/null || :; }
 # ============================================================================
 # common.sh: Shared library for Minecraft server management scripts

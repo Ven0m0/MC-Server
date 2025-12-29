@@ -213,7 +213,7 @@ restore_backup(){
     print_error "File not found: $file"
     exit 1
   }
-  print_info "Restoring: $(basename "$file")"
+  print_info "Restoring: ${file##*/}"
   read -r -p "This will overwrite existing data. Continue? (yes/no): " confirm
   [[ $confirm != "yes" ]] && {
     print_info "Cancelled"

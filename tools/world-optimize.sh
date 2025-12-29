@@ -54,6 +54,45 @@ create_backup(){
   }
   print_success "Backup created"
 }
+# Process single dimension (helper for parallel execution)
+process_dimension(){
+  local dimension_path="$1" min_ticks="$2"
+  local dim_name="${dimension_path##*/}"
+  local region_dir=""
+
+  # Determine region directory based on dimension
+  if [[ $dim_name == "world" ]]; then
+    region_dir="${dimension_path}/region"
+  elif [[ $dim_name == "world_nether" ]]; then
+    region_dir="${dimension_path}/DIM-1/region"
+  elif [[ $dim_name == "world_the_end" ]]; then
+    region_dir="${dimension_path}/DIM1/region"
+  fi
+
+  [[ ! -d $region_dir ]] && return 0
+
+  print_info "Processing ${dim_name}..."
+  local backup_region="${region_dir}_backup_$(printf '%(%Y%m%d_%H%M%S)T' -1)"
+
+  if [[ $DRY_RUN == "true" ]]; then
+    print_info "[DRY RUN] Would clean chunks in: ${region_dir}"
+    local chunk_count=$(find "$region_dir" -name "*.mca" 2>/dev/null | wc -l)
+    print_info "[DRY RUN] Found ${chunk_count} region files"
+  else
+    "$CHUNK_CLEANER_BIN" -path "$region_dir" \
+      -newPath "$backup_region" \
+      -minInhabitedTicks "$min_ticks" || {
+      print_error "ChunkCleaner failed for ${dim_name}"; return 1
+    }
+    # Calculate space saved
+    if [[ -d $backup_region ]]; then
+      local old_size=$(get_dir_size "$backup_region") new_size=$(get_dir_size "$region_dir")
+      local saved=$((old_size - new_size)); local saved_mb=$((saved / 1024 / 1024))
+      print_success "${dim_name}: Saved ${saved_mb}MB (backup: ${backup_region})"
+    fi
+  fi
+}
+
 # Clean chunks using ChunkCleaner
 clean_chunks(){
   local world_path="${1:-${WORLD_DIR}}"
@@ -62,42 +101,29 @@ clean_chunks(){
   print_header "Chunk Cleaning"
   print_info "World: ${world_path}"
   print_info "Minimum inhabited ticks: ${min_ticks}"
+
   # Download ChunkCleaner if needed
   download_chunk_cleaner || return 1
-  # Process each dimension
+
+  # Export function and variables for parallel execution
+  export -f process_dimension get_dir_size print_info print_error print_success
+  export CHUNK_CLEANER_BIN DRY_RUN
+
+  # Process dimensions in parallel
+  local pids=()
   for dimension_path in "$world_path" "${world_path}_nether" "${world_path}_the_end"; do
     [[ ! -d $dimension_path ]] && continue
-    local dim_name="${dimension_path##*/}" # Pure bash, no subshell
-    local region_dir=""
-    # Determine region directory based on dimension
-    if [[ $dim_name == "world" ]]; then
-      region_dir="${dimension_path}/region"
-    elif [[ $dim_name == "world_nether" ]]; then
-      region_dir="${dimension_path}/DIM-1/region"
-    elif [[ $dim_name == "world_the_end" ]]; then
-      region_dir="${dimension_path}/DIM1/region"
-    fi
-    [[ ! -d $region_dir ]] && continue
-    print_info "Processing ${dim_name}..."
-    local backup_region="${region_dir}_backup_$(printf '%(%Y%m%d_%H%M%S)T' -1)"
-    if [[ $DRY_RUN == "true" ]]; then
-      print_info "[DRY RUN] Would clean chunks in: ${region_dir}"
-      local chunk_count=$(find "$region_dir" -name "*.mca" 2>/dev/null | wc -l)
-      print_info "[DRY RUN] Found ${chunk_count} region files"
-    else
-      "$CHUNK_CLEANER_BIN" -path "$region_dir" \
-        -newPath "$backup_region" \
-        -minInhabitedTicks "$min_ticks" || {
-        print_error "ChunkCleaner failed for ${dim_name}"; continue
-      }
-      # Calculate space saved
-      if [[ -d $backup_region ]]; then
-        local old_size=$(get_dir_size "$backup_region") new_size=$(get_dir_size "$region_dir")
-        local saved=$((old_size - new_size)); local saved_mb=$((saved / 1024 / 1024))
-        print_success "${dim_name}: Saved ${saved_mb}MB (backup: ${backup_region})"
-      fi
-    fi
+    process_dimension "$dimension_path" "$min_ticks" &
+    pids+=($!)
   done
+
+  # Wait for all background jobs to complete
+  local failed=0
+  for pid in "${pids[@]}"; do
+    wait "$pid" || ((failed++))
+  done
+
+  [[ $failed -gt 0 ]] && print_error "Some dimension processing failed" || return 0
 }
 # Clean old player data
 clean_player_data(){
@@ -107,21 +133,23 @@ clean_player_data(){
   print_header "Player Data Cleanup"
   print_info "Removing player data older than ${days} days..."
   local count=0 total_size=0
-  while IFS= read -r -d '' player_file; do
-    if [[ $DRY_RUN == "true" ]]; then
-      print_info "[DRY RUN] Would remove: $(basename "$player_file")"
-      ((count++))
-    else
-      local size=$(stat -f%z "$player_file" 2>/dev/null || stat -c%s "$player_file" 2>/dev/null || echo 0)
+  if [[ $DRY_RUN == "true" ]]; then
+    while IFS='|' read -r -d '' size file; do
+      print_info "[DRY RUN] Would remove: ${file##*/}"
       total_size=$((total_size + size))
-      rm -f "$player_file"
       ((count++))
-    fi
-  done < <(find "${world_path}/playerdata" -name "*.dat" -type f -mtime "+${days}" -print0 2>/dev/null)
+    done < <(find "${world_path}/playerdata" -name "*.dat" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null)
+  else
+    while IFS='|' read -r -d '' size file; do
+      total_size=$((total_size + size))
+      rm -f "$file"
+      ((count++))
+    done < <(find "${world_path}/playerdata" -name "*.dat" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null)
+  fi
   if [[ $count -gt 0 ]]; then
     local size_mb=$((total_size / 1024 / 1024))
     if [[ $DRY_RUN == "true" ]]; then
-      print_info "[DRY RUN] Would remove ${count} player data files"
+      print_info "[DRY RUN] Would remove ${count} player data files (${size_mb}MB)"
     else
       print_success "Removed ${count} player data files (${size_mb}MB)"
     fi
@@ -137,21 +165,23 @@ clean_statistics(){
   print_header "Statistics Cleanup"
   print_info "Removing statistics older than ${days} days..."
   local count=0 total_size=0
-  while IFS= read -r -d '' stat_file; do
-    if [[ $DRY_RUN == "true" ]]; then
-      print_info "[DRY RUN] Would remove: $(basename "$stat_file")"
-      ((count++))
-    else
-      local size=$(stat -f%z "$stat_file" 2>/dev/null || stat -c%s "$stat_file" 2>/dev/null || echo 0)
+  if [[ $DRY_RUN == "true" ]]; then
+    while IFS='|' read -r -d '' size file; do
+      print_info "[DRY RUN] Would remove: ${file##*/}"
       total_size=$((total_size + size))
-      rm -f "$stat_file"
       ((count++))
-    fi
-  done < <(find "${world_path}/stats" -name "*.json" -type f -mtime "+${days}" -print0 2>/dev/null)
+    done < <(find "${world_path}/stats" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null)
+  else
+    while IFS='|' read -r -d '' size file; do
+      total_size=$((total_size + size))
+      rm -f "$file"
+      ((count++))
+    done < <(find "${world_path}/stats" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null)
+  fi
   if [[ $count -gt 0 ]]; then
     local size_mb=$((total_size / 1024 / 1024))
     if [[ $DRY_RUN == "true" ]]; then
-      print_info "[DRY RUN] Would remove ${count} statistics files"
+      print_info "[DRY RUN] Would remove ${count} statistics files (${size_mb}MB)"
     else
       print_success "Removed ${count} statistics files (${size_mb}MB)"
     fi
@@ -167,21 +197,23 @@ clean_advancements(){
   print_header "Advancements Cleanup"
   print_info "Removing advancements older than ${days} days..."
   local count=0 total_size=0
-  while IFS= read -r -d '' adv_file; do
-    if [[ $DRY_RUN == "true" ]]; then
-      print_info "[DRY RUN] Would remove: $(basename "$adv_file")"
-      ((count++))
-    else
-      local size=$(stat -f%z "$adv_file" 2>/dev/null || stat -c%s "$adv_file" 2>/dev/null || echo 0)
+  if [[ $DRY_RUN == "true" ]]; then
+    while IFS='|' read -r -d '' size file; do
+      print_info "[DRY RUN] Would remove: ${file##*/}"
       total_size=$((total_size + size))
-      rm -f "$adv_file"
       ((count++))
-    fi
-  done < <(find "${world_path}/advancements" -name "*.json" -type f -mtime "+${days}" -print0 2>/dev/null)
+    done < <(find "${world_path}/advancements" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null)
+  else
+    while IFS='|' read -r -d '' size file; do
+      total_size=$((total_size + size))
+      rm -f "$file"
+      ((count++))
+    done < <(find "${world_path}/advancements" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null)
+  fi
   if [[ $count -gt 0 ]]; then
     local size_kb=$((total_size / 1024))
     if [[ $DRY_RUN == "true" ]]; then
-      print_info "[DRY RUN] Would remove ${count} advancement files"
+      print_info "[DRY RUN] Would remove ${count} advancement files (${size_kb}KB)"
     else
       print_success "Removed ${count} advancement files (${size_kb}KB)"
     fi
@@ -257,61 +289,78 @@ optimize_regions(){
 show_stats(){
   local world_path="${1:-${WORLD_DIR}}"
   print_header "World Statistics"
+
+  # Collect all paths for batch du call
+  local -a du_paths=()
+  local -A path_labels=()
+
   for dimension_path in "$world_path" "${world_path}_nether" "${world_path}_the_end"; do
     [[ ! -d $dimension_path ]] && continue
-    local dim_name="${dimension_path##*/}" # Pure bash, no subshell
-    printf '\n'
-    printf '=== %s ===\n' "$dim_name"
-    # Region files
-    local region_dir=""
+    local dim_name="${dimension_path##*/}"
+
+    # Add dimension directories
     if [[ $dim_name == "world" ]]; then
-      region_dir="${dimension_path}/region"
+      [[ -d "${dimension_path}/region" ]] && { du_paths+=("${dimension_path}/region"); path_labels["${dimension_path}/region"]="${dim_name}:region"; }
+      [[ -d "${dimension_path}/entities" ]] && { du_paths+=("${dimension_path}/entities"); path_labels["${dimension_path}/entities"]="${dim_name}:entities"; }
+      [[ -d "${dimension_path}/poi" ]] && { du_paths+=("${dimension_path}/poi"); path_labels["${dimension_path}/poi"]="${dim_name}:poi"; }
     elif [[ $dim_name == "world_nether" ]]; then
-      region_dir="${dimension_path}/DIM-1/region"
+      [[ -d "${dimension_path}/DIM-1/region" ]] && { du_paths+=("${dimension_path}/DIM-1/region"); path_labels["${dimension_path}/DIM-1/region"]="${dim_name}:region"; }
+      [[ -d "${dimension_path}/DIM-1/entities" ]] && { du_paths+=("${dimension_path}/DIM-1/entities"); path_labels["${dimension_path}/DIM-1/entities"]="${dim_name}:entities"; }
+      [[ -d "${dimension_path}/DIM-1/poi" ]] && { du_paths+=("${dimension_path}/DIM-1/poi"); path_labels["${dimension_path}/DIM-1/poi"]="${dim_name}:poi"; }
     elif [[ $dim_name == "world_the_end" ]]; then
-      region_dir="${dimension_path}/DIM1/region"
-    fi
-    if [[ -d $region_dir ]]; then
-      local region_count=$(find "$region_dir" -name "*.mca" 2>/dev/null | wc -l)
-      local region_size=$(du -sh "$region_dir" 2>/dev/null | cut -f1)
-      printf '  Region files: %s (%s)\n' "$region_count" "$region_size"
-    fi
-    # Entity data
-    if [[ -d "${dimension_path}/entities" ]]; then
-      local entity_count=$(find "${dimension_path}/entities" -name "*.mca" 2>/dev/null | wc -l)
-      local entity_size=$(du -sh "${dimension_path}/entities" 2>/dev/null | cut -f1)
-      printf '  Entity files: %s (%s)\n' "$entity_count" "$entity_size"
-    fi
-    # POI data
-    if [[ -d "${dimension_path}/poi" ]]; then
-      local poi_count=$(find "${dimension_path}/poi" -name "*.mca" 2>/dev/null | wc -l)
-      local poi_size=$(du -sh "${dimension_path}/poi" 2>/dev/null | cut -f1)
-      printf '  POI files: %s (%s)\n' "$poi_count" "$poi_size"
+      [[ -d "${dimension_path}/DIM1/region" ]] && { du_paths+=("${dimension_path}/DIM1/region"); path_labels["${dimension_path}/DIM1/region"]="${dim_name}:region"; }
+      [[ -d "${dimension_path}/DIM1/entities" ]] && { du_paths+=("${dimension_path}/DIM1/entities"); path_labels["${dimension_path}/DIM1/entities"]="${dim_name}:entities"; }
+      [[ -d "${dimension_path}/DIM1/poi" ]] && { du_paths+=("${dimension_path}/DIM1/poi"); path_labels["${dimension_path}/DIM1/poi"]="${dim_name}:poi"; }
     fi
   done
-  # Player data
-  if [[ -d "${world_path}/playerdata" ]]; then
-    local player_count=$(find "${world_path}/playerdata" -name "*.dat" 2>/dev/null | wc -l)
-    local player_size=$(du -sh "${world_path}/playerdata" 2>/dev/null | cut -f1)
-    printf '\n'
-    printf 'Player data: %s players (%s)\n' "$player_count" "$player_size"
-  fi
-  # Statistics
-  if [[ -d "${world_path}/stats" ]]; then
-    local stats_count=$(find "${world_path}/stats" -name "*.json" 2>/dev/null | wc -l)
-    local stats_size=$(du -sh "${world_path}/stats" 2>/dev/null | cut -f1)
-    printf 'Statistics: %s files (%s)\n' "$stats_count" "$stats_size"
-  fi
-  # Advancements
-  if [[ -d "${world_path}/advancements" ]]; then
-    local adv_count=$(find "${world_path}/advancements" -name "*.json" 2>/dev/null | wc -l)
-    local adv_size=$(du -sh "${world_path}/advancements" 2>/dev/null | cut -f1)
-    printf 'Advancements: %s files (%s)\n' "$adv_count" "$adv_size"
-  fi
-  # Total size
-  local total_size=$(du -sh "$world_path" 2>/dev/null | cut -f1)
+
+  # Add common paths
+  [[ -d "${world_path}/playerdata" ]] && { du_paths+=("${world_path}/playerdata"); path_labels["${world_path}/playerdata"]="playerdata"; }
+  [[ -d "${world_path}/stats" ]] && { du_paths+=("${world_path}/stats"); path_labels["${world_path}/stats"]="stats"; }
+  [[ -d "${world_path}/advancements" ]] && { du_paths+=("${world_path}/advancements"); path_labels["${world_path}/advancements"]="advancements"; }
+  du_paths+=("$world_path")
+  path_labels["$world_path"]="total"
+
+  # Single du call for all paths
+  local -A sizes=()
+  while IFS=$'\t' read -r size path; do
+    sizes["$path"]="$size"
+  done < <(du -sh "${du_paths[@]}" 2>/dev/null)
+
+  # Display results by dimension
+  local current_dim=""
+  for dimension_path in "$world_path" "${world_path}_nether" "${world_path}_the_end"; do
+    [[ ! -d $dimension_path ]] && continue
+    local dim_name="${dimension_path##*/}"
+
+    printf '\n=== %s ===\n' "$dim_name"
+
+    # Determine region path based on dimension
+    local region_dir="" entities_dir="" poi_dir=""
+    if [[ $dim_name == "world" ]]; then
+      region_dir="${dimension_path}/region"
+      entities_dir="${dimension_path}/entities"
+      poi_dir="${dimension_path}/poi"
+    elif [[ $dim_name == "world_nether" ]]; then
+      region_dir="${dimension_path}/DIM-1/region"
+      entities_dir="${dimension_path}/DIM-1/entities"
+      poi_dir="${dimension_path}/DIM-1/poi"
+    elif [[ $dim_name == "world_the_end" ]]; then
+      region_dir="${dimension_path}/DIM1/region"
+      entities_dir="${dimension_path}/DIM1/entities"
+      poi_dir="${dimension_path}/DIM1/poi"
+    fi
+
+    [[ -n ${sizes[$region_dir]:-} ]] && printf '  Region files: %s (%s)\n' "$(find "$region_dir" -name "*.mca" 2>/dev/null | wc -l)" "${sizes[$region_dir]}"
+    [[ -n ${sizes[$entities_dir]:-} ]] && printf '  Entity files: %s (%s)\n' "$(find "$entities_dir" -name "*.mca" 2>/dev/null | wc -l)" "${sizes[$entities_dir]}"
+    [[ -n ${sizes[$poi_dir]:-} ]] && printf '  POI files: %s (%s)\n' "$(find "$poi_dir" -name "*.mca" 2>/dev/null | wc -l)" "${sizes[$poi_dir]}"
+  done
+
   printf '\n'
-  printf 'Total world size: %s\n' "$total_size"
+  [[ -n ${sizes["${world_path}/playerdata"]:-} ]] && printf 'Player data: %s players (%s)\n' "$(find "${world_path}/playerdata" -name "*.dat" 2>/dev/null | wc -l)" "${sizes["${world_path}/playerdata"]}"
+  [[ -n ${sizes["${world_path}/stats"]:-} ]] && printf 'Statistics: %s files (%s)\n' "$(find "${world_path}/stats" -name "*.json" 2>/dev/null | wc -l)" "${sizes["${world_path}/stats"]}"
+  [[ -n ${sizes["${world_path}/advancements"]:-} ]] && printf 'Advancements: %s files (%s)\n' "$(find "${world_path}/advancements" -name "*.json" 2>/dev/null | wc -l)" "${sizes["${world_path}/advancements"]}"
+  printf '\nTotal world size: %s\n' "${sizes[$world_path]}"
 }
 # Show usage
 show_usage(){
