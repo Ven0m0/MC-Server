@@ -8,8 +8,8 @@ s=${BASH_SOURCE[0]}
 [[ $s != /* ]] && s=$PWD/$s
 cd -P -- "${s%/*}/.."
 # prepare.sh: Prepare Minecraft server environment and optional components
-# shellcheck source=lib/common.sh
-source "${PWD}/lib/common.sh"
+# shellcheck source=tools/common.sh
+source "${PWD}/tools/common.sh"
 # shellcheck source=minecraft/config/versions.sh
 source "${PWD}/minecraft/config/versions.sh"
 

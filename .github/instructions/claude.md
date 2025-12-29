@@ -52,11 +52,11 @@
 ## Code Style & Standards
 
 - **Shell**: Bash 5.0+. Shebang `#!/usr/bin/env bash`.
-- **Shared Library**: All scripts MUST source `lib/common.sh` for common functions (output formatting, command detection, memory calculations, etc.).
-- **Strict Mode**: Provided by `lib/common.sh` - no need to redefine in individual scripts.
+- **Shared Library**: All scripts MUST source `tools/common.sh` for common functions (output formatting, command detection, memory calculations, etc.).
+- **Strict Mode**: Provided by `tools/common.sh` - no need to redefine in individual scripts.
 - **Formatting**: 2-space indent. No tabs. Strip trailing whitespace.
 - **Variables**: `snake_case` for locals, `SCREAMING_SNAKE` for globals/exports. Quote all variables unless intentional splitting.
-- **Output**: Use `printf` over `echo`. Use `print_header`, `print_success`, `print_error`, `print_info` from `lib/common.sh`.
+- **Output**: Use `printf` over `echo`. Use `print_header`, `print_success`, `print_error`, `print_info` from `tools/common.sh`.
 - **Loops**: Prefer `while IFS= read -r` or `mapfile` over `for` loops on command output.
 - **Conditions**: Use `[[ ... ]]` over `[ ... ]`. Use `(( ... ))` for arithmetic.
 - **Functions**: Define as `func_name() { ... }`. Use `local` variables. Return values via `printf` capture or global refs if necessary.

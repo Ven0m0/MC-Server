@@ -3,8 +3,8 @@
 
 # Source common library
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-# shellcheck source=lib/common.sh
-source "${SCRIPT_DIR}/lib/common.sh"
+# shellcheck source=tools/common.sh
+source "${SCRIPT_DIR}/tools/common.sh"
 # Additional formatting helper (not in common.sh)
 print_warning(){ printf '\033[1;33m⚠\033[0m %s\n' "$1"; }
 # Directory size cache to avoid multiple du calls
