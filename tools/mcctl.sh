@@ -13,8 +13,8 @@
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=lib/common.sh
 source "${SCRIPT_DIR}/lib/common.sh"
-# shellcheck source=config/versions.sh
-source "${SCRIPT_DIR}/config/versions.sh"
+# shellcheck source=minecraft/config/versions.sh
+source "${SCRIPT_DIR}/minecraft/config/versions.sh"
 
 # Version
 MCCTL_VERSION="2.1.0-integrated"
@@ -269,7 +269,8 @@ accept_eula(){
 init_server(){
   print_header "Initializing server directory"
 
-  mkdir -p "$SCRIPT_DIR"/{plugins,world,logs,backups}
+  mkdir -p "$SCRIPT_DIR"/{plugins,world,logs}
+  mkdir -p "$SCRIPT_DIR"/minecraft/{backups,config}
 
   accept_eula
 

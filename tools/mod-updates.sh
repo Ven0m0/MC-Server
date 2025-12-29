@@ -100,7 +100,7 @@ repack_mods(){
 }
 update_geyserconnect(){
   print_header "Updating GeyserConnect"
-  local dest_dir="${1:-$HOME/Documents/MC/Minecraft/config/Geyser-Fabric/extensions}"
+  local dest_dir="${1:-$PWD/minecraft/config/Geyser-Fabric/extensions}"
   local url="https://download.geysermc.org/v2/projects/geyserconnect/versions/latest/builds/latest/downloads/geyserconnect"
   mkdir -p "$dest_dir"
   local jar="$dest_dir/GeyserConnect.jar"
@@ -124,7 +124,7 @@ full_update(){
   setup_mc_repack
   has ferium && { ferium_update; printf '\n'; }
   has mc-repack && { repack_mods; printf '\n'; }
-  [[ -d "$HOME/Documents/MC/Minecraft/config/Geyser-Fabric" ]] && { update_geyserconnect; printf '\n'; }
+  [[ -d "$PWD/minecraft/config/Geyser-Fabric" ]] && { update_geyserconnect; printf '\n'; }
   print_success "Full update complete!"
 }
 # ============================================================================

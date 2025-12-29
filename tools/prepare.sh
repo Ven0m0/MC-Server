@@ -10,14 +10,14 @@ cd -P -- "${s%/*}/.."
 # prepare.sh: Prepare Minecraft server environment and optional components
 # shellcheck source=lib/common.sh
 source "${PWD}/lib/common.sh"
-# shellcheck source=config/versions.sh
-source "${PWD}/config/versions.sh"
+# shellcheck source=minecraft/config/versions.sh
+source "${PWD}/minecraft/config/versions.sh"
 
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
-CONFIG_DIR="${CONFIG_DIR:-$PWD/config}"
+CONFIG_DIR="${CONFIG_DIR:-$PWD/minecraft/config}"
 LAZYMC_CONFIG="${CONFIG_DIR}/lazymc.toml"
 # ============================================================================
 # SERVER PREPARATION FUNCTIONS
