@@ -8,17 +8,6 @@
 - **Install/Update Fabric**: `./tools/mod-updates.sh install-fabric [version]`
 - **Update Mods**: `./tools/mod-updates.sh ferium`
 
-### Paper/Spigot Server Management
-
-- **Build Paper**: `./tools/mcctl.sh build-paper [version]`
-- **Build Spigot**: `./tools/mcctl.sh build-spigot [version]`
-- **Update Plugin**: `./tools/mcctl.sh update <plugin>`
-- **Update All Plugins**: `./tools/mcctl.sh update-all`
-- **Initialize Server**: `./tools/mcctl.sh init`
-- **Accept EULA**: `./tools/mcctl.sh accept-eula`
-
-**Supported Plugins**: viaversion, viabackwards, multilogin, floodgate, geyser, protocollib, vault, luckperms, griefprevention, freedomchat, deluxemenus, noencryption, craftgui, globalmarket
-
 ### Backup & Snapshots
 
 - **Backup (tar)**: `./tools/backup.sh backup [all|world|config|mods]`
@@ -47,7 +36,8 @@
 
 - **Setup lazymc**: `./tools/prepare.sh lazymc-install`
 - **Generate lazymc config**: `./tools/prepare.sh lazymc-config`
-- **Manage lazymc**: `./tools/lazymc.sh [start|stop|restart|status|logs|follow]`
+- **Manage lazymc**: `./tools/server-start.sh lazymc [start|stop|restart|status|logs|follow]`
+- **Start server with lazymc**: `ENABLE_LAZYMC=true ./tools/server-start.sh`
 
 ## Code Style & Standards
 
@@ -65,9 +55,7 @@
 
 - **Core**: Bash Scripts (Management, Automation, Monitoring).
 - **Runtime**: Java 21+ (GraalVM Enterprise/Community or Eclipse Temurin).
-- **Server**:
-  - Fabric Loader + Minecraft Java Edition (primary)
-  - Paper/Spigot support via mcctl (integrated)
+- **Server**: Fabric Loader + Minecraft Java Edition.
 - **Proxy/Tunnel**: Playit.gg, Infrarust, lazymc (auto sleep/wake).
 - **Geyser**: Bedrock/Java interoperability.
 - **Backup**: tar-based backups + Btrfs snapshots (optional).
@@ -81,10 +69,10 @@
 
 ## Directory Structure
 
-- `tools/`: All operational scripts (server management, backup, monitor, watchdog, logs, mcctl, systemd).
+- `tools/`: All operational scripts (server management, backup, monitor, watchdog, logs, systemd).
 - `lib/`: Shared shell library (`common.sh`) with reusable functions.
 - `minecraft/`: Minecraft-specific data directory.
-  - `config/`: Plugin/Mod configurations (ServerCore, Geyser, etc.).
+  - `config/`: Mod configurations (ServerCore, Geyser, etc.).
   - `backups/`: Storage for compressed world/config archives.
     - `worlds/`: Tar-based world backups
     - `configs/`: Tar-based config backups
@@ -92,20 +80,4 @@
   - `server.properties`: Minecraft server configuration.
   - `packsquash.toml`: Resource pack optimization config.
 - `docs/`: Documentation and JVM flag references.
-- `plugins/`: Paper/Spigot plugins (when using mcctl).
 - `.github/`: CI/CD workflows, issue templates, AI instructions.
-
-## mcctl Integration
-
-This repository includes an integrated version of [Kraftland/mcctl](https://github.com/Kraftland/mcctl) (v2.1.0-integrated, based on upstream v1.6-stable) for Paper/Spigot server management. The tool has been modernized to follow this repository's code standards:
-
-- Modern bash with strict mode (`set -euo pipefail`)
-- Consistent code style (2-space indent, snake_case)
-- Modular design with clear separation of concerns
-- Compatible with existing Fabric-focused tooling
-- Extended plugin support (14 plugins including ViaVersion, Geyser, LuckPerms, and more)
-- Proper GPL-3.0 license attribution (see CREDITS.md)
-
-Use `./tools/mcctl.sh help` for Paper/Spigot commands.
-
-**Original Author**: Kimiblock | **License**: GPL-3.0
