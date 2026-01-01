@@ -429,7 +429,7 @@ Detailed documentation available in `docs/`:
 ```
 MC-Server/
 ├── tools/                      # All operational scripts
-│   ├── server-start.sh         # Main server launcher
+│   ├── server-start.sh         # Main server launcher with lazymc support
 │   ├── mod-updates.sh          # Fabric installer & mod management
 │   ├── mc-client.sh            # Client launcher
 │   ├── prepare.sh              # Initial setup & lazymc installation
@@ -438,8 +438,6 @@ MC-Server/
 │   ├── watchdog.sh             # Auto-restart & crash recovery
 │   ├── logrotate.sh            # Log management
 │   ├── systemd-service.sh      # Systemd service management
-│   ├── lazymc.sh               # Lazymc proxy management
-│   ├── mcctl.sh                # Paper/Spigot management
 │   ├── rcon.sh                 # RCON protocol handler
 │   └── world-optimize.sh       # World optimization
 │

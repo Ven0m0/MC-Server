@@ -1,6 +1,6 @@
 # Minecraft Configuration Directory
 
-This directory contains all plugin and mod configurations for the Minecraft server. Files are automatically loaded by their respective mods/plugins at server startup.
+This directory contains all mod configurations for the Minecraft server. Files are automatically loaded by their respective mods at server startup.
 
 ## Directory Structure
 
@@ -237,16 +237,14 @@ Some mods may override others. Load order considerations:
 
 ## Version Management
 
-Version numbers for key plugins are tracked in `versions.sh`. This file is sourced by:
+Version numbers for key components are tracked in `versions.sh`. This file is sourced by:
 
 - `tools/prepare.sh` - For lazymc installation
-- `tools/mcctl.sh` - For Paper/Spigot plugin management
 
-To update a plugin version:
+To update a version:
 
 1. Edit `minecraft/config/versions.sh`
-2. Update the version variable (e.g., `LUCKPERMS_VERSION="5.4.102"`)
-3. Run the update command: `./tools/mcctl.sh update <plugin>`
+2. Update the version variable (e.g., `LAZYMC_VERSION="0.2.11"`)
 
 ---
 
