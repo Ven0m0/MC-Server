@@ -329,6 +329,7 @@ main() {
         status) status_lazymc ;;
         logs) show_lazymc_logs "${3:-50}" ;;
         follow) follow_lazymc_logs ;;
+        help | --help | -h) show_usage ;;
         *) print_error "Unknown lazymc command: $subcmd"; show_usage; exit 1 ;;
       esac
       ;;
