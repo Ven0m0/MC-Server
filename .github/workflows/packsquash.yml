@@ -17,7 +17,7 @@ jobs:
           token: ${{ secrets.PAT || github.token }}
           fetch-depth: 0
       - name: Run PackSquash
-        uses: ComunidadAylas/PackSquash-action@a9128decf6503efc143586d8eebbf52a861fcb6e # v4.0.3
+        uses: ComunidadAylas/PackSquash-action@a4494b6fd5651b74601d7d5af71a057b529d12c4 # v4.0.4
         with:
           packsquash_version: latest
       - name: Commit optimized pack
