@@ -13,6 +13,8 @@ PORT = "25565"
 [launcher]
 eula_args = true
 nogui = true
+java_version = "25"
+memory = "8G"
 
 [markdown]
 files = ["README.md"]
