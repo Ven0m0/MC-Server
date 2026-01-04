@@ -16,6 +16,9 @@ nogui = true
 java_version = "25"
 memory = "8G"
 
+[launcher.properties]
+"com.mojang.eula.agree" = "true"
+
 [markdown]
 files = ["README.md"]
 auto_update = false
