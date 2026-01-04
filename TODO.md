@@ -2,6 +2,10 @@
 - https://github.com/deniz-blue/mcman
 - https://github.com/Neocky/pluGET
 - https://github.com/Pugmatt/BedrockConnect
+- https://jamie.codeberg.page/mrpack-to-zip/@master/
+- https://vanillatweaks.net/
+- https://bedrocktweaks.net/resource-packs
+- https://modrinth.com/discover/mods
 
 ### Bash
 
