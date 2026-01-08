@@ -1,4 +1,5 @@
 [Unit]
+Description=Minecraft Server Socket - %i
 BindsTo=minecraft@%i.service
 
 [Socket]

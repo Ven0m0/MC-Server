@@ -6,7 +6,7 @@ StartLimitBurst=5
 [Service]
 User=root
 Group=root
-WorkingDirectory=%h/MC-Server
+WorkingDirectory=/var/lib/minecraft/deploy/server
 Type=forking
 ExecStart=screen -dmS %i '/bin/bash %h/MC-Server/tools/server-start.sh'
 GuessMainPID=no
@@ -29,8 +29,7 @@ SystemCallArchitectures=native
 SystemCallFilter=@system-service
 AmbientCapabilities=CAP_KILL
 CapabilityBoundingSet=CAP_KILL
-WorkingDirectory=/var/lib/minecraft/deploy/server
-ReadWriteDirectories=/var/lib/minecraft
+ReadWritePaths=/var/lib/minecraft
 LimitNOFILE=65536
 
 [Install]
