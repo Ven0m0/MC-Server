@@ -1,0 +1,3 @@
+- https://modrinth.com/mod/wayfix
+- https://www.reddit.com/r/kde/comments/13ddktm/mouse_cursor_changing_when_over_some_apps_when/
+- https://github.com/jinliu/kdotool
