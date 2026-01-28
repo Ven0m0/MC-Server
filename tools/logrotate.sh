@@ -71,8 +71,7 @@ clean_old(){
   while IFS= read -r -d '' log; do
     print_info "Deleting: ${log##*/}"
     files+=("$log")
-  done < <(find "$LOGS_DIR" -name "*.log" -type f -mtime +"$MAX_LOG_AGE_DAYS" -print0 \
-           -o -path "$ARCHIVE_DIR/*.log.gz" -type f -mtime +"$MAX_LOG_AGE_DAYS" -print0 2>/dev/null)
+  done < <({ find "$LOGS_DIR" -maxdepth 1 -name "*.log" -type f -mtime +"$MAX_LOG_AGE_DAYS" -print0; find "$ARCHIVE_DIR" -name "*.log.gz" -type f -mtime +"$MAX_LOG_AGE_DAYS" -print0; } 2>/dev/null)
 
   if (( ${#files[@]} > 0 )); then
     rm -f "${files[@]}"
