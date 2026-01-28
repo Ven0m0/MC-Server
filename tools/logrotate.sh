@@ -68,7 +68,7 @@ clean_old(){
   local files=()
   # Single find call for both directories
   while IFS= read -r -d '' log; do
-    print_info "Deleting: ${log##*/}"
+    print_info "Queuing for deletion: ${log##*/}"
     files+=("$log")
   done < <({ find "$LOGS_DIR" -maxdepth 1 -name "*.log" -type f -mtime +"$MAX_LOG_AGE_DAYS" -print0; find "$ARCHIVE_DIR" -name "*.log.gz" -type f -mtime +"$MAX_LOG_AGE_DAYS" -print0; } 2>/dev/null)
 
