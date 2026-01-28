@@ -73,7 +73,7 @@ clean_old(){
   done < <({ find "$LOGS_DIR" -maxdepth 1 -name "*.log" -type f -mtime +"$MAX_LOG_AGE_DAYS" -print0; find "$ARCHIVE_DIR" -name "*.log.gz" -type f -mtime +"$MAX_LOG_AGE_DAYS" -print0; } 2>/dev/null)
 
   if (( ${#files[@]} > 0 )); then
-    rm -f "${files[@]}"
+    printf '%s\0' "${files[@]}" | xargs -0 rm -f --
     print_success "Deleted ${#files[@]} files"
   else
     print_info "Nothing to clean"
