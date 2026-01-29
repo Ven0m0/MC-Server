@@ -123,7 +123,10 @@ CLASSPATH="$CLIENT_JAR"
 "$JSON_PROC" -r '.libraries[] |
   (
     if (.rules // []) | length > 0 then
-      (.rules | map(select(.action == "allow") | (.os.name // "any") as $os | if $os == "any" or $os == "linux" then true else false end) | any)
+      (.rules | map(select(.action == "allow") |
+        (.os.name // "any") as $os |
+        if $os == "any" or $os == "linux" then true else false end
+      ) | any)
     else true end
   ) as $allowed |
   if $allowed then
