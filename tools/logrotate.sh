@@ -49,17 +49,28 @@ rotate_all(){
 # Compress old logs
 compress_old(){
   print_header "Compressing old logs"
-  local count=0
-  # Single find call for both directories
-  while IFS= read -r -d '' log; do
-    local name="${log##*/}"
-    # Skip active logs
-    [[ $name == "latest.log" || $name == "debug.log" || $name == "watchdog.log" ]] && continue
-    print_info "Compressing: $name"
-    gzip "$log"
-    ((count++))
-           -o -path "$ARCHIVE_DIR/*" -name "*.log" -type f -print0 2>/dev/null)
-  ((count > 0)) && print_success "Compressed $count files" || print_info "Nothing to compress"
+
+  local file_list
+  file_list=$(mktemp)
+
+  {
+    find "$LOGS_DIR" -maxdepth 1 -name "*.log" -type f \
+      ! -name "latest.log" ! -name "debug.log" ! -name "watchdog.log" -print0
+    find "$ARCHIVE_DIR" -name "*.log" -type f -print0 2>/dev/null
+  } > "$file_list"
+
+  local count
+  count=$(tr -cd '\0' < "$file_list" | wc -c)
+
+  if ((count > 0)); then
+    print_info "Compressing $count files with $(get_cpu_cores) threads..."
+    xargs -0 -a "$file_list" -P "$(get_cpu_cores)" -n 1 gzip
+    print_success "Compressed $count files"
+  else
+    print_info "Nothing to compress"
+  fi
+
+  rm -f "$file_list"
 }
 
 # Clean old logs
@@ -70,8 +81,8 @@ clean_old(){
   while IFS= read -r -d '' log; do
     print_info "Deleting: ${log##*/}"
     rm -f "$log"
-    ((count++))
-           -o -path "$ARCHIVE_DIR/*.log.gz" -type f -mtime +"$MAX_LOG_AGE_DAYS" -print0 2>/dev/null)
+    ((count+=1))
+  done < <(find "$LOGS_DIR" -maxdepth 1 -name "*.log" -type f -mtime +"$MAX_LOG_AGE_DAYS" -print0; find "$ARCHIVE_DIR" -name "*.log.gz" -type f -mtime +"$MAX_LOG_AGE_DAYS" -print0 2>/dev/null)
   ((count > 0)) && print_success "Deleted $count files" || print_info "Nothing to clean"
 }
 
