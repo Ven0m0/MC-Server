@@ -14,7 +14,7 @@ permissions:
 jobs:
   megalinter:
     name: MegaLinter
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       issues: write
