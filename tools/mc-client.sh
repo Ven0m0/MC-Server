@@ -90,12 +90,12 @@ trap 'rm -f "$ASSET_INPUT_FILE"' EXIT
   HASH_PREFIX="${hash:0:2}"
   ASSET_FILE="$ASSETS_DIR/objects/$HASH_PREFIX/$hash"
   if [[ ! -f $ASSET_FILE ]]; then
-    ensure_dir "$ASSETS_DIR/objects/$HASH_PREFIX"
-    printf 'https://resources.download.minecraft.net/%s/%s\n' "$HASH_PREFIX" "$hash" >>"$ASSET_INPUT_FILE"
-    printf '  dir=%s/objects/%s\n' "$ASSETS_DIR" "$HASH_PREFIX" >>"$ASSET_INPUT_FILE"
-    printf '  out=%s\n' "$hash" >>"$ASSET_INPUT_FILE"
+    ensure_dir "$ASSETS_DIR/objects/$HASH_PREFIX" >&2
+    printf 'https://resources.download.minecraft.net/%s/%s\n' "$HASH_PREFIX" "$hash"
+    printf '  dir=%s/objects/%s\n' "$ASSETS_DIR" "$HASH_PREFIX"
+    printf '  out=%s\n' "$hash"
   fi
-done
+done >>"$ASSET_INPUT_FILE"
 # Download missing assets with aria2c
 if [[ -f $ASSET_INPUT_FILE ]] && [[ -s $ASSET_INPUT_FILE ]]; then
   if ! has_command aria2c; then
