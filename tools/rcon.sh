@@ -8,7 +8,11 @@ rcon-command() {
   reverse-hex-endian() {
     # Given a 4-byte hex integer, reverse endianness
     while read -r -d '' -N 8 INTEGER; do
-      echo "$INTEGER" | sed -E 's/(..)(..)(..)(..)/\4\3\2\1/'
+      if [ "${#INTEGER}" -eq 8 ]; then
+        echo "${INTEGER:6:2}${INTEGER:4:2}${INTEGER:2:2}${INTEGER:0:2}"
+      else
+        echo "$INTEGER"
+      fi
     done
   }
   decode-hex-int() {

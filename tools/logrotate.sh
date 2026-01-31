@@ -58,21 +58,26 @@ compress_old(){
     print_info "Compressing: $name"
     gzip "$log"
     ((count++))
-           -o -path "$ARCHIVE_DIR/*" -name "*.log" -type f -print0 2>/dev/null)
+  done < <(find "$LOGS_DIR" -maxdepth 1 -name "*.log" -type f -print0 2>/dev/null)
   ((count > 0)) && print_success "Compressed $count files" || print_info "Nothing to compress"
 }
 
 # Clean old logs
 clean_old(){
   print_header "Cleaning logs older than ${MAX_LOG_AGE_DAYS} days"
-  local count=0
+  local files=()
   # Single find call for both directories
   while IFS= read -r -d '' log; do
-    print_info "Deleting: ${log##*/}"
-    rm -f "$log"
-    ((count++))
-           -o -path "$ARCHIVE_DIR/*.log.gz" -type f -mtime +"$MAX_LOG_AGE_DAYS" -print0 2>/dev/null)
-  ((count > 0)) && print_success "Deleted $count files" || print_info "Nothing to clean"
+    print_info "Queuing for deletion: ${log##*/}"
+    files+=("$log")
+  done < <({ find "$LOGS_DIR" -maxdepth 1 -name "*.log" -type f -mtime +"$MAX_LOG_AGE_DAYS" -print0; find "$ARCHIVE_DIR" -name "*.log.gz" -type f -mtime +"$MAX_LOG_AGE_DAYS" -print0; } 2>/dev/null)
+
+  if (( ${#files[@]} > 0 )); then
+    printf '%s\0' "${files[@]}" | xargs -0 rm -f --
+    print_success "Deleted ${#files[@]} files"
+  else
+    print_info "Nothing to clean"
+  fi
 }
 
 # Limit archived logs
