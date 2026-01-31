@@ -22,14 +22,55 @@ install_fabric(){
   print_header "Installing Fabric Server"
   # Fetch versions
   print_info "Fetching Minecraft and Fabric versions..."
+
+  local pids=()
+  local tmp_mc; tmp_mc=$(mktemp)
+  local tmp_installer; tmp_installer=$(mktemp)
+  local tmp_loader; tmp_loader=$(mktemp)
+
+  trap "rm -f '$tmp_mc' '$tmp_installer' '$tmp_loader'" EXIT INT TERM
+
+  # Fetch MC Version if needed
   if [[ -z $mc_version ]]; then
-    mc_version=$(fetch_url "https://meta.fabricmc.net/v2/versions/game" | "$JSON_PROC" -r '[.[] | select(.stable == true)][0].version')
+    (
+      fetch_url "https://meta.fabricmc.net/v2/versions/game" | "$JSON_PROC" -r '[.[] | select(.stable == true)][0].version' > "$tmp_mc"
+    ) &
+    pids+=($!)
   fi
+
+  # Fetch Installer (always needed)
   local fabric_installer
-  fabric_installer=$(fetch_url "https://meta.fabricmc.net/v2/versions/installer" | "$JSON_PROC" -r '.[0].version')
+  (
+    fetch_url "https://meta.fabricmc.net/v2/versions/installer" | "$JSON_PROC" -r '.[0].version' > "$tmp_installer"
+  ) &
+  pids+=($!)
+
+  # Fetch Loader if needed
   if [[ -z $loader ]]; then
-    loader=$(fetch_url "https://meta.fabricmc.net/v2/versions/loader" | "$JSON_PROC" -r '[.[] | select(.stable==true)][0].version')
+    (
+      fetch_url "https://meta.fabricmc.net/v2/versions/loader" | "$JSON_PROC" -r '[.[] | select(.stable==true)][0].version' > "$tmp_loader"
+    ) &
+    pids+=($!)
   fi
+
+  # Wait for all background jobs
+  for pid in "${pids[@]}"; do
+    wait "$pid"
+  done
+
+  # Retrieve results
+  if [[ -z $mc_version ]]; then
+     mc_version=$(cat "$tmp_mc")
+  fi
+
+  fabric_installer=$(cat "$tmp_installer")
+
+  if [[ -z $loader ]]; then
+     loader=$(cat "$tmp_loader")
+  fi
+
+  # Explicit cleanup
+  rm -f "$tmp_mc" "$tmp_installer" "$tmp_loader"
   print_info "Minecraft: $mc_version | Fabric installer: $fabric_installer | Loader: $loader"
   # Download installer
   print_info "Downloading Fabric installer..."
