@@ -37,13 +37,23 @@ DISABLE_ERRORS_LINTERS:
 YAML_YAMLLINT_CONFIG_FILE: .yamllint.yml
 YAML_YAMLLINT_CLI_LINT_MODE: file
 YAML_PRETTIER_CONFIG_FILE: .prettierrc.yml
-YAML_PRETTIER_FILE_EXTENSIONS: [".yml", ".yaml"]
+YAML_PRETTIER_FILE_EXTENSIONS:
+  - ".yml"
+  - ".yaml"
 JSON_PRETTIER_CONFIG_FILE: .prettierrc.yml
-JSON_PRETTIER_FILE_EXTENSIONS: [".json", ".json5", ".jsonc"]
+JSON_PRETTIER_FILE_EXTENSIONS:
+  - ".json"
+  - ".json5"
+  - ".jsonc"
 JSON_JSONLINT_CLI_LINT_MODE: list_of_files
 BASH_SHELLCHECK_ARGUMENTS: "-s bash -x -a -S warning"
 BASH_SHFMT_ARGUMENTS: "-ln bash -s -i 2 -bn --apply-ignore"
-YAML_V8R_FILE_EXTENSIONS: [".yml", ".yaml", ".toml", ".json", ".jsonc"]
+YAML_V8R_FILE_EXTENSIONS:
+  - ".yml"
+  - ".yaml"
+  - ".toml"
+  - ".json"
+  - ".jsonc"
 YAML_V8R_DISABLE_ERRORS: true
 YAML_YAMLLINT_DISABLE_ERRORS: true
 YAML_PRETTIER_DISABLE_ERRORS: true
