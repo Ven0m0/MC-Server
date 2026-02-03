@@ -61,7 +61,9 @@ get_disk(){
 get_players(){
   print_header "Recent Player Activity"
   # Use tac (reverse) to find last 5 matches efficiently
-  tac "$LOG_FILE" 2>/dev/null | grep -E '(joined|left) the game' -m 5 | tac || printf 'No recent activity\n'
+  local recent_activity
+  recent_activity=$(tail -n 5000 "$LOG_FILE" 2>/dev/null | tac | grep -E '(joined|left) the game' -m 5 | tac || true)
+  [[ -n "$recent_activity" ]] && printf '%s\n' "$recent_activity" || printf 'No recent activity\n'
   printf '\n'
 }
 

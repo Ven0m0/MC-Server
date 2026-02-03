@@ -9,6 +9,10 @@ source "${PWD}/tools/common.sh"
 MC_REPACK_CONFIG="${HOME}/.config/mc-repack.toml"
 JSON_PROC=$(get_json_processor) || exit 1
 
+clean_mod_name(){
+  echo "$1" | sed -E 's/\.jar$//; s/[-_+]+(v|mc)?[0-9].*//; s/[-_]fabric$//I'
+}
+
 # ============================================================================
 # FABRIC SERVER INSTALLATION
 # ============================================================================
@@ -18,14 +22,55 @@ install_fabric(){
   print_header "Installing Fabric Server"
   # Fetch versions
   print_info "Fetching Minecraft and Fabric versions..."
+
+  local pids=()
+  local tmp_mc; tmp_mc=$(mktemp)
+  local tmp_installer; tmp_installer=$(mktemp)
+  local tmp_loader; tmp_loader=$(mktemp)
+
+  trap "rm -f '$tmp_mc' '$tmp_installer' '$tmp_loader'" EXIT INT TERM
+
+  # Fetch MC Version if needed
   if [[ -z $mc_version ]]; then
-    mc_version=$(fetch_url "https://meta.fabricmc.net/v2/versions/game" | "$JSON_PROC" -r '[.[] | select(.stable == true)][0].version')
+    (
+      fetch_url "https://meta.fabricmc.net/v2/versions/game" | "$JSON_PROC" -r '[.[] | select(.stable == true)][0].version' > "$tmp_mc"
+    ) &
+    pids+=($!)
   fi
+
+  # Fetch Installer (always needed)
   local fabric_installer
-  fabric_installer=$(fetch_url "https://meta.fabricmc.net/v2/versions/installer" | "$JSON_PROC" -r '.[0].version')
+  (
+    fetch_url "https://meta.fabricmc.net/v2/versions/installer" | "$JSON_PROC" -r '.[0].version' > "$tmp_installer"
+  ) &
+  pids+=($!)
+
+  # Fetch Loader if needed
   if [[ -z $loader ]]; then
-    loader=$(fetch_url "https://meta.fabricmc.net/v2/versions/loader" | "$JSON_PROC" -r '[.[] | select(.stable==true)][0].version')
+    (
+      fetch_url "https://meta.fabricmc.net/v2/versions/loader" | "$JSON_PROC" -r '[.[] | select(.stable==true)][0].version' > "$tmp_loader"
+    ) &
+    pids+=($!)
   fi
+
+  # Wait for all background jobs
+  for pid in "${pids[@]}"; do
+    wait "$pid"
+  done
+
+  # Retrieve results
+  if [[ -z $mc_version ]]; then
+     mc_version=$(cat "$tmp_mc")
+  fi
+
+  fabric_installer=$(cat "$tmp_installer")
+
+  if [[ -z $loader ]]; then
+     loader=$(cat "$tmp_loader")
+  fi
+
+  # Explicit cleanup
+  rm -f "$tmp_mc" "$tmp_installer" "$tmp_loader"
   print_info "Minecraft: $mc_version | Fabric installer: $fabric_installer | Loader: $loader"
   # Download installer
   print_info "Downloading Fabric installer..."
@@ -48,13 +93,34 @@ setup_server(){
   print_success "Server setup complete"
 }
 setup_ferium(){
+  has ferium || { print_error "Ferium not installed"; return 1; }
+  print_header "Setting up Ferium profile"
+
   # Create a profile for your server (e.g., Minecraft 1.20.1, Fabric)
-  ferium profile create --name server-mods --game-version 1.21.5 --mod-loader fabric
-  # Add your mods (You can use IDs or names, Ferium searches for them)
-  ferium add fabric-api
-  ferium add lithium
-  ferium add phosphor
-  # TODO: extend
+  ferium profile create --name server-mods --game-version 1.21.5 --mod-loader fabric || print_warning "Profile creation failed (maybe exists?)"
+
+  local mods_file="docs/mods.txt"
+  if [[ -f "$mods_file" ]]; then
+    print_header "Adding mods from $mods_file"
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      # Skip empty lines
+      [[ -z "$line" ]] && continue
+
+      local mod_name
+      mod_name=$(clean_mod_name "$line")
+
+      # Skip if cleaning resulted in empty string
+      [[ -z "$mod_name" ]] && continue
+
+      print_info "Adding mod: $mod_name (from $line)"
+      ferium add "$mod_name" || print_warning "Failed to add $mod_name"
+    done < "$mods_file"
+  else
+    print_warning "$mods_file not found. Installing defaults."
+    ferium add fabric-api
+    ferium add lithium
+  fi
+  print_success "Ferium setup complete"
 }
 # ============================================================================
 # MC-REPACK CONFIGURATION
@@ -142,6 +208,7 @@ COMMANDS:
                                        Version & loader optional (uses latest stable)
     setup                              Setup server (EULA, permissions)
     setup-repack                       Configure mc-repack
+    setup-ferium                       Setup Ferium profile and add mods
     ferium                             Run ferium update
     repack [src] [dst]                 Repack mods with mc-repack
     geyser [dir]                       Update GeyserConnect extension
@@ -168,6 +235,7 @@ case "${1:-}" in
   install-fabric | install | fabric) install_fabric "${2:-}" "${3:-}" ;;
   setup) setup_server ;;
   setup-repack) setup_mc_repack ;;
+  setup-ferium) setup_ferium ;;
   ferium) ferium_update ;;
   repack) repack_mods "${2:-}" "${3:-}" ;;
   geyser | geyserconnect) update_geyserconnect "${2:-}" ;;

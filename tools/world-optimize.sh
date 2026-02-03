@@ -137,14 +137,21 @@ clean_player_data(){
     while IFS='|' read -r -d '' size file; do
       print_info "[DRY RUN] Would remove: ${file##*/}"
       total_size=$((total_size + size))
-      ((count++))
+      count=$((count + 1))
     done < <(find "${world_path}/playerdata" -name "*.dat" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null)
   else
+    local temp_list
+    temp_list=$(mktemp)
     while IFS='|' read -r -d '' size file; do
       total_size=$((total_size + size))
-      rm -f "$file"
-      ((count++))
+      count=$((count + 1))
+      printf "%s\0" "$file" >> "$temp_list"
     done < <(find "${world_path}/playerdata" -name "*.dat" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null)
+
+    if [[ -s "$temp_list" ]]; then
+      xargs -0 rm -f < "$temp_list"
+    fi
+    rm -f "$temp_list"
   fi
   if [[ $count -gt 0 ]]; then
     local size_mb=$((total_size / 1024 / 1024))
@@ -169,14 +176,21 @@ clean_statistics(){
     while IFS='|' read -r -d '' size file; do
       print_info "[DRY RUN] Would remove: ${file##*/}"
       total_size=$((total_size + size))
-      ((count++))
+      count=$((count + 1))
     done < <(find "${world_path}/stats" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null)
   else
+    local temp_list
+    temp_list=$(mktemp)
     while IFS='|' read -r -d '' size file; do
       total_size=$((total_size + size))
-      rm -f "$file"
-      ((count++))
+      count=$((count + 1))
+      printf "%s\0" "$file" >> "$temp_list"
     done < <(find "${world_path}/stats" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null)
+
+    if [[ -s "$temp_list" ]]; then
+      xargs -0 rm -f < "$temp_list"
+    fi
+    rm -f "$temp_list"
   fi
   if [[ $count -gt 0 ]]; then
     local size_mb=$((total_size / 1024 / 1024))
@@ -201,14 +215,21 @@ clean_advancements(){
     while IFS='|' read -r -d '' size file; do
       print_info "[DRY RUN] Would remove: ${file##*/}"
       total_size=$((total_size + size))
-      ((count++))
+      count=$((count + 1))
     done < <(find "${world_path}/advancements" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null)
   else
+    local temp_list
+    temp_list=$(mktemp)
     while IFS='|' read -r -d '' size file; do
       total_size=$((total_size + size))
-      rm -f "$file"
-      ((count++))
+      count=$((count + 1))
+      printf "%s\0" "$file" >> "$temp_list"
     done < <(find "${world_path}/advancements" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null)
+
+    if [[ -s "$temp_list" ]]; then
+      xargs -0 rm -f < "$temp_list"
+    fi
+    rm -f "$temp_list"
   fi
   if [[ $count -gt 0 ]]; then
     local size_kb=$((total_size / 1024))

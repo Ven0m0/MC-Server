@@ -78,7 +78,7 @@ compress_old(){
 # Clean old logs
 clean_old(){
   print_header "Cleaning logs older than ${MAX_LOG_AGE_DAYS} days"
-  local count=0
+  local files=()
   # Single find call for both directories
   while IFS= read -r -d '' log; do
     print_info "Deleting: ${log##*/}"
