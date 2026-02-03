@@ -63,8 +63,10 @@ compress_old(){
   count=$(tr -cd '\0' < "$file_list" | wc -c)
 
   if ((count > 0)); then
-    print_info "Compressing $count files with $(get_cpu_cores) threads..."
-    xargs -0 -a "$file_list" -P "$(get_cpu_cores)" -n 1 gzip
+    local threads
+    threads=$(get_cpu_cores)
+    print_info "Compressing $count files with $threads threads..."
+    xargs -0 -a "$file_list" -P "$threads" -n 1 gzip
     print_success "Compressed $count files"
   else
     print_info "Nothing to compress"
