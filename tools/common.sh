@@ -108,7 +108,7 @@ get_client_xmx_gb(){
 # SYSTEM INFORMATION FUNCTIONS
 # ============================================================================
 get_cpu_cores(){
-  nproc &>/dev/null || printf '4'
+  nproc 2>/dev/null || printf '4'
 }
 # ============================================================================
 # DOWNLOAD CONFIGURATION FUNCTIONS
