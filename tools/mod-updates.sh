@@ -77,9 +77,8 @@ install_fabric(){
   print_info "Minecraft: $mc_version | Fabric installer: $fabric_installer | Loader: $loader"
   # Download installer
   print_info "Downloading Fabric installer..."
-  local installer_url=\
-    "https://maven.fabricmc.net/net/fabricmc/fabric-installer/${fabric_installer}/fabric-installer-"\
-    "${fabric_installer}.jar"
+  local installer_url="https://maven.fabricmc.net/net/fabricmc/fabric-installer/${fabric_installer}/fabric-installer-"
+  installer_url="${installer_url}${fabric_installer}.jar"
   download_file "$installer_url" "fabric-installer.jar"
   # Install Fabric server
   print_info "Installing Fabric server..."
