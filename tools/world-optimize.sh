@@ -133,26 +133,60 @@ clean_player_data(){
   print_header "Player Data Cleanup"
   print_info "Removing player data older than ${days} days..."
   local count=0 total_size=0
+  local stats_file; stats_file=$(mktemp)
+
   if [[ $DRY_RUN == "true" ]]; then
-    while IFS='|' read -r -d '' size file; do
-      print_info "[DRY RUN] Would remove: ${file##*/}"
-      total_size=$((total_size + size))
-      count=$((count + 1))
-    done < <(find "${world_path}/playerdata" -name "*.dat" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null)
+    # In dry run, we print messages and calculate stats
+    find "${world_path}/playerdata" -name "*.dat" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null | \
+    awk -v RS='\0' -v stats_file="$stats_file" '
+      BEGIN { s=0; c=0 }
+      {
+        if ($0 == "") next
+        size = $0 + 0
+        path = $0
+        sub(/^[0-9]+\|/, "", path)
+
+        # Extract filename from path for display
+        n = split(path, parts, "/")
+        filename = parts[n]
+
+        # Replicate print_info: \033[1;33m→\033[0m
+        printf "\033[1;33m→\033[0m [DRY RUN] Would remove: %s\n", filename
+
+        s += size
+        c++
+      }
+      END { print s, c > stats_file }
+    '
   else
     local temp_list
     temp_list=$(mktemp)
-    while IFS='|' read -r -d '' size file; do
-      total_size=$((total_size + size))
-      count=$((count + 1))
-      printf "%s\0" "$file" >> "$temp_list"
-    done < <(find "${world_path}/playerdata" -name "*.dat" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null)
+
+    # In normal run, we output file paths to temp_list and calculate stats
+    find "${world_path}/playerdata" -name "*.dat" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null | \
+    awk -v RS='\0' -v stats_file="$stats_file" '
+      BEGIN { s=0; c=0 }
+      {
+        if ($0 == "") next
+        size = $0 + 0
+        path = $0
+        sub(/^[0-9]+\|/, "", path)
+
+        s += size
+        c++
+        printf "%s\0", path
+      }
+      END { print s, c > stats_file }
+    ' > "$temp_list"
 
     if [[ -s "$temp_list" ]]; then
       xargs -0 rm -f < "$temp_list"
     fi
     rm -f "$temp_list"
   fi
+
+  read -r total_size count < "$stats_file"
+  rm -f "$stats_file"
   if [[ $count -gt 0 ]]; then
     local size_mb=$((total_size / 1024 / 1024))
     if [[ $DRY_RUN == "true" ]]; then
