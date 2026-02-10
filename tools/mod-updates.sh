@@ -43,7 +43,8 @@ install_fabric(){
   # Fetch Installer (always needed)
   local fabric_installer
   (
-    fetch_url "https://meta.fabricmc.net/v2/versions/installer" | "$JSON_PROC" -r '.[0].version' > "$tmp_installer"
+    fetch_url "https://meta.fabricmc.net/v2/versions/installer" | \
+      "$JSON_PROC" -r '.[0].version' > "$tmp_installer"
   ) &
   pids+=($!)
 
@@ -77,11 +78,9 @@ install_fabric(){
   print_info "Minecraft: $mc_version | Fabric installer: $fabric_installer | Loader: $loader"
   # Download installer
   print_info "Downloading Fabric installer..."
-  local url="https://maven.fabricmc.net/net/fabricmc/fabric-installer/${fabric_installer}"
-  url="${url}/fabric-installer-${fabric_installer}.jar"
-  download_file \
-    "$url" \
-    "fabric-installer.jar"
+  local installer_url="https://maven.fabricmc.net/net/fabricmc/fabric-installer/${fabric_installer}/fabric-installer-"
+  installer_url="${installer_url}${fabric_installer}.jar"
+  download_file "$installer_url" "fabric-installer.jar"
   # Install Fabric server
   print_info "Installing Fabric server..."
   java -jar fabric-installer.jar server -mcversion "$mc_version" -downloadMinecraft
@@ -175,8 +174,8 @@ repack_mods(){
 update_geyserconnect(){
   print_header "Updating GeyserConnect"
   local dest_dir="${1:-$PWD/minecraft/config/Geyser-Fabric/extensions}"
-  local url="https://download.geysermc.org/v2/projects/geyserconnect/versions/latest"\
-  "/builds/latest/downloads/geyserconnect"
+  local url="\
+    https://download.geysermc.org/v2/projects/geyserconnect/versions/latest/builds/latest/downloads/geyserconnect"
   mkdir -p "$dest_dir"
   local jar="$dest_dir/GeyserConnect.jar"
   [[ -f $jar ]] && mv "$jar" "$jar.bak"
