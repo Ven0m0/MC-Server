@@ -28,12 +28,14 @@ install_fabric(){
   local tmp_installer; tmp_installer=$(mktemp)
   local tmp_loader; tmp_loader=$(mktemp)
 
+  # shellcheck disable=SC2064 # We want immediate expansion for temp files
   trap "rm -f '$tmp_mc' '$tmp_installer' '$tmp_loader'" EXIT INT TERM
 
   # Fetch MC Version if needed
   if [[ -z $mc_version ]]; then
     (
-      fetch_url "https://meta.fabricmc.net/v2/versions/game" | "$JSON_PROC" -r '[.[] | select(.stable == true)][0].version' > "$tmp_mc"
+      fetch_url "https://meta.fabricmc.net/v2/versions/game" | \
+        "$JSON_PROC" -r '[.[] | select(.stable == true)][0].version' > "$tmp_mc"
     ) &
     pids+=($!)
   fi
@@ -48,7 +50,8 @@ install_fabric(){
   # Fetch Loader if needed
   if [[ -z $loader ]]; then
     (
-      fetch_url "https://meta.fabricmc.net/v2/versions/loader" | "$JSON_PROC" -r '[.[] | select(.stable==true)][0].version' > "$tmp_loader"
+      fetch_url "https://meta.fabricmc.net/v2/versions/loader" | \
+        "$JSON_PROC" -r '[.[] | select(.stable==true)][0].version' > "$tmp_loader"
     ) &
     pids+=($!)
   fi
@@ -74,7 +77,11 @@ install_fabric(){
   print_info "Minecraft: $mc_version | Fabric installer: $fabric_installer | Loader: $loader"
   # Download installer
   print_info "Downloading Fabric installer..."
-  download_file "https://maven.fabricmc.net/net/fabricmc/fabric-installer/${fabric_installer}/fabric-installer-${fabric_installer}.jar" "fabric-installer.jar"
+  local url="https://maven.fabricmc.net/net/fabricmc/fabric-installer/${fabric_installer}"
+  url="${url}/fabric-installer-${fabric_installer}.jar"
+  download_file \
+    "$url" \
+    "fabric-installer.jar"
   # Install Fabric server
   print_info "Installing Fabric server..."
   java -jar fabric-installer.jar server -mcversion "$mc_version" -downloadMinecraft
@@ -97,7 +104,8 @@ setup_ferium(){
   print_header "Setting up Ferium profile"
 
   # Create a profile for your server (e.g., Minecraft 1.20.1, Fabric)
-  ferium profile create --name server-mods --game-version 1.21.5 --mod-loader fabric || print_warning "Profile creation failed (maybe exists?)"
+  ferium profile create --name server-mods --game-version 1.21.5 --mod-loader fabric || \
+    print_warning "Profile creation failed (maybe exists?)"
 
   local mods_file="docs/mods.txt"
   if [[ -f "$mods_file" ]]; then
@@ -167,7 +175,8 @@ repack_mods(){
 update_geyserconnect(){
   print_header "Updating GeyserConnect"
   local dest_dir="${1:-$PWD/minecraft/config/Geyser-Fabric/extensions}"
-  local url="https://download.geysermc.org/v2/projects/geyserconnect/versions/latest/builds/latest/downloads/geyserconnect"
+  local url="https://download.geysermc.org/v2/projects/geyserconnect/versions/latest"\
+  "/builds/latest/downloads/geyserconnect"
   mkdir -p "$dest_dir"
   local jar="$dest_dir/GeyserConnect.jar"
   [[ -f $jar ]] && mv "$jar" "$jar.bak"

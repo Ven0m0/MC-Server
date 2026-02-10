@@ -20,7 +20,8 @@ get_dir_size(){
 
 # Configuration
 CHUNK_CLEANER_VERSION="1.0.0"
-CHUNK_CLEANER_URL="https://github.com/zeroBzeroT/ChunkCleaner/releases/download/v${CHUNK_CLEANER_VERSION}/ChunkCleaner-Linux64"
+CHUNK_CLEANER_URL="https://github.com/zeroBzeroT/ChunkCleaner/releases/download/v${CHUNK_CLEANER_VERSION}"
+CHUNK_CLEANER_URL="${CHUNK_CLEANER_URL}/ChunkCleaner-Linux64"
 CHUNK_CLEANER_BIN="${SCRIPT_DIR}/tools/ChunkCleaner-Linux64"
 MIN_INHABITED_TICKS=200
 PLAYER_INACTIVITY_DAYS=90
@@ -133,26 +134,60 @@ clean_player_data(){
   print_header "Player Data Cleanup"
   print_info "Removing player data older than ${days} days..."
   local count=0 total_size=0
+  local stats_file; stats_file=$(mktemp)
+
   if [[ $DRY_RUN == "true" ]]; then
-    while IFS='|' read -r -d '' size file; do
-      print_info "[DRY RUN] Would remove: ${file##*/}"
-      total_size=$((total_size + size))
-      count=$((count + 1))
-    done < <(find "${world_path}/playerdata" -name "*.dat" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null)
+    # In dry run, we print messages and calculate stats
+    find "${world_path}/playerdata" -name "*.dat" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null | \
+    awk -v RS='\0' -v stats_file="$stats_file" '
+      BEGIN { s=0; c=0 }
+      {
+        if ($0 == "") next
+        size = $0 + 0
+        path = $0
+        sub(/^[0-9]+\|/, "", path)
+
+        # Extract filename from path for display
+        filename = path
+        sub(/.*\//, "", filename)
+
+        # Replicate print_info: \033[1;33m→\033[0m
+        printf "\033[1;33m→\033[0m [DRY RUN] Would remove: %s\n", filename
+
+        s += size
+        c++
+      }
+      END { print s, c > stats_file }
+    '
   else
     local temp_list
     temp_list=$(mktemp)
-    while IFS='|' read -r -d '' size file; do
-      total_size=$((total_size + size))
-      count=$((count + 1))
-      printf "%s\0" "$file" >> "$temp_list"
-    done < <(find "${world_path}/playerdata" -name "*.dat" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null)
+
+    # In normal run, we output file paths to temp_list and calculate stats
+    find "${world_path}/playerdata" -name "*.dat" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null | \
+    awk -v RS='\0' -v stats_file="$stats_file" '
+      BEGIN { s=0; c=0 }
+      {
+        if ($0 == "") next
+        size = $0 + 0
+        path = $0
+        sub(/^[0-9]+\|/, "", path)
+
+        s += size
+        c++
+        printf "%s\0", path
+      }
+      END { print s, c > stats_file }
+    ' > "$temp_list"
 
     if [[ -s "$temp_list" ]]; then
       xargs -0 rm -f < "$temp_list"
     fi
     rm -f "$temp_list"
   fi
+
+  read -r total_size count < "$stats_file"
+  rm -f "$stats_file"
   if [[ $count -gt 0 ]]; then
     local size_mb=$((total_size / 1024 / 1024))
     if [[ $DRY_RUN == "true" ]]; then
@@ -321,24 +356,35 @@ show_stats(){
 
     # Add dimension directories
     if [[ $dim_name == "world" ]]; then
-      [[ -d "${dimension_path}/region" ]] && { du_paths+=("${dimension_path}/region"); path_labels["${dimension_path}/region"]="${dim_name}:region"; }
-      [[ -d "${dimension_path}/entities" ]] && { du_paths+=("${dimension_path}/entities"); path_labels["${dimension_path}/entities"]="${dim_name}:entities"; }
-      [[ -d "${dimension_path}/poi" ]] && { du_paths+=("${dimension_path}/poi"); path_labels["${dimension_path}/poi"]="${dim_name}:poi"; }
+      [[ -d "${dimension_path}/region" ]] && { du_paths+=("${dimension_path}/region")
+      path_labels["${dimension_path}/region"]="${dim_name}:region"; }
+      [[ -d "${dimension_path}/entities" ]] && { du_paths+=("${dimension_path}/entities")
+      path_labels["${dimension_path}/entities"]="${dim_name}:entities"; }
+      [[ -d "${dimension_path}/poi" ]] && { du_paths+=("${dimension_path}/poi")
+      path_labels["${dimension_path}/poi"]="${dim_name}:poi"; }
     elif [[ $dim_name == "world_nether" ]]; then
-      [[ -d "${dimension_path}/DIM-1/region" ]] && { du_paths+=("${dimension_path}/DIM-1/region"); path_labels["${dimension_path}/DIM-1/region"]="${dim_name}:region"; }
-      [[ -d "${dimension_path}/DIM-1/entities" ]] && { du_paths+=("${dimension_path}/DIM-1/entities"); path_labels["${dimension_path}/DIM-1/entities"]="${dim_name}:entities"; }
-      [[ -d "${dimension_path}/DIM-1/poi" ]] && { du_paths+=("${dimension_path}/DIM-1/poi"); path_labels["${dimension_path}/DIM-1/poi"]="${dim_name}:poi"; }
+      [[ -d "${dimension_path}/DIM-1/region" ]] && { du_paths+=("${dimension_path}/DIM-1/region")
+      path_labels["${dimension_path}/DIM-1/region"]="${dim_name}:region"; }
+      [[ -d "${dimension_path}/DIM-1/entities" ]] && { du_paths+=("${dimension_path}/DIM-1/entities")
+      path_labels["${dimension_path}/DIM-1/entities"]="${dim_name}:entities"; }
+      [[ -d "${dimension_path}/DIM-1/poi" ]] && { du_paths+=("${dimension_path}/DIM-1/poi")
+      path_labels["${dimension_path}/DIM-1/poi"]="${dim_name}:poi"; }
     elif [[ $dim_name == "world_the_end" ]]; then
-      [[ -d "${dimension_path}/DIM1/region" ]] && { du_paths+=("${dimension_path}/DIM1/region"); path_labels["${dimension_path}/DIM1/region"]="${dim_name}:region"; }
-      [[ -d "${dimension_path}/DIM1/entities" ]] && { du_paths+=("${dimension_path}/DIM1/entities"); path_labels["${dimension_path}/DIM1/entities"]="${dim_name}:entities"; }
-      [[ -d "${dimension_path}/DIM1/poi" ]] && { du_paths+=("${dimension_path}/DIM1/poi"); path_labels["${dimension_path}/DIM1/poi"]="${dim_name}:poi"; }
+      [[ -d "${dimension_path}/DIM1/region" ]] && { du_paths+=("${dimension_path}/DIM1/region")
+      path_labels["${dimension_path}/DIM1/region"]="${dim_name}:region"; }
+      [[ -d "${dimension_path}/DIM1/entities" ]] && { du_paths+=("${dimension_path}/DIM1/entities")
+      path_labels["${dimension_path}/DIM1/entities"]="${dim_name}:entities"; }
+      [[ -d "${dimension_path}/DIM1/poi" ]] && { du_paths+=("${dimension_path}/DIM1/poi")
+      path_labels["${dimension_path}/DIM1/poi"]="${dim_name}:poi"; }
     fi
   done
 
   # Add common paths
-  [[ -d "${world_path}/playerdata" ]] && { du_paths+=("${world_path}/playerdata"); path_labels["${world_path}/playerdata"]="playerdata"; }
+  [[ -d "${world_path}/playerdata" ]] && { du_paths+=("${world_path}/playerdata")
+  path_labels["${world_path}/playerdata"]="playerdata"; }
   [[ -d "${world_path}/stats" ]] && { du_paths+=("${world_path}/stats"); path_labels["${world_path}/stats"]="stats"; }
-  [[ -d "${world_path}/advancements" ]] && { du_paths+=("${world_path}/advancements"); path_labels["${world_path}/advancements"]="advancements"; }
+  [[ -d "${world_path}/advancements" ]] && { du_paths+=("${world_path}/advancements")
+  path_labels["${world_path}/advancements"]="advancements"; }
   du_paths+=("$world_path")
   path_labels["$world_path"]="total"
 
@@ -372,15 +418,21 @@ show_stats(){
       poi_dir="${dimension_path}/DIM1/poi"
     fi
 
-    [[ -n ${sizes[$region_dir]:-} ]] && printf '  Region files: %s (%s)\n' "$(find "$region_dir" -name "*.mca" 2>/dev/null | wc -l)" "${sizes[$region_dir]}"
-    [[ -n ${sizes[$entities_dir]:-} ]] && printf '  Entity files: %s (%s)\n' "$(find "$entities_dir" -name "*.mca" 2>/dev/null | wc -l)" "${sizes[$entities_dir]}"
-    [[ -n ${sizes[$poi_dir]:-} ]] && printf '  POI files: %s (%s)\n' "$(find "$poi_dir" -name "*.mca" 2>/dev/null | wc -l)" "${sizes[$poi_dir]}"
+    [[ -n ${sizes[$region_dir]:-} ]] && printf '  Region files: %s (%s)\n' \
+      "$(find "$region_dir" -name "*.mca" 2>/dev/null | wc -l)" "${sizes[$region_dir]}"
+    [[ -n ${sizes[$entities_dir]:-} ]] && printf '  Entity files: %s (%s)\n' \
+      "$(find "$entities_dir" -name "*.mca" 2>/dev/null | wc -l)" "${sizes[$entities_dir]}"
+    [[ -n ${sizes[$poi_dir]:-} ]] && printf '  POI files: %s (%s)\n' \
+      "$(find "$poi_dir" -name "*.mca" 2>/dev/null | wc -l)" "${sizes[$poi_dir]}"
   done
 
   printf '\n'
-  [[ -n ${sizes["${world_path}/playerdata"]:-} ]] && printf 'Player data: %s players (%s)\n' "$(find "${world_path}/playerdata" -name "*.dat" 2>/dev/null | wc -l)" "${sizes["${world_path}/playerdata"]}"
-  [[ -n ${sizes["${world_path}/stats"]:-} ]] && printf 'Statistics: %s files (%s)\n' "$(find "${world_path}/stats" -name "*.json" 2>/dev/null | wc -l)" "${sizes["${world_path}/stats"]}"
-  [[ -n ${sizes["${world_path}/advancements"]:-} ]] && printf 'Advancements: %s files (%s)\n' "$(find "${world_path}/advancements" -name "*.json" 2>/dev/null | wc -l)" "${sizes["${world_path}/advancements"]}"
+  [[ -n ${sizes["${world_path}/playerdata"]:-} ]] && printf 'Player data: %s players (%s)\n' \
+    "$(find "${world_path}/playerdata" -name "*.dat" 2>/dev/null | wc -l)" "${sizes["${world_path}/playerdata"]}"
+  [[ -n ${sizes["${world_path}/stats"]:-} ]] && printf 'Statistics: %s files (%s)\n' \
+    "$(find "${world_path}/stats" -name "*.json" 2>/dev/null | wc -l)" "${sizes["${world_path}/stats"]}"
+  [[ -n ${sizes["${world_path}/advancements"]:-} ]] && printf 'Advancements: %s files (%s)\n' \
+    "$(find "${world_path}/advancements" -name "*.json" 2>/dev/null | wc -l)" "${sizes["${world_path}/advancements"]}"
   printf '\nTotal world size: %s\n' "${sizes[$world_path]}"
 }
 # Show usage
