@@ -28,6 +28,7 @@ install_fabric(){
   local tmp_installer; tmp_installer=$(mktemp)
   local tmp_loader; tmp_loader=$(mktemp)
 
+  # shellcheck disable=SC2064 # We want immediate expansion for temp files
   trap "rm -f '$tmp_mc' '$tmp_installer' '$tmp_loader'" EXIT INT TERM
 
   # Fetch MC Version if needed
