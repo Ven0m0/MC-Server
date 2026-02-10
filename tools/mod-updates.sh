@@ -28,7 +28,8 @@ install_fabric(){
   local tmp_installer; tmp_installer=$(mktemp)
   local tmp_loader; tmp_loader=$(mktemp)
 
-  trap 'rm -f "$tmp_mc" "$tmp_installer" "$tmp_loader"' EXIT INT TERM
+  # shellcheck disable=SC2064 # We want immediate expansion for temp files
+  trap "rm -f '$tmp_mc' '$tmp_installer' '$tmp_loader'" EXIT INT TERM
 
   # Fetch MC Version if needed
   if [[ -z $mc_version ]]; then
@@ -103,7 +104,7 @@ setup_ferium(){
 
   # Create a profile for your server (e.g., Minecraft 1.20.1, Fabric)
   ferium profile create --name server-mods --game-version 1.21.5 --mod-loader fabric || \
-     print_warning "Profile creation failed (maybe exists?)"
+    print_warning "Profile creation failed (maybe exists?)"
 
   local mods_file="docs/mods.txt"
   if [[ -f "$mods_file" ]]; then
