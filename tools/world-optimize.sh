@@ -148,8 +148,8 @@ clean_player_data(){
         sub(/^[0-9]+\|/, "", path)
 
         # Extract filename from path for display
-        n = split(path, parts, "/")
-        filename = parts[n]
+        filename = path
+        sub(/.*\//, "", filename)
 
         # Replicate print_info: \033[1;33m→\033[0m
         printf "\033[1;33m→\033[0m [DRY RUN] Would remove: %s\n", filename
