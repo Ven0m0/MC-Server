@@ -28,7 +28,7 @@ install_fabric(){
   local tmp_installer; tmp_installer=$(mktemp)
   local tmp_loader; tmp_loader=$(mktemp)
 
-  trap "rm -f '$tmp_mc' '$tmp_installer' '$tmp_loader'" EXIT INT TERM
+  trap 'rm -f "$tmp_mc" "$tmp_installer" "$tmp_loader"' EXIT INT TERM
 
   # Fetch MC Version if needed
   if [[ -z $mc_version ]]; then
