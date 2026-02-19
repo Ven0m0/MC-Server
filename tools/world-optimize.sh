@@ -363,7 +363,7 @@ optimize_regions(){
       }
       END { print count + 0 > stats_file }
     '
-    read -r small_count < "$stats_file"
+    IFS=" " read -r small_count < "$stats_file"
     rm -f "$stats_file"
     local after=$(get_dir_size "$region_dir")
     total_after=$((total_after + after))
@@ -466,7 +466,7 @@ show_stats(){
     "$(find "${world_path}/stats" -name "*.json" 2>/dev/null | wc -l)" "${sizes["${world_path}/stats"]}"
   [[ -n ${sizes["${world_path}/advancements"]:-} ]] && printf 'Advancements: %s files (%s)\n' \
     "$(find "${world_path}/advancements" -name "*.json" 2>/dev/null | wc -l)" "${sizes["${world_path}/advancements"]}"
-  printf '\nTotal world size: %s\n' "${sizes[$world_path]}"
+  printf '\nTotal world size: %s\n' "${sizes[$world_path]:-Unknown}"
 }
 # Show usage
 show_usage(){
