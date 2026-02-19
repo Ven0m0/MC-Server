@@ -186,7 +186,7 @@ clean_player_data(){
     rm -f "$temp_list"
   fi
 
-  read -r total_size count < "$stats_file"
+  IFS=" " read -r total_size count < "$stats_file"
   rm -f "$stats_file"
   if [[ $count -gt 0 ]]; then
     local size_mb=$((total_size / 1024 / 1024))
@@ -207,26 +207,39 @@ clean_statistics(){
   print_header "Statistics Cleanup"
   print_info "Removing statistics older than ${days} days..."
   local count=0 total_size=0
+  local stats_file; stats_file=$(mktemp)
   if [[ $DRY_RUN == "true" ]]; then
-    while IFS='|' read -r -d '' size file; do
-      print_info "[DRY RUN] Would remove: ${file##*/}"
-      total_size=$((total_size + size))
-      count=$((count + 1))
-    done < <(find "${world_path}/stats" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null)
+    find "${world_path}/stats" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null | \
+    awk -v RS='\0' -v stats_file="$stats_file" -F'|' '
+      BEGIN { s=0; c=0 }
+      {
+        size = $1 + 0; path = $2
+        filename = path; sub(/.*\//, "", filename)
+        printf "\033[1;33m\342\206\222\033[0m [DRY RUN] Would remove: %s\n", filename
+        s += size; c++
+      }
+      END { print s, c > stats_file }
+    '
   else
-    local temp_list
-    temp_list=$(mktemp)
-    while IFS='|' read -r -d '' size file; do
-      total_size=$((total_size + size))
-      count=$((count + 1))
-      printf "%s\0" "$file" >> "$temp_list"
-    done < <(find "${world_path}/stats" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null)
+    local temp_list; temp_list=$(mktemp)
+    find "${world_path}/stats" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null | \
+    awk -v RS='\0' -v stats_file="$stats_file" -F'|' '
+      BEGIN { s=0; c=0 }
+      {
+        size = $1 + 0; path = $2
+        s += size; c++
+        printf "%s\0", path
+      }
+      END { print s, c > stats_file }
+    ' > "$temp_list"
 
     if [[ -s "$temp_list" ]]; then
       xargs -0 rm -f < "$temp_list"
     fi
     rm -f "$temp_list"
   fi
+  IFS=" " read -r total_size count < "$stats_file"
+  rm -f "$stats_file"
   if [[ $count -gt 0 ]]; then
     local size_mb=$((total_size / 1024 / 1024))
     if [[ $DRY_RUN == "true" ]]; then
@@ -246,26 +259,39 @@ clean_advancements(){
   print_header "Advancements Cleanup"
   print_info "Removing advancements older than ${days} days..."
   local count=0 total_size=0
+  local stats_file; stats_file=$(mktemp)
   if [[ $DRY_RUN == "true" ]]; then
-    while IFS='|' read -r -d '' size file; do
-      print_info "[DRY RUN] Would remove: ${file##*/}"
-      total_size=$((total_size + size))
-      count=$((count + 1))
-    done < <(find "${world_path}/advancements" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null)
+    find "${world_path}/advancements" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null | \
+    awk -v RS='\0' -v stats_file="$stats_file" -F'|' '
+      BEGIN { s=0; c=0 }
+      {
+        size = $1 + 0; path = $2
+        filename = path; sub(/.*\//, "", filename)
+        printf "\033[1;33m\342\206\222\033[0m [DRY RUN] Would remove: %s\n", filename
+        s += size; c++
+      }
+      END { print s, c > stats_file }
+    '
   else
-    local temp_list
-    temp_list=$(mktemp)
-    while IFS='|' read -r -d '' size file; do
-      total_size=$((total_size + size))
-      count=$((count + 1))
-      printf "%s\0" "$file" >> "$temp_list"
-    done < <(find "${world_path}/advancements" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null)
+    local temp_list; temp_list=$(mktemp)
+    find "${world_path}/advancements" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null | \
+    awk -v RS='\0' -v stats_file="$stats_file" -F'|' '
+      BEGIN { s=0; c=0 }
+      {
+        size = $1 + 0; path = $2
+        s += size; c++
+        printf "%s\0", path
+      }
+      END { print s, c > stats_file }
+    ' > "$temp_list"
 
     if [[ -s "$temp_list" ]]; then
       xargs -0 rm -f < "$temp_list"
     fi
     rm -f "$temp_list"
   fi
+  IFS=" " read -r total_size count < "$stats_file"
+  rm -f "$stats_file"
   if [[ $count -gt 0 ]]; then
     local size_kb=$((total_size / 1024))
     if [[ $DRY_RUN == "true" ]]; then
@@ -324,14 +350,21 @@ optimize_regions(){
     total_before=$((total_before + before))
     # Find and report small/potentially empty region files
     local small_count=0
-    while IFS='|' read -r size name; do
-      if [[ $size -lt 8192 ]]; then # Less than 8KB is likely empty or nearly empty
-        ((small_count++))
-        if [[ $DRY_RUN == "true" ]]; then
-          print_info "[DRY RUN] Small region file: $name (${size} bytes)"
-        fi
-      fi
-    done < <(find "$region_dir" -name "*.mca" -type f -printf '%s|%f\n' 2>/dev/null)
+    local stats_file; stats_file=$(mktemp)
+    find "$region_dir" -name "*.mca" -type f -printf '%s|%f\0' 2>/dev/null | \
+    awk -v RS='\0' -v dry_run="$DRY_RUN" -v stats_file="$stats_file" -F'|' '
+      BEGIN { count = 0 }
+      $1 < 8192 {
+        count++
+        if (dry_run == "true") {
+          # Replicate print_info: \033[1;33m→\033[0m
+          printf "\033[1;33m\342\206\222\033[0m [DRY RUN] Small region file: %s (%d bytes)\n", $2, $1
+        }
+      }
+      END { print count + 0 > stats_file }
+    '
+    read -r small_count < "$stats_file"
+    rm -f "$stats_file"
     local after=$(get_dir_size "$region_dir")
     total_after=$((total_after + after))
     if [[ $small_count -gt 0 ]]; then
