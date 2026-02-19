@@ -134,7 +134,8 @@ clean_player_data(){
   print_header "Player Data Cleanup"
   print_info "Removing player data older than ${days} days..."
   local count=0 total_size=0
-  local stats_file; stats_file=$(mktemp)
+  local stats_file
+  stats_file=$(mktemp)
 
   if [[ $DRY_RUN == "true" ]]; then
     # In dry run, we print messages and calculate stats
@@ -207,7 +208,8 @@ clean_statistics(){
   print_header "Statistics Cleanup"
   print_info "Removing statistics older than ${days} days..."
   local count=0 total_size=0
-  local stats_file; stats_file=$(mktemp)
+  local stats_file
+  stats_file=$(mktemp)
   if [[ $DRY_RUN == "true" ]]; then
     find "${world_path}/stats" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null | \
     awk -v RS='\0' -v stats_file="$stats_file" -F'|' '
@@ -215,7 +217,7 @@ clean_statistics(){
       {
         size = $1 + 0; path = $2
         filename = path; sub(/.*\//, "", filename)
-        printf "\033[1;33m\342\206\222\033[0m [DRY RUN] Would remove: %s\n", filename
+        printf "\033[1;33m→\033[0m [DRY RUN] Would remove: %s\n", filename
         s += size; c++
       }
       END { print s, c > stats_file }
@@ -259,7 +261,8 @@ clean_advancements(){
   print_header "Advancements Cleanup"
   print_info "Removing advancements older than ${days} days..."
   local count=0 total_size=0
-  local stats_file; stats_file=$(mktemp)
+  local stats_file
+  stats_file=$(mktemp)
   if [[ $DRY_RUN == "true" ]]; then
     find "${world_path}/advancements" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null | \
     awk -v RS='\0' -v stats_file="$stats_file" -F'|' '
@@ -267,7 +270,7 @@ clean_advancements(){
       {
         size = $1 + 0; path = $2
         filename = path; sub(/.*\//, "", filename)
-        printf "\033[1;33m\342\206\222\033[0m [DRY RUN] Would remove: %s\n", filename
+        printf "\033[1;33m→\033[0m [DRY RUN] Would remove: %s\n", filename
         s += size; c++
       }
       END { print s, c > stats_file }
@@ -350,7 +353,8 @@ optimize_regions(){
     total_before=$((total_before + before))
     # Find and report small/potentially empty region files
     local small_count=0
-    local stats_file; stats_file=$(mktemp)
+    local stats_file
+    stats_file=$(mktemp)
     find "$region_dir" -name "*.mca" -type f -printf '%s|%f\0' 2>/dev/null | \
     awk -v RS='\0' -v dry_run="$DRY_RUN" -v stats_file="$stats_file" -F'|' '
       BEGIN { count = 0 }
@@ -358,7 +362,7 @@ optimize_regions(){
         count++
         if (dry_run == "true") {
           # Replicate print_info: \033[1;33m→\033[0m
-          printf "\033[1;33m\342\206\222\033[0m [DRY RUN] Small region file: %s (%d bytes)\n", $2, $1
+          printf "\033[1;33m→\033[0m [DRY RUN] Small region file: %s (%d bytes)\n", $2, $1
         }
       }
       END { print count + 0 > stats_file }
