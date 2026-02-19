@@ -152,8 +152,8 @@ clean_player_data(){
         filename = path
         sub(/.*\//, "", filename)
 
-        # Replicate print_info: \033[1;33m→\033[0m
-        printf "\033[1;33m→\033[0m [DRY RUN] Would remove: %s\n", filename
+        # Replicate print_info: \033[1;33m\342\206\222\033[0m
+        printf "\033[1;33m\342\206\222\033[0m [DRY RUN] Would remove: %s\n", filename
 
         s += size
         c++
@@ -217,7 +217,7 @@ clean_statistics(){
       {
         size = $1 + 0; path = $2
         filename = path; sub(/.*\//, "", filename)
-        printf "\033[1;33m→\033[0m [DRY RUN] Would remove: %s\n", filename
+        printf "\033[1;33m\342\206\222\033[0m [DRY RUN] Would remove: %s\n", filename
         s += size; c++
       }
       END { print s, c > stats_file }
@@ -270,7 +270,7 @@ clean_advancements(){
       {
         size = $1 + 0; path = $2
         filename = path; sub(/.*\//, "", filename)
-        printf "\033[1;33m→\033[0m [DRY RUN] Would remove: %s\n", filename
+        printf "\033[1;33m\342\206\222\033[0m [DRY RUN] Would remove: %s\n", filename
         s += size; c++
       }
       END { print s, c > stats_file }
@@ -361,8 +361,8 @@ optimize_regions(){
       $1 < 8192 {
         count++
         if (dry_run == "true") {
-          # Replicate print_info: \033[1;33m→\033[0m
-          printf "\033[1;33m→\033[0m [DRY RUN] Small region file: %s (%d bytes)\n", $2, $1
+          # Replicate print_info: \033[1;33m\342\206\222\033[0m
+          printf "\033[1;33m\342\206\222\033[0m [DRY RUN] Small region file: %s (%d bytes)\n", $2, $1
         }
       }
       END { print count + 0 > stats_file }
@@ -388,40 +388,42 @@ show_stats(){
   local -A path_labels=()
 
   for dimension_path in "$world_path" "${world_path}_nether" "${world_path}_the_end"; do
-    [[ ! -d $dimension_path ]] && continue
+    [[ ! -d "$dimension_path" ]] && continue
     local dim_name="${dimension_path##*/}"
 
     # Add dimension directories
+    local rel_region="" rel_entities="" rel_poi=""
     if [[ $dim_name == "world" ]]; then
-      [[ -d "${dimension_path}/region" ]] && { du_paths+=("${dimension_path}/region")
-      path_labels["${dimension_path}/region"]="${dim_name}:region"; }
-      [[ -d "${dimension_path}/entities" ]] && { du_paths+=("${dimension_path}/entities")
-      path_labels["${dimension_path}/entities"]="${dim_name}:entities"; }
-      [[ -d "${dimension_path}/poi" ]] && { du_paths+=("${dimension_path}/poi")
-      path_labels["${dimension_path}/poi"]="${dim_name}:poi"; }
+      rel_region="region"
+      rel_entities="entities"
+      rel_poi="poi"
     elif [[ $dim_name == "world_nether" ]]; then
-      [[ -d "${dimension_path}/DIM-1/region" ]] && { du_paths+=("${dimension_path}/DIM-1/region")
-      path_labels["${dimension_path}/DIM-1/region"]="${dim_name}:region"; }
-      [[ -d "${dimension_path}/DIM-1/entities" ]] && { du_paths+=("${dimension_path}/DIM-1/entities")
-      path_labels["${dimension_path}/DIM-1/entities"]="${dim_name}:entities"; }
-      [[ -d "${dimension_path}/DIM-1/poi" ]] && { du_paths+=("${dimension_path}/DIM-1/poi")
-      path_labels["${dimension_path}/DIM-1/poi"]="${dim_name}:poi"; }
+      rel_region="DIM-1/region"
+      rel_entities="DIM-1/entities"
+      rel_poi="DIM-1/poi"
     elif [[ $dim_name == "world_the_end" ]]; then
-      [[ -d "${dimension_path}/DIM1/region" ]] && { du_paths+=("${dimension_path}/DIM1/region")
-      path_labels["${dimension_path}/DIM1/region"]="${dim_name}:region"; }
-      [[ -d "${dimension_path}/DIM1/entities" ]] && { du_paths+=("${dimension_path}/DIM1/entities")
-      path_labels["${dimension_path}/DIM1/entities"]="${dim_name}:entities"; }
-      [[ -d "${dimension_path}/DIM1/poi" ]] && { du_paths+=("${dimension_path}/DIM1/poi")
-      path_labels["${dimension_path}/DIM1/poi"]="${dim_name}:poi"; }
+      rel_region="DIM1/region"
+      rel_entities="DIM1/entities"
+      rel_poi="DIM1/poi"
     fi
+
+    for sub in "$rel_region" "$rel_entities" "$rel_poi"; do
+      local p="${dimension_path}/${sub}"
+      if [[ -n $sub && -d $p ]]; then
+        du_paths+=("$p")
+        path_labels["$p"]="${dim_name}:${sub##*/}"
+      fi
+    done
   done
 
   # Add common paths
-  [[ -d "${world_path}/playerdata" ]] && { du_paths+=("${world_path}/playerdata")
-  path_labels["${world_path}/playerdata"]="playerdata"; }
-  [[ -d "${world_path}/stats" ]] && { du_paths+=("${world_path}/stats"); path_labels["${world_path}/stats"]="stats"; }
-  [[ -d "${world_path}/advancements" ]] && { du_paths+=("${world_path}/advancements")
-  path_labels["${world_path}/advancements"]="advancements"; }
+  for sub in "playerdata" "stats" "advancements"; do
+    local p="${world_path}/${sub}"
+    if [[ -d $p ]]; then
+      du_paths+=("$p")
+      path_labels["$p"]="$sub"
+    fi
+  done
   du_paths+=("$world_path")
   path_labels["$world_path"]="total"
 
