@@ -98,7 +98,7 @@ trap 'rm -f "$ASSET_INPUT_FILE"' EXIT
 done >>"$ASSET_INPUT_FILE"
 # Download missing assets with aria2c
 if [[ -f $ASSET_INPUT_FILE ]] && [[ -s $ASSET_INPUT_FILE ]]; then
-  if ! has_command aria2c; then
+  if ! has aria2c; then
     printf '  Warning: aria2c not found, assets download may be slow\n'
     "$JSON_PROC" -r '.objects[] | .hash' <"$ASSET_INDEX_FILE" | while read -r hash; do
       HASH_PREFIX="${hash:0:2}"

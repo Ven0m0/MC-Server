@@ -36,7 +36,8 @@ check_health(){
   # Check Log Activity (Hang detection)
   local log_file="${SCRIPT_DIR}/logs/latest.log"
   if [[ -f $log_file ]]; then
-    local last_log=$(stat -c %Y "$log_file" 2>/dev/null || echo 0)
+    local last_log
+    last_log=$(stat -c %Y "$log_file" 2>/dev/null || printf '0')
     local idle=$(($(printf '%(%s)T' -1) - last_log))
     if ((idle > 300)); then
       # If no logs for 5 mins, check network before killing

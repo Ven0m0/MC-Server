@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 # shellcheck enable=all shell=bash source-path=SCRIPTDIR
+set -euo pipefail
+shopt -s nullglob globstar
+export LC_ALL=C
+IFS=$'\n\t'
 s=${BASH_SOURCE[0]}
 [[ $s != /* ]] && s=$PWD/$s
 cd -P -- "${s%/*}/.."
@@ -104,7 +108,7 @@ setup_ferium(){
 
   # Create a profile for your server (e.g., Minecraft 1.20.1, Fabric)
   ferium profile create --name server-mods --game-version 1.21.5 --mod-loader fabric || \
-    print_warning "Profile creation failed (maybe exists?)"
+    print_info "Profile creation failed (maybe exists?)"
 
   local mods_file="docs/mods.txt"
   if [[ -f "$mods_file" ]]; then
@@ -120,10 +124,10 @@ setup_ferium(){
       [[ -z "$mod_name" ]] && continue
 
       print_info "Adding mod: $mod_name (from $line)"
-      ferium add "$mod_name" || print_warning "Failed to add $mod_name"
+      ferium add "$mod_name" || print_info "Failed to add $mod_name"
     done < "$mods_file"
   else
-    print_warning "$mods_file not found. Installing defaults."
+    print_info "$mods_file not found. Installing defaults."
     ferium add fabric-api
     ferium add lithium
   fi

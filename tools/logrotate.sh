@@ -78,14 +78,18 @@ compress_old(){
 # Clean old logs
 clean_old(){
   print_header "Cleaning logs older than ${MAX_LOG_AGE_DAYS} days"
-  local files=()
+  local count=0
   # Single find call for both directories
   while IFS= read -r -d '' log; do
     print_info "Deleting: ${log##*/}"
     rm -f "$log"
     ((count+=1))
   done < <(find "$LOGS_DIR" -maxdepth 1 -name "*.log" -type f -mtime +"$MAX_LOG_AGE_DAYS" -print0; find "$ARCHIVE_DIR" -name "*.log.gz" -type f -mtime +"$MAX_LOG_AGE_DAYS" -print0 2>/dev/null)
-  ((count > 0)) && print_success "Deleted $count files" || print_info "Nothing to clean"
+  if ((count > 0)); then
+    print_success "Deleted $count files"
+  else
+    print_info "Nothing to clean"
+  fi
 }
 
 # Limit archived logs
