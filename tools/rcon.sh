@@ -1,87 +1,88 @@
 #!/usr/bin/env bash
+# shellcheck enable=all shell=bash
+# rcon.sh: Pure Bash Minecraft RCON client
+# Usage: rcon.sh <host> <port> <password> <command>
+export LC_ALL=C
 
-rcon-command() {
-  HOST="$(echo "$1" | cut -d: -f1)"
-  PORT="$(echo "$1" | cut -d: -f2)"
-  PASSWORD="$(echo "$1" | cut -d: -f3-)"
-  COMMAND="$2"
-  reverse-hex-endian() {
-    # Given a 4-byte hex integer, reverse endianness
-    while read -r -d '' -N 8 INTEGER; do
-      if [ "${#INTEGER}" -eq 8 ]; then
-        echo "${INTEGER:6:2}${INTEGER:4:2}${INTEGER:2:2}${INTEGER:0:2}"
-      else
-        echo "$INTEGER"
-      fi
-    done
-  }
-  decode-hex-int() {
-    # decode little-endian hex integer
-    while read -r -d '' -N 8 INTEGER; do
-      BIG_ENDIAN_HEX=$(echo "$INTEGER" | reverse-hex-endian)
-      echo "$((16#$BIG_ENDIAN_HEX))"
-    done
-  }
-  stream-to-hex() { xxd -ps; }
-  hex-to-stream() { xxd -ps -r; }
-  encode-int() {
-    # Encode an integer as 4 bytes in little endian and return as hex
-    INT="$1"
-    # Source: https://stackoverflow.com/a/9955198
-    printf "%08x" "$INT" | sed -E 's/(..)(..)(..)(..)/\4\3\2\1/'
-  }
-  encode(){
-    # Encode a packet type and payload for the rcon protocol
-    TYPE="$1"
-    PAYLOAD="$2"
-    REQUEST_ID="$3"
-    PAYLOAD_LENGTH="${#PAYLOAD}"
-    TOTAL_LENGTH="$((4 + 4 + PAYLOAD_LENGTH + 1 + 1))"
-    OUTPUT=""
-    OUTPUT+=$(encode-int "$TOTAL_LENGTH")
-    OUTPUT+=$(encode-int "$REQUEST_ID")
-    OUTPUT+=$(encode-int "$TYPE")
-    OUTPUT+=$(echo -n "$PAYLOAD" | stream-to-hex)
-    OUTPUT+="0000"
-    echo -n "$OUTPUT" | hex-to-stream
-  }
-  read-response() {
-    # read next response packet and return the payload text
-    HEX_LENGTH=$(head -c4 <&3 | stream-to-hex | reverse-hex-endian)
-    LENGTH=$((16#$HEX_LENGTH))
-    RESPONSE_PAYLOAD=$(head -c $LENGTH <&3 | stream-to-hex)
-    echo -n "$RESPONSE_PAYLOAD"
-  }
-  response-request-id() { echo -n "${1:0:8}" | decode-hex-int; }
-  response-type() { echo -n "${1:8:8}" | decode-hex-int; }
-  response-payload() { echo -n "${1:16:-4}" | hex-to-stream; }
-  login(){
-    PASSWORD="$1"
-    encode 3 "$PASSWORD" 12 >&3
-    RESPONSE=$(read-response "$IN_PIPE")
-    RESPONSE_REQUEST_ID=$(response-request-id "$RESPONSE")
-    if [ "$RESPONSE_REQUEST_ID" -eq -1 ] || [ "$RESPONSE_REQUEST_ID" -eq 4294967295 ]; then
-      echo "Authentication failed: Wrong RCON password" 1>&2; return 1
+# Given a 4-byte hex string, reverse byte order (little→big endian)
+reverse_hex_endian() {
+  local INTEGER
+  while read -r -d '' -N 8 INTEGER; do
+    if [[ "${#INTEGER}" -eq 8 ]]; then
+      printf '%s' "${INTEGER:6:2}${INTEGER:4:2}${INTEGER:2:2}${INTEGER:0:2}"
+    else
+      printf '%s' "$INTEGER"
     fi
-  }
-  run-command() {
-    COMMAND="$1"
-    # encode 2 "$COMMAND" 13 >> "$OUT_PIPE"
-    encode 2 "$COMMAND" 13 >&3
-    RESPONSE=$(read-response "$IN_PIPE")
-    response-payload "$RESPONSE"
-  }
-  # Open a TCP socket
-  # Source: https://www.xmodulo.com/tcp-udp-socket-bash-shell.html
-  exec 3<>/dev/tcp/"$HOST"/"$PORT"
-  login "$PASSWORD" || return 1
-  run-command "$COMMAND"
-  # Close the socket
+  done
+}
+
+# Decode a little-endian 4-byte hex integer to decimal
+decode_hex_int() {
+  local INTEGER big_endian
+  while read -r -d '' -N 8 INTEGER; do
+    big_endian=$(printf '%s' "$INTEGER" | reverse_hex_endian)
+    printf '%d\n' "$((16#$big_endian))"
+  done
+}
+
+stream_to_hex() { xxd -ps; }
+hex_to_stream() { xxd -ps -r; }
+
+# Encode an integer as 4 bytes little-endian hex
+encode_int() {
+  # Source: https://stackoverflow.com/a/9955198
+  printf '%08x' "$1" | sed -E 's/(..)(..)(..)(..)/\4\3\2\1/'
+}
+
+# Encode an RCON packet and write to fd 3
+encode_packet() {
+  local type="$1" payload="$2" request_id="$3"
+  local plen total output
+  plen="${#payload}"
+  total="$((4 + 4 + plen + 1 + 1))"
+  output=""
+  output+=$(encode_int "$total")
+  output+=$(encode_int "$request_id")
+  output+=$(encode_int "$type")
+  output+=$(printf '%s' "$payload" | stream_to_hex)
+  output+="0000"
+  printf '%s' "$output" | hex_to_stream
+}
+
+# Read a single RCON response packet from fd 3
+read_response() {
+  local hex_len len payload
+  hex_len=$(head -c4 <&3 | stream_to_hex | reverse_hex_endian)
+  len=$((16#$hex_len))
+  payload=$(head -c "$len" <&3 | stream_to_hex)
+  printf '%s' "$payload"
+}
+
+resp_request_id() { printf '%s' "${1:0:8}"  | decode_hex_int; }
+resp_payload()    { printf '%s' "${1:16:-4}" | hex_to_stream; }
+
+# Authenticate; returns 1 on wrong password
+rcon_login() {
+  local password="$1" response rid
+  encode_packet 3 "$password" 12 >&3
+  response=$(read_response)
+  rid=$(resp_request_id "$response")
+  if [[ "$rid" -eq -1 ]] || [[ "$rid" -eq 4294967295 ]]; then
+    printf 'Authentication failed: Wrong RCON password\n' >&2
+    return 1
+  fi
+}
+
+# Open socket, login, send command, print response, close socket
+rcon_command() {
+  local host="$1" port="$2" password="$3" command="$4" response
+  exec 3<>"/dev/tcp/${host}/${port}"
+  rcon_login "$password" || { exec 3<&-; exec 3>&-; return 1; }
+  encode_packet 2 "$command" 13 >&3
+  response=$(read_response)
+  resp_payload "$response"
   exec 3<&-
   exec 3>&-
 }
-HOST="$1"
-PORT="$2"
-PASSWORD="$3"
-COMMAND="$4"
-rcon-command "$HOST:$PORT:$PASSWORD" "$COMMAND"
+
+rcon_command "$1" "$2" "$3" "$4"

@@ -32,11 +32,11 @@ WORLD_DIR="${SCRIPT_DIR}/world"
 download_chunk_cleaner(){
   [[ -f $CHUNK_CLEANER_BIN ]] && { print_info "ChunkCleaner already installed"; return 0; }
   print_info "Downloading ChunkCleaner v${CHUNK_CLEANER_VERSION}..."
-  if has_command curl; then
+  if has curl; then
     curl -L -o "$CHUNK_CLEANER_BIN" "$CHUNK_CLEANER_URL" || {
       print_error "Failed to download ChunkCleaner"; return 1
     }
-  elif has_command wget; then
+  elif has wget; then
     wget -q --show-progress -O "$CHUNK_CLEANER_BIN" "$CHUNK_CLEANER_URL" || {
       print_error "Failed to download ChunkCleaner"; return 1
     }

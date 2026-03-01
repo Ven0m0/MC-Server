@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
+# shellcheck enable=all shell=bash source-path=SCRIPTDIR
 # systemd-service.sh: Minecraft server systemd service management
 # Extracted from mcctl and modernized
+set -euo pipefail
+shopt -s nullglob globstar
+export LC_ALL=C
+IFS=$'\n\t'
 
 # Source common library
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -15,7 +20,7 @@ SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 create_service(){
   local start_script="${1:-${SCRIPT_DIR}/tools/server-start.sh}"
   local working_dir="${2:-${SCRIPT_DIR}}"
-  local run_user="${3:-${user}}"
+  local run_user="${3:-${USER}}"
 
   check_root || return 1
 
@@ -102,7 +107,7 @@ create_infrarust_service(){
   print_header "Setting up Infrarust Minecraft Proxy"
 
   # Install infrarust if not already installed
-  if ! has_command infrarust; then
+  if ! has infrarust; then
     print_info "Installing infrarust via cargo..."
     check_dependencies cargo || return 1
     cargo install --locked infrarust || {

@@ -27,7 +27,6 @@ detect_arch(){
     *) print_error "Unsupported architecture: $arch"; exit 1;;
   esac
 }
-has_command(){ has "$1"; }
 check_dependencies(){
   local missing=()
   for cmd in "$@"; do
@@ -139,12 +138,6 @@ format_size_bytes(){
   else
     printf '%dB' "$bytes"
   fi
-}
-# ============================================================================
-# SCRIPT DIRECTORY DETECTION
-# ============================================================================
-get_script_dir(){
-  printf '%s' "$(cd -- "$(dirname -- "${BASH_SOURCE[1]}")/.." && pwd)"
 }
 # ============================================================================
 # HEALTH CHECK FUNCTIONS
