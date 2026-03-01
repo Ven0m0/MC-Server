@@ -94,12 +94,8 @@ download_lazymc(){
   arch="$(detect_arch)"
   version="$1"
   print_header "Downloading lazymc v${version}"
-  local url_arch
-  case "$arch" in
-    x86_64) url_arch="x64" ;;
-    *) url_arch="$arch" ;;
-  esac
-  url="https://github.com/timvisee/lazymc/releases/download/v${version}/lazymc-v${version}-linux-${url_arch}"
+  local download_arch="${arch/x86_64/x64}"
+  url="https://github.com/timvisee/lazymc/releases/download/v${version}/lazymc-v${version}-linux-${download_arch}"
   target_file="${INSTALL_DIR}/lazymc"
   expected_checksum=$(get_checksum_for_arch "lazymc" "$arch")
   mkdir -p "$INSTALL_DIR"

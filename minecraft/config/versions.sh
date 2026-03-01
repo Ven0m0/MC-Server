@@ -6,8 +6,8 @@
 # ============================================================================
 # lazymc - Automatic server sleep/wake proxy
 LAZYMC_VERSION="0.2.11"
-LAZYMC_SHA256_X86_64="9332f3d39fc030cc38e95f636d901404dc1c0cbf41df809692f3951858d03606"  # Verified for v0.2.11
-LAZYMC_SHA256_AARCH64="a2b80b32e0b2825a44a1bf79cf1c0f01fba2bf3e12af09e426379091e2945202"  # Verified for v0.2.11
+LAZYMC_SHA256_X86_64="9332f3d39fc030cc38e95f636d901404dc1c0cbf41df809692f3951858d03606"
+LAZYMC_SHA256_AARCH64="a2b80b32e0b2825a44a1bf79cf1c0f01fba2bf3e12af09e426379091e2945202"
 
 # rustic - Backup tool
 RUSTIC_VERSION="0.19.1"
