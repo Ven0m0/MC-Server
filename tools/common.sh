@@ -176,7 +176,7 @@ detect_java(){
 # ROOT/SUDO CHECK FUNCTIONS
 # ============================================================================
 check_root(){
-  [[ $EUID -eq 0 ]] && return 0
+  [[ "$EUID" -eq 0 ]] && return 0
   has sudo && { print_info "Root access required. Using sudo..."; return 0; }
   print_error "Root access required but sudo not available"; return 1
 }
@@ -193,7 +193,13 @@ send_command(){
   fi
 }
 game_command(){
-  local cmd="$1" host="localhost" port="25575" pass=""
-  command -v mcrcon &>/dev/null || { print_error "mcrcon is not installed. Cannot send command."; return 1; }
-  mcrcon -H "$host" -P "$port" -p "$pass" -c "$cmd"
+  local cmd="$1" host="${RCON_HOST:-localhost}" port="${RCON_PORT:-25575}" pass="${RCON_PASSWORD:-}"
+  if has mcrcon; then
+    MCRCON_HOST="$host" MCRCON_PORT="$port" MCRCON_PASS="$pass" mcrcon -c "$cmd"
+  elif [[ -f "${s%/*}/rcon.sh" ]]; then
+    RCON_HOST="$host" RCON_PORT="$port" RCON_PASSWORD="$pass" "${s%/*}/rcon.sh" "" "" "" "$cmd"
+  else
+    print_error "Neither mcrcon nor rcon.sh found. Cannot send command."
+    return 1
+  fi
 }
