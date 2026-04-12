@@ -24,28 +24,24 @@ export RUSTIC_PASSWORD_FILE="$RUSTIC_PASS_FILE"
 # Initialize backup directories
 mkdir -p "${BACKUP_DIR}/worlds" "${BACKUP_DIR}/configs"
 
-# Shared AWK script for size formatting to avoid duplication
-# This handles: size|name (name can contain |)
-FORMAT_SIZE_AWK='
-  function format_size(bytes) {
-    if (bytes >= 1073741824) {
-      return sprintf("%d.%dG", bytes / 1073741824, (bytes % 1073741824) * 10 / 1073741824)
-    } else if (bytes >= 1048576) {
-      return sprintf("%d.%dM", bytes / 1048576, (bytes % 1048576) * 10 / 1048576)
-    } else if (bytes >= 1024) {
-      return sprintf("%d.%dK", bytes / 1024, (bytes % 1024) * 10 / 1024)
-    } else {
-      return sprintf("%dB", bytes)
-    }
+# Shared AWK script for parsing size|name rows; delegate size formatting to
+# format_size_bytes in tools/common.sh to avoid duplicating threshold logic.
+COMMON_SH_PATH="${SCRIPT_DIR}/tools/common.sh"
+FORMAT_SIZE_AWK="
+  function format_size(bytes, cmd, formatted) {
+    cmd = \"bash -lc 'source \\\"${COMMON_SH_PATH}\\\"; format_size_bytes \" bytes \"'\"
+    cmd | getline formatted
+    close(cmd)
+    return formatted
   }
   {
     # Handle filenames that might contain | by reconstructing the name from remaining fields
-    size=$1
-    name=$2
-    for(i=3; i<=NF; i++) name = name "|" $i
-    printf "  %s (%s)\n", name, format_size(size)
+    size=\$1
+    name=\$2
+    for (i = 3; i <= NF; i++) name = name \"|\" \$i
+    printf \"  %s (%s)\\n\", name, format_size(size)
   }
-'
+"
 
 # ----------------------------------------------------------------------------
 # RUSTIC FUNCTIONS
