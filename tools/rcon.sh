@@ -85,4 +85,4 @@ rcon_command() {
   exec 3>&-
 }
 
-rcon_command "$1" "$2" "$3" "$4"
+rcon_command "${1:-${RCON_HOST:-localhost}}" "${2:-${RCON_PORT:-25575}}" "${3:-${RCON_PASSWORD:-}}" "$4"
