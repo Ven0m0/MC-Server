@@ -307,10 +307,7 @@ delete_btrfs_snapshot(){
     print_info "Cancelled"
     return 0
   }
-  btrfs_cmd subvolume delete "$snapshot_path" || {
-    print_error "Failed to delete snapshot (root access required)"
-    return 1
-  }
+  btrfs_cmd subvolume delete "$snapshot_path" || return 1
   print_success "Snapshot deleted"
 }
 # Restore Btrfs snapshot
