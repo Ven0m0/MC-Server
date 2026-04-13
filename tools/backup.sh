@@ -23,6 +23,26 @@ export RUSTIC_REPOSITORY="$RUSTIC_REPO"
 export RUSTIC_PASSWORD_FILE="$RUSTIC_PASS_FILE"
 # Initialize backup directories
 mkdir -p "${BACKUP_DIR}/worlds" "${BACKUP_DIR}/configs"
+
+# Shared AWK script for parsing size|name rows; delegate size formatting to
+# format_size_bytes in tools/common.sh to avoid duplicating threshold logic.
+COMMON_SH_PATH="${SCRIPT_DIR}/tools/common.sh"
+FORMAT_SIZE_AWK="
+  function format_size(bytes, cmd, formatted) {
+    cmd = \"bash -lc 'source \\\"${COMMON_SH_PATH}\\\"; format_size_bytes \" bytes \"'\"
+    cmd | getline formatted
+    close(cmd)
+    return formatted
+  }
+  {
+    # Handle filenames that might contain | by reconstructing the name from remaining fields
+    size=\$1
+    name=\$2
+    for (i = 3; i <= NF; i++) name = name \"|\" \$i
+    printf \"  %s (%s)\\n\", name, format_size(size)
+  }
+"
+
 # ----------------------------------------------------------------------------
 # RUSTIC FUNCTIONS
 # ----------------------------------------------------------------------------
@@ -192,19 +212,13 @@ list_backups(){
   print_header "Available Tar Backups"
   printf '\n'
   printf 'World Backups:\n'
-  # Use -printf for efficiency instead of calling du in a loop
-  while IFS='|' read -r size_bytes name; do
-    local size
-    size=$(format_size_bytes "$size_bytes")
-    printf '  %s (%s)\n' "$name" "$size"
-  done < <(find "${BACKUP_DIR}/worlds" -name "*.tar.gz" -type f -printf '%s|%f\n' 2>/dev/null | sort -t'|' -k1 -rn | head -10)
+  # Use awk for efficiency instead of calling format_size_bytes in a loop
+  find "${BACKUP_DIR}/worlds" -name "*.tar.gz" -type f -printf '%s|%f\n' 2>/dev/null |
+    sort -t'|' -k1 -rn | head -10 | awk -F'|' "$FORMAT_SIZE_AWK"
   printf '\n'
   printf 'Config Backups:\n'
-  while IFS='|' read -r size_bytes name; do
-    local size
-    size=$(format_size_bytes "$size_bytes")
-    printf '  %s (%s)\n' "$name" "$size"
-  done < <(find "${BACKUP_DIR}/configs" -name "*.tar.gz" -type f -printf '%s|%f\n' 2>/dev/null | sort -t'|' -k1 -rn | head -10)
+  find "${BACKUP_DIR}/configs" -name "*.tar.gz" -type f -printf '%s|%f\n' 2>/dev/null |
+    sort -t'|' -k1 -rn | head -10 | awk -F'|' "$FORMAT_SIZE_AWK"
   if [[ -d "$RUSTIC_REPO" ]]; then
     printf '\n'
     print_header "Rustic Snapshots"
