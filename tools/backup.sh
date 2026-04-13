@@ -250,6 +250,18 @@ is_btrfs(){
   local path="${1:-${SCRIPT_DIR}}"
   [[ $(stat -f -c %T "$path" 2>/dev/null) == "btrfs" ]]
 }
+# Wrapper for btrfs command with sudo if needed
+btrfs_cmd(){
+  has btrfs || {
+    print_error "btrfs command not found"
+    return 1
+  }
+  if [[ $EUID -eq 0 ]]; then
+    btrfs "$@"
+  else
+    sudo btrfs "$@"
+  fi
+}
 # Create Btrfs snapshot
 create_btrfs_snapshot(){
   local source="${1:-${SCRIPT_DIR}/world}"
@@ -263,22 +275,11 @@ create_btrfs_snapshot(){
     print_info "Use regular backup instead"
     return 1
   }
-  command -v btrfs &>/dev/null || {
-    print_error "btrfs command not found"
-    return 1
-  }
   local snapshot_dir="${BACKUP_DIR}/btrfs-snapshots"
   mkdir -p "$snapshot_dir"
   local snapshot_path="${snapshot_dir}/${snapshot_name}"
   print_info "Creating Btrfs snapshot: ${snapshot_name}"
-  if [[ $EUID -eq 0 ]]; then
-    btrfs subvolume snapshot -r "$source" "$snapshot_path"
-  else
-    sudo btrfs subvolume snapshot -r "$source" "$snapshot_path" || {
-      print_error "Failed to create snapshot (root access required)"
-      return 1
-    }
-  fi
+  btrfs_cmd subvolume snapshot -r "$source" "$snapshot_path" || return 1
   print_success "Btrfs snapshot created: ${snapshot_path}"
 }
 # List Btrfs snapshots
@@ -314,24 +315,13 @@ delete_btrfs_snapshot(){
     print_error "Snapshot not found: ${snapshot_name}"
     return 1
   }
-  command -v btrfs &>/dev/null || {
-    print_error "btrfs command not found"
-    return 1
-  }
   print_info "Deleting Btrfs snapshot: ${snapshot_name}"
   read -r -p "Continue? (yes/no): " confirm
   [[ $confirm != "yes" ]] && {
     print_info "Cancelled"
     return 0
   }
-  if [[ $EUID -eq 0 ]]; then
-    btrfs subvolume delete "$snapshot_path"
-  else
-    sudo btrfs subvolume delete "$snapshot_path" || {
-      print_error "Failed to delete snapshot (root access required)"
-      return 1
-    }
-  fi
+  btrfs_cmd subvolume delete "$snapshot_path" || return 1
   print_success "Snapshot deleted"
 }
 # Restore Btrfs snapshot
@@ -342,10 +332,6 @@ restore_btrfs_snapshot(){
   local snapshot_path="${snapshot_dir}/${snapshot_name}"
   [[ ! -d $snapshot_path ]] && {
     print_error "Snapshot not found: ${snapshot_name}"
-    return 1
-  }
-  command -v btrfs &>/dev/null || {
-    print_error "btrfs command not found"
     return 1
   }
   print_info "Restoring Btrfs snapshot: ${snapshot_name} -> ${target}"
@@ -361,14 +347,7 @@ restore_btrfs_snapshot(){
     mv "$target" "$backup_name"
   }
   # Create new snapshot from read-only snapshot
-  if [[ $EUID -eq 0 ]]; then
-    btrfs subvolume snapshot "$snapshot_path" "$target"
-  else
-    sudo btrfs subvolume snapshot "$snapshot_path" "$target" || {
-      print_error "Failed to restore snapshot (root access required)"
-      return 1
-    }
-  fi
+  btrfs_cmd subvolume snapshot "$snapshot_path" "$target" || return 1
   print_success "Snapshot restored"
 }
 
