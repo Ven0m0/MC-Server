@@ -333,10 +333,7 @@ restore_btrfs_snapshot(){
     mv "$target" "$backup_name"
   }
   # Create new snapshot from read-only snapshot
-  btrfs_cmd subvolume snapshot "$snapshot_path" "$target" || {
-    print_error "Failed to restore snapshot (root access required)"
-    return 1
-  }
+  btrfs_cmd subvolume snapshot "$snapshot_path" "$target" || return 1
   print_success "Snapshot restored"
 }
 
