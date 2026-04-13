@@ -238,7 +238,7 @@ is_btrfs(){
 }
 # Wrapper for btrfs command with sudo if needed
 btrfs_cmd(){
-  command -v btrfs &>/dev/null || {
+  has btrfs || {
     print_error "btrfs command not found"
     return 1
   }
