@@ -265,10 +265,7 @@ create_btrfs_snapshot(){
   mkdir -p "$snapshot_dir"
   local snapshot_path="${snapshot_dir}/${snapshot_name}"
   print_info "Creating Btrfs snapshot: ${snapshot_name}"
-  btrfs_cmd subvolume snapshot -r "$source" "$snapshot_path" || {
-    print_error "Failed to create snapshot (root access required)"
-    return 1
-  }
+  btrfs_cmd subvolume snapshot -r "$source" "$snapshot_path" || return 1
   print_success "Btrfs snapshot created: ${snapshot_path}"
 }
 # List Btrfs snapshots
