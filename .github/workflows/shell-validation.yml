@@ -1,0 +1,50 @@
+name: Shell validation
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - tools/**/*.sh
+      - minecraft/config/versions.sh
+      - .editorconfig
+      - .shellcheckrc
+      - .github/workflows/shell-validation.yml
+  pull_request:
+    paths:
+      - tools/**/*.sh
+      - minecraft/config/versions.sh
+      - .editorconfig
+      - .shellcheckrc
+      - .github/workflows/shell-validation.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shellcheck:
+    name: Bash syntax and lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install shell tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck shfmt
+
+      - name: Run Bash syntax checks
+        run: |
+          bash -n tools/*.sh minecraft/config/versions.sh
+
+      - name: Run ShellCheck
+        run: |
+          shellcheck tools/*.sh minecraft/config/versions.sh
+
+      - name: Check formatting
+        run: |
+          shfmt -d -i 2 -bn tools/*.sh minecraft/config/versions.sh

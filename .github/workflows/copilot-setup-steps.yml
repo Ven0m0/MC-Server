@@ -1,0 +1,57 @@
+name: Copilot setup steps
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  setup:
+    name: Prepare Copilot workspace
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cargo \
+            curl \
+            jq \
+            netcat-openbsd \
+            openjdk-21-jdk-headless \
+            rustc \
+            screen \
+            shellcheck \
+            shfmt \
+            unzip \
+            wget
+
+      - name: Install mise
+        run: |
+          curl https://mise.run | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Install repo-managed tools
+        run: |
+          "$HOME/.local/bin/mise" install
+
+      - name: Verify core tooling
+        run: |
+          java -version
+          shellcheck --version
+          shfmt --version
+          "$HOME/.local/bin/mise" --version
