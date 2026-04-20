@@ -487,7 +487,7 @@ mise upgrade
 - Minecraft version: `server.toml` (mcman config)
 - Fabric Loader: `server.toml`
 - Java: `mise.toml` (optional)
-- Mods: Ferium profile (`minecraft/config/cesium.json`)
+- Mods: Ferium profile (created locally by `./tools/mod-updates.sh setup-ferium`)
 
 ---
 
@@ -637,7 +637,7 @@ for f in tools/*.sh; do bash -n "$f" || echo "Error in $f"; done
 **Adding New Scripts:**
 ```bash
 # 1. Create script in tools/
-cat > tools/mc-client.sh << 'EOF'
+cat > tools/new-script.sh << 'EOF'
 #!/usr/bin/env bash
 # shellcheck enable=all shell=bash source-path=SCRIPTDIR
 set -euo pipefail
@@ -652,13 +652,13 @@ main "$@"
 EOF
 
 # 2. Make executable
-chmod +x tools/mc-client.sh
+chmod +x tools/new-script.sh
 
 # 3. Test syntax
-bash -n tools/mc-client.sh
+bash -n tools/new-script.sh
 
 # 4. Run ShellCheck
-shellcheck tools/mc-client.sh
+shellcheck tools/new-script.sh
 
 # 5. Document in README.md
 ```
@@ -675,7 +675,7 @@ shellcheck tools/mc-client.sh
 | `mise.toml` | TOML | Tool installation and versioning |
 | `server.toml` | TOML | Minecraft server config (mcman) |
 | `minecraft/server.properties` | Properties | Java server settings |
-| `.config/rustic/rustic.toml` | TOML | Auto-sleep proxy config |
+| `.config/rustic/rustic.toml` | TOML | Rustic backup repository config |
 
 **Code Quality:**
 | File | Format | Purpose |
@@ -714,10 +714,9 @@ export BACKUP_DIR="/custom/path"
 # Max backups to keep (default: 7)
 export MAX_BACKUPS=14
 
-# RCON settings
+# RCON settings (set the password separately; do not commit it)
 export RCON_HOST="localhost"
 export RCON_PORT=25575
-# Configure the RCON password outside this guide (for example in `server.properties` or a local env file)
 ```
 
 **Proxy Configuration:**
