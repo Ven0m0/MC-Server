@@ -1,6 +1,6 @@
 # MC-Server Copilot bootstrap
 
-Start with `AGENTS.md`; it is the canonical repo-wide guide for this repository.
+Start with `AGENTS.md`; it is the canonical repo-wide guide for this repository. Precedence: direct user instructions, then this bootstrap, then any matching `.github/instructions/*.instructions.md`, then `AGENTS.md` for full detail.
 
 ## Repo at a glance
 
@@ -14,7 +14,7 @@ Start with `AGENTS.md`; it is the canonical repo-wide guide for this repository.
 - Prefer small edits to existing scripts and docs over adding new files.
 - Follow the Bash conventions in `AGENTS.md`: strict mode, quoted variables, `[[ ]]`, and 2-space indentation.
 - Reuse helpers from `tools/common.sh` for logging, dependency checks, downloads, and server detection.
-- Treat `minecraft/worlds`, `minecraft/backups`, and `minecraft/logs` as live data; do not modify them unless the task explicitly requires it.
+- Treat `minecraft/` as stateful server data. Avoid deleting or rewriting tracked backups and server artifacts unless the task explicitly requires it.
 
 ## Validation
 

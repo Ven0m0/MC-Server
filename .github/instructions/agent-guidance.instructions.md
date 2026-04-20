@@ -6,4 +6,4 @@ applyTo: "AGENTS.md,.github/copilot-instructions.md,.github/instructions/**/*.md
 - Keep `.github/copilot-instructions.md` short and point detailed guidance back to `AGENTS.md`.
 - Reference only commands, files, and workflows that exist in this repository.
 - Prefer narrow instructions and skills over copying repo-wide rules into every file.
-- Call out unsafe stateful paths when relevant: `minecraft/worlds`, `minecraft/backups`, and `minecraft/logs`.
+- Call out unsafe stateful paths when relevant, especially `minecraft/` and `minecraft/backups/`.

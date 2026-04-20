@@ -1,6 +1,6 @@
 ---
 name: validate
-description: Run the correct validation checks for changed files in this repository (ruff, biome, shellcheck, claudelint, pytest).
+description: Use when validating changed files in this repository with the narrowest relevant checks (ruff, biome, shellcheck, claudelint, pytest).
 allowed-tools: 'Read, Bash, Grep, Glob'
 ---
 
