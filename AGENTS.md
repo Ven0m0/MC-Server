@@ -714,7 +714,8 @@ export BACKUP_DIR="/custom/path"
 # Max backups to keep (default: 7)
 export MAX_BACKUPS=14
 
-# RCON settings (set the password separately; do not commit it)
+# RCON settings
+# Store the password in a local env file or secret manager; do not commit it.
 export RCON_HOST="localhost"
 export RCON_PORT=25575
 ```

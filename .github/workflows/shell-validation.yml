@@ -37,14 +37,25 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y shellcheck shfmt
 
+      - name: Collect shell files
+        id: shell-files
+        run: |
+          mapfile -t shell_files < <(find tools -type f -name '*.sh' | sort)
+          shell_files+=(minecraft/config/versions.sh)
+          [[ ${#shell_files[@]} -gt 0 ]]
+          printf '%s\n' "${shell_files[@]}" > /tmp/mc-server-shell-files.txt
+
       - name: Run Bash syntax checks
         run: |
-          bash -n tools/*.sh minecraft/config/versions.sh
+          mapfile -t shell_files < /tmp/mc-server-shell-files.txt
+          bash -n "${shell_files[@]}"
 
       - name: Run ShellCheck
         run: |
-          shellcheck tools/*.sh minecraft/config/versions.sh
+          mapfile -t shell_files < /tmp/mc-server-shell-files.txt
+          shellcheck "${shell_files[@]}"
 
       - name: Check formatting
         run: |
-          shfmt -d -i 2 -bn tools/*.sh minecraft/config/versions.sh
+          mapfile -t shell_files < /tmp/mc-server-shell-files.txt
+          shfmt -d -i 2 -bn "${shell_files[@]}"
