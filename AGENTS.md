@@ -61,14 +61,14 @@
 | **Ferium** | Minecraft mod manager | Auto-downloaded |
 | **Rustic** | Backup utility (Rust) | Via mise/cargo |
 | **PackSquash** | Resource pack optimizer | Via mise/cargo |
-| **ChunkCleaner** | World optimization | Via mise/ubi |
+| **ChunkCleaner** | World optimization | Via mise.toml |
 | **lazymc** | Auto-sleep proxy | Optional |
 | **Playit.gg/Infrarust** | Public tunneling | Optional |
 
 ### CI/CD & Quality Assurance
 
 - **GitHub Actions** - Automated workflows for linting, image optimization, dependency updates
-- **MegaLinter** - Multi-language linting (Bash, YAML, JSON, Markdown)
+- **Shell validation** - Bash syntax, ShellCheck, and shfmt checks via GitHub Actions
 - **ShellCheck** - Bash script static analysis
 - **Dependabot** - Automated dependency updates
 - **PackSquash** - Resource pack validation and optimization
@@ -81,87 +81,88 @@
 
 ```
 MC-Server/
-├── @tools/                          # Server management scripts (13 files)
-│   ├── @backup.sh                   # Backup creation/restoration (tar, rustic, btrfs)
-│   ├── @common.sh                   # Shared utility functions (logging, colors)
-│   ├── @logrotate.sh                # Log file rotation and maintenance
-│   ├── @mc-client.sh                # Minecraft server console interface
-│   ├── @mod-updates.sh              # Fabric installation and mod updates
-│   ├── @monitor.sh                  # Server health monitoring and metrics
-│   ├── @prepare.sh                  # Initial server setup (EULA, directories)
-│   ├── @rcon.sh                     # RCON client for remote commands
-│   ├── @server-start.sh             # Server startup with JVM optimization
-│   ├── @systemd-service.sh          # Systemd service creation and management
-│   ├── @watchdog.sh                 # Auto-restart on crashes
-│   ├── @world-optimize.sh           # World pruning and optimization
+├── tools/                           # Server management scripts
+│   ├── backup.sh                    # Backup creation/restoration (tar, rustic, btrfs)
+│   ├── common.sh                    # Shared utility functions (logging, colors)
+│   ├── logrotate.sh                 # Log file rotation and maintenance
+│   ├── mc-client.sh                 # Minecraft client and console helper
+│   ├── mod-updates.sh               # Fabric installation and mod updates
+│   ├── monitor.sh                   # Server health monitoring and metrics
+│   ├── prepare.sh                   # Initial server setup (EULA, directories)
+│   ├── rcon.sh                      # RCON client for remote commands
+│   ├── server-start.sh              # Server startup with JVM optimization
+│   ├── systemd-service.sh           # Systemd service creation and management
+│   ├── watchdog.sh                  # Auto-restart on crashes
+│   ├── world-optimize.sh            # World pruning and optimization
 │   └── systemd/                     # Systemd unit templates
-│       ├── minecraft@.service       # Main server service template
-│       ├── minecraft@.socket        # Socket activation template
-│       ├── minecraft-backup.service # Backup automation service
-│       └── minecraft.sudoers        # Sudo permissions config
+│       ├── mc-server@.service
+│       ├── minecraft-backup-new@.service
+│       ├── minecraft-backup.service
+│       ├── minecraft@.service
+│       ├── minecraft@.socket
+│       └── minecraft.sudoers
 │
-├── minecraft/                       # Minecraft server data
-│   ├── backups/                     # Backup storage
-│   │   ├── worlds/                  # Tar archives of worlds
-│   │   ├── configs/                 # Configuration backups
-│   │   ├── rustic/                  # Rustic deduplicated backups
-│   │   └── btrfs-snapshots/         # Btrfs COW snapshots
-│   ├── config/                      # Mod and plugin configurations
-│   │   ├── servercore/              # ServerCore optimization configs
-│   │   ├── Geyser-Fabric/           # GeyserMC Bedrock bridge
-│   │   ├── floodgate/               # Floodgate authentication
-│   │   └── [20+ mod configs]
-│   ├── mods/                        # Fabric mod JAR files
-│   ├── worlds/                      # World data directories
-│   └── logs/                        # Server and mod logs
+├── minecraft/                       # Server config, backups, and metadata tracked in git
+│   ├── backups/
+│   │   └── README.md
+│   ├── config/
+│   │   ├── Geyser-Fabric/
+│   │   ├── floodgate/
+│   │   ├── servercore/
+│   │   └── versions.sh
+│   ├── packsquash.toml
+│   └── server.properties
 │
-├── @docs/                           # Documentation
-│   ├── @SETUP.md                    # Comprehensive setup guide
-│   ├── @TROUBLESHOOTING.md          # Common issues and solutions
-│   ├── @HOSTING.md                  # Public hosting configuration
-│   ├── Flags.txt                    # JVM optimization flags reference
-│   ├── mods.txt                     # Complete installed mod list
-│   └── mods-links.txt               # Mod download links
+├── docs/                            # Setup, hosting, and troubleshooting guides
+│   ├── SETUP.md
+│   ├── TROUBLESHOOTING.md
+│   ├── HOSTING.md
+│   ├── Flags.txt
+│   ├── mods.txt
+│   └── mods-links.txt
 │
-├── .github/                         # GitHub configuration
-│   ├── workflows/                   # CI/CD pipelines
-│   │   ├── @mega-linter.yml         # Code quality automation
-│   │   ├── image-optimization.yml   # Image compression
-│   │   ├── packsquash.yml           # Resource pack optimization
-│   │   └── automerge-dependabot.yml # Automated dependency merging
-│   ├── instructions/                # AI assistant context files
-│   │   ├── claude.md                # Claude-specific instructions
-│   │   ├── gemini.md                # Gemini-specific instructions
-│   │   └── copilot.md               # GitHub Copilot rules
-│   └── dependabot.yml               # Dependency update configuration
+├── .github/                         # GitHub automation and Copilot guidance
+│   ├── workflows/
+│   │   ├── copilot-setup-steps.yml
+│   │   ├── image-optimization.yml
+│   │   ├── packsquash.yml
+│   │   └── shell-validation.yml
+│   ├── instructions/
+│   │   ├── agent-guidance.instructions.md
+│   │   ├── shell-tools.instructions.md
+│   │   └── workflows.instructions.md
+│   ├── skills/
+│   │   ├── copilot-init/
+│   │   ├── maintain-shell-tools/
+│   │   └── validate/
+│   └── dependabot.yml
 │
-├── .config/                         # Application configurations
-│   └── lazymc/                      # Lazymc proxy settings
+├── .config/
+│   └── rustic/
 │
-├── @README.md                       # Main project documentation (539 lines)
-├── @TODO.md                         # Development roadmap and feature backlog
-├── @CREDITS.md                      # Third-party component attribution
-├── @mise.toml                       # Tool versioning and installation
-├── @server.toml                     # Minecraft server configuration (mcman)
-├── @.editorconfig                   # Code formatting standards
-├── @.megalinter.yml                 # Linting configuration
-├── @.shellcheckrc                   # Bash linting rules
-├── @.gitignore                      # Git exclusions
-└── @.gitattributes                  # Git file handling
+├── README.md
+├── TODO.md
+├── CREDITS.md
+├── mise.toml
+├── server.toml
+├── .editorconfig
+├── .shellcheckrc
+├── .gitignore
+└── .gitattributes
 ```
 
 ### Key File Purposes
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `@tools/server-start.sh` | ~300 | Main server launcher with JVM optimization |
-| `@tools/backup.sh` | ~400 | Multi-strategy backup and restore |
-| `@tools/monitor.sh` | ~350 | Health monitoring and metrics |
-| `@tools/mod-updates.sh` | ~250 | Fabric and mod management |
-| `@tools/common.sh` | ~150 | Shared utility library |
-| `@README.md` | 539 | Complete project documentation |
-| `@docs/SETUP.md` | ~150 | Step-by-step setup guide |
-| `@.megalinter.yml` | ~100 | Comprehensive linting config |
+| `tools/server-start.sh` | ~300 | Main server launcher with JVM optimization |
+| `tools/backup.sh` | ~400 | Multi-strategy backup and restore |
+| `tools/monitor.sh` | ~350 | Health monitoring and metrics |
+| `tools/mod-updates.sh` | ~250 | Fabric and mod management |
+| `tools/common.sh` | ~150 | Shared utility library |
+| `README.md` | 539 | Complete project documentation |
+| `docs/SETUP.md` | ~150 | Step-by-step setup guide |
+| `.github/workflows/shell-validation.yml` | ~100 | Comprehensive linting config |
 
 ---
 
@@ -214,9 +215,9 @@ mise install
 
 **JVM Optimization:**
 - Server automatically detects JVM type (GraalVM vs. standard JDK)
-- Applies optimized flags from `@docs/Flags.txt`
+- Applies optimized flags from `docs/Flags.txt`
 - Configures G1GC, huge pages, GameMode integration
-- See `@tools/server-start.sh:150-250` for flag logic
+- See `tools/server-start.sh:150-250` for flag logic
 
 ### Testing
 
@@ -230,7 +231,7 @@ mise install
 - Resource pack validation
 
 # Local testing
-mega-linter --flavor bash  # Run MegaLinter locally
+bash -n tools/*.sh && shellcheck tools/*.sh  # Run MegaLinter locally
 shellcheck tools/*.sh      # Check Bash scripts
 ```
 
@@ -317,7 +318,7 @@ main() {
 main "$@"
 ```
 
-**Formatting Rules (from `@.editorconfig`):**
+**Formatting Rules (from `.editorconfig`):**
 | Rule | Value |
 |------|-------|
 | **Indentation** | 2 spaces (never tabs) |
@@ -377,7 +378,7 @@ result=`command`  # WRONG - use $() instead
 rm -rf $dir/*  # WRONG - use "$dir"
 ```
 
-**Output Functions (from `@tools/common.sh`):**
+**Output Functions (from `tools/common.sh`):**
 ```bash
 print_header "Installing Fabric"     # Blue "==> Installing Fabric"
 print_success "Server started"       # Green "✓ Server started"
@@ -402,7 +403,7 @@ trap 'cleanup_function' EXIT
 
 ### ShellCheck Compliance
 
-**Enabled Rules (from `@.shellcheckrc`):**
+**Enabled Rules (from `.shellcheckrc`):**
 ```bash
 # All rules enabled by default
 enable=all
@@ -438,7 +439,7 @@ shell=bash
 
 ### External Tools (Auto-Installed)
 
-**Via mise (`@mise.toml`):**
+**Via mise (`mise.toml`):**
 ```toml
 [tools]
 "cargo:https://github.com/ComunidadAylas/PackSquash" = "latest"
@@ -466,7 +467,7 @@ shell=bash
 - GeyserMC - Bedrock/Java bridge
 - Floodgate - Bedrock authentication
 
-**Full list:** See `@docs/mods.txt` (50+ mods)
+**Full list:** See `docs/mods.txt` (50+ mods)
 
 ### Dependency Management
 
@@ -483,10 +484,10 @@ mise upgrade
 ```
 
 **Version Pinning:**
-- Minecraft version: `@server.toml` (mcman config)
-- Fabric Loader: `@server.toml`
+- Minecraft version: `server.toml` (mcman config)
+- Fabric Loader: `server.toml`
 - Java: `mise.toml` (optional)
-- Mods: Ferium profile (`minecraft/config/ferium.json`)
+- Mods: Ferium profile (created locally by `./tools/mod-updates.sh setup-ferium`)
 
 ---
 
@@ -612,7 +613,7 @@ cd minecraft/mods && wget https://example.com/mod.jar
 **Linting & Formatting:**
 ```bash
 # Run MegaLinter on all files
-mega-linter --flavor bash
+bash -n tools/*.sh && shellcheck tools/*.sh
 
 # Check specific script
 shellcheck tools/backup.sh
@@ -671,18 +672,18 @@ shellcheck tools/new-script.sh
 **Server Management:**
 | File | Format | Purpose |
 |------|--------|---------|
-| `@mise.toml` | TOML | Tool installation and versioning |
-| `@server.toml` | TOML | Minecraft server config (mcman) |
+| `mise.toml` | TOML | Tool installation and versioning |
+| `server.toml` | TOML | Minecraft server config (mcman) |
 | `minecraft/server.properties` | Properties | Java server settings |
-| `.config/lazymc/lazymc.toml` | TOML | Auto-sleep proxy config |
+| `.config/rustic/rustic.toml` | TOML | Rustic backup repository config |
 
 **Code Quality:**
 | File | Format | Purpose |
 |------|--------|---------|
-| `@.editorconfig` | INI | Universal editor settings |
-| `@.megalinter.yml` | YAML | Multi-language linting |
-| `@.shellcheckrc` | RC | Bash linting rules |
-| `.github/workflows/mega-linter.yml` | YAML | CI linting automation |
+| `.editorconfig` | INI | Universal editor settings |
+| `.github/workflows/shell-validation.yml` | YAML | Multi-language linting |
+| `.shellcheckrc` | RC | Bash linting rules |
+| `.github/workflows/packsquash.yml` | YAML | CI linting automation |
 
 **Mod Configurations:**
 | Path | Files | Purpose |
@@ -714,9 +715,9 @@ export BACKUP_DIR="/custom/path"
 export MAX_BACKUPS=14
 
 # RCON settings
+# Set RCON_PASSWORD in a gitignored env file, service override, or local shell before using RCON tooling.
 export RCON_HOST="localhost"
 export RCON_PORT=25575
-export RCON_PASSWORD="password"
 ```
 
 **Proxy Configuration:**
@@ -757,7 +758,7 @@ export DRY_RUN=true
 ### When Answering Questions
 
 1. **Reference specific files** - Use `@filename:line` format
-2. **Check documentation first** - Review `@README.md`, `@docs/SETUP.md`
+2. **Check documentation first** - Review `README.md`, `docs/SETUP.md`
 3. **Provide context** - Explain why, not just what
 4. **Include examples** - Show actual commands from the codebase
 5. **Link to sources** - Reference relevant files and line numbers
@@ -766,7 +767,7 @@ export DRY_RUN=true
 
 1. **Read TODO.md** - Check if feature is already planned
 2. **Follow existing patterns** - Look at similar implementations
-3. **Update documentation** - Modify `@README.md` if needed
+3. **Update documentation** - Modify `README.md` if needed
 4. **Add to TODO.md** - Document future enhancements
 5. **Test thoroughly** - Verify syntax and logic
 
@@ -803,11 +804,11 @@ JVM flags are documented in docs/Flags.txt:10-30
 ### Contributing
 
 **Before Submitting PRs:**
-1. Run `mega-linter --flavor bash` locally
+1. Run `bash -n tools/*.sh && shellcheck tools/*.sh` locally
 2. Ensure all scripts pass `shellcheck`
 3. Test changes manually
-4. Update `@README.md` if adding features
-5. Add entry to `@TODO.md` if applicable
+4. Update `README.md` if adding features
+5. Add entry to `TODO.md` if applicable
 6. Check `.github/workflows/` for CI requirements
 
 **Commit Message Format:**
@@ -825,10 +826,10 @@ chore: Update dependencies via Dependabot
 **Common Issues:**
 | Problem | Solution | Reference |
 |---------|----------|-----------|
-| Server won't start | Check Java version, EULA acceptance | `@docs/TROUBLESHOOTING.md` |
+| Server won't start | Check Java version, EULA acceptance | `docs/TROUBLESHOOTING.md` |
 | Backup fails | Verify disk space, permissions | `tools/backup.sh` logs |
-| Mods not loading | Check Fabric version compatibility | `@docs/mods.txt` |
-| RCON timeout | Verify port, password in `server.properties` | `@docs/SETUP.md` |
+| Mods not loading | Check Fabric version compatibility | `docs/mods.txt` |
+| RCON timeout | Verify port, password in `server.properties` | `docs/SETUP.md` |
 
 **Debug Mode:**
 ```bash
@@ -844,10 +845,10 @@ journalctl -u minecraft@default -f
 ```
 
 **Getting Help:**
-- Review `@README.md` - Comprehensive feature documentation
-- Check `@docs/SETUP.md` - Step-by-step setup guide
-- Read `@docs/TROUBLESHOOTING.md` - Common issues and solutions
-- Examine `@TODO.md` - Known issues and planned features
+- Review `README.md` - Comprehensive feature documentation
+- Check `docs/SETUP.md` - Step-by-step setup guide
+- Read `docs/TROUBLESHOOTING.md` - Common issues and solutions
+- Examine `TODO.md` - Known issues and planned features
 - Check GitHub Issues - Community discussions
 
 ---
@@ -867,18 +868,18 @@ journalctl -u minecraft@default -f
 ```
 
 **Key Files:**
-- `@tools/server-start.sh` - Server launcher
-- `@tools/backup.sh` - Backup/restore
-- `@tools/monitor.sh` - Health monitoring
-- `@README.md` - Main documentation
-- `@server.toml` - Server configuration
+- `tools/server-start.sh` - Server launcher
+- `tools/backup.sh` - Backup/restore
+- `tools/monitor.sh` - Health monitoring
+- `README.md` - Main documentation
+- `server.toml` - Server configuration
 
 **Documentation:**
-- Setup: `@docs/SETUP.md`
-- Troubleshooting: `@docs/TROUBLESHOOTING.md`
-- Hosting: `@docs/HOSTING.md`
-- JVM Flags: `@docs/Flags.txt`
-- Mod List: `@docs/mods.txt`
+- Setup: `docs/SETUP.md`
+- Troubleshooting: `docs/TROUBLESHOOTING.md`
+- Hosting: `docs/HOSTING.md`
+- JVM Flags: `docs/Flags.txt`
+- Mod List: `docs/mods.txt`
 
 ---
 
