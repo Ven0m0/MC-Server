@@ -1,6 +1,12 @@
 # MC-Server Copilot bootstrap
 
-Start with `AGENTS.md`; it is the canonical repo-wide guide for this repository. Precedence: direct user instructions, then this bootstrap, then any matching `.github/instructions/*.instructions.md` file for the file paths covered by its `applyTo` pattern, then `AGENTS.md` for full detail.
+Start with `AGENTS.md`; it is the canonical repo-wide guide for this repository.
+
+**Precedence order:**
+1. Direct user instructions
+2. This bootstrap file
+3. Matching `.github/instructions/*.instructions.md` files for the paths covered by their `applyTo` patterns
+4. `AGENTS.md` for full repo detail
 
 ## Repo at a glance
 

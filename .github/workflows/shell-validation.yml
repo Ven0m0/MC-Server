@@ -42,7 +42,7 @@ jobs:
         run: |
           mapfile -d '' -t shell_files < <(find tools -maxdepth 1 -type f -name '*.sh' -print0 | sort -z)
           # versions.sh is the only tracked shell helper outside tools/ that this repo validates.
-          shell_files+=(minecraft/config/versions.sh)
+          [[ -f minecraft/config/versions.sh ]] && shell_files+=(minecraft/config/versions.sh)
           [[ ${#shell_files[@]} -gt 0 ]]
           printf '%s\n' "${shell_files[@]}" > /tmp/mc-server-shell-files.txt
 

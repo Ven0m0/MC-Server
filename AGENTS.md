@@ -715,6 +715,7 @@ export BACKUP_DIR="/custom/path"
 export MAX_BACKUPS=14
 
 # RCON settings
+# Set RCON_PASSWORD in a gitignored env file, service override, or local shell before using RCON tooling.
 export RCON_HOST="localhost"
 export RCON_PORT=25575
 ```
