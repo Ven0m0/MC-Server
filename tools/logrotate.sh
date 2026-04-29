@@ -136,13 +136,15 @@ show_stats(){
       [[ -f "${LOGS_DIR}/${log}" ]] && active_logs+=("${LOGS_DIR}/${log}")
     done
     if [[ ${#active_logs[@]} -gt 0 ]]; then
-      # Single du call for all active logs
-      while IFS=$'\t' read -r s path; do
+      # Single du and wc call for all active logs
+      paste <(du -h "${active_logs[@]}" 2>/dev/null) <(wc -l "${active_logs[@]}" 2>/dev/null) | while IFS=$'\t' read -r s path lines_and_path; do
+        if [[ -z "$path" ]]; then continue; fi
         local log_name lines
         log_name=$(basename "$path")
-        lines=$(wc -l <"$path" 2>/dev/null || printf '0')
+        lines="${lines_and_path#"${lines_and_path%%[![:space:]]*}"}"
+        lines="${lines%% *}"
         printf '  %s: %s (%s lines)\n' "$log_name" "$s" "$lines"
-      done < <(du -h "${active_logs[@]}" 2>/dev/null)
+      done
     fi
     printf '\n'
   }
