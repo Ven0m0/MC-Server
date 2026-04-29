@@ -79,18 +79,10 @@ PrivateNetwork=false
 WantedBy=multi-user.target
 EOF
 
-  if [[ $EUID -eq 0 ]]; then
-    printf '%s\n' "$service_content" >"$SERVICE_FILE"
-  else
-    printf '%s\n' "$service_content" | sudo tee "$SERVICE_FILE" >/dev/null
-  fi
+  printf '%s\n' "$service_content" | run_as_root tee "$SERVICE_FILE" >/dev/null
 
   # Reload systemd
-  if [[ $EUID -eq 0 ]]; then
-    systemctl daemon-reload
-  else
-    sudo systemctl daemon-reload
-  fi
+  run_as_root systemctl daemon-reload
 
   print_success "Service created: ${SERVICE_NAME}"
   print_info "Enable with: sudo systemctl enable ${SERVICE_NAME}"
@@ -120,13 +112,8 @@ create_infrarust_service(){
   fi
 
   # Create working directory
-  if [[ $EUID -eq 0 ]]; then
-    mkdir -p "$infrarust_dir"
-    chown "$run_user:$run_user" "$infrarust_dir" 2>/dev/null || true
-  else
-    sudo mkdir -p "$infrarust_dir"
-    sudo chown "$run_user:$run_user" "$infrarust_dir" 2>/dev/null || true
-  fi
+  run_as_root mkdir -p "$infrarust_dir"
+    run_as_root chown "$run_user:$run_user" "$infrarust_dir" 2>/dev/null || true
 
   # Detect infrarust binary location
   local infrarust_bin
@@ -166,13 +153,8 @@ EOF
 
   local infrarust_service="/etc/systemd/system/infrarust.service"
 
-  if [[ $EUID -eq 0 ]]; then
-    printf '%s\n' "$service_content" >"$infrarust_service"
-    systemctl daemon-reload
-  else
-    printf '%s\n' "$service_content" | sudo tee "$infrarust_service" >/dev/null
-    sudo systemctl daemon-reload
-  fi
+  printf '%s\n' "$service_content" | run_as_root tee "$infrarust_service" >/dev/null
+    run_as_root systemctl daemon-reload
 
   print_success "Infrarust service created"
   print_info "Enable with: sudo systemctl enable infrarust"
@@ -189,38 +171,22 @@ remove_service(){
   # Stop service if running
   if systemctl is-active --quiet "$SERVICE_NAME"; then
     print_info "Stopping service..."
-    if [[ $EUID -eq 0 ]]; then
-      systemctl stop "$SERVICE_NAME"
-    else
-      sudo systemctl stop "$SERVICE_NAME"
-    fi
+    run_as_root systemctl stop "$SERVICE_NAME"
   fi
 
   # Disable service if enabled
   if systemctl is-enabled --quiet "$SERVICE_NAME" 2>/dev/null; then
     print_info "Disabling service..."
-    if [[ $EUID -eq 0 ]]; then
-      systemctl disable "$SERVICE_NAME"
-    else
-      sudo systemctl disable "$SERVICE_NAME"
-    fi
+    run_as_root systemctl disable "$SERVICE_NAME"
   fi
 
   # Remove service file
   [[ -f $SERVICE_FILE ]] && {
-    if [[ $EUID -eq 0 ]]; then
-      rm -f "$SERVICE_FILE"
-    else
-      sudo rm -f "$SERVICE_FILE"
-    fi
+    run_as_root rm -f "$SERVICE_FILE"
   }
 
   # Reload systemd
-  if [[ $EUID -eq 0 ]]; then
-    systemctl daemon-reload
-  else
-    sudo systemctl daemon-reload
-  fi
+  run_as_root systemctl daemon-reload
 
   print_success "Service removed"
 }
@@ -236,11 +202,7 @@ enable_service(){
 
   print_info "Enabling ${SERVICE_NAME}..."
 
-  if [[ $EUID -eq 0 ]]; then
-    systemctl enable "$SERVICE_NAME"
-  else
-    sudo systemctl enable "$SERVICE_NAME"
-  fi
+  run_as_root systemctl enable "$SERVICE_NAME"
 
   print_success "Service enabled (will start on boot)"
 }
@@ -256,11 +218,7 @@ start_service(){
 
   print_info "Starting ${SERVICE_NAME}..."
 
-  if [[ $EUID -eq 0 ]]; then
-    systemctl start "$SERVICE_NAME"
-  else
-    sudo systemctl start "$SERVICE_NAME"
-  fi
+  run_as_root systemctl start "$SERVICE_NAME"
 
   print_success "Service started"
 }
@@ -271,11 +229,7 @@ stop_service(){
 
   print_info "Stopping ${SERVICE_NAME}..."
 
-  if [[ $EUID -eq 0 ]]; then
-    systemctl stop "$SERVICE_NAME"
-  else
-    sudo systemctl stop "$SERVICE_NAME"
-  fi
+  run_as_root systemctl stop "$SERVICE_NAME"
 
   print_success "Service stopped"
 }
