@@ -85,4 +85,6 @@ rcon_command() {
   exec 3>&-
 }
 
-rcon_command "$1" "$2" "$3" "$4"
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  rcon_command "$@"
+fi
