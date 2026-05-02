@@ -180,6 +180,13 @@ check_root(){
   has sudo && { print_info "Root access required. Using sudo..."; return 0; }
   print_error "Root access required but sudo not available"; return 1
 }
+run_as_root(){
+  if [[ "$EUID" -eq 0 ]]; then
+    "$@"
+  else
+    sudo "$@"
+  fi
+}
 send_command(){
   local cmd="$1" session_name="minecraft"
   if command -v screen &>/dev/null && screen -list | rg -q "$session_name" &>/dev/null; then

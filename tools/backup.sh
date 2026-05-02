@@ -256,11 +256,7 @@ btrfs_cmd(){
     print_error "btrfs command not found"
     return 1
   }
-  if [[ $EUID -eq 0 ]]; then
-    btrfs "$@"
-  else
-    sudo btrfs "$@"
-  fi
+  run_as_root btrfs "$@"
 }
 # Create Btrfs snapshot
 create_btrfs_snapshot(){
@@ -296,15 +292,10 @@ list_btrfs_snapshots(){
     return 1
   }
   # List subvolumes
-  if [[ $EUID -eq 0 ]]; then
-    btrfs subvolume list "$snapshot_dir" 2>/dev/null || {
-      # Fallback: just list directories
-      find "$snapshot_dir" -maxdepth 1 -type d -name "snapshot_*" -printf '%f\n' | sort
-    }
-  else
-    # Non-root: just list directories
+  run_as_root btrfs subvolume list "$snapshot_dir" 2>/dev/null || {
+    # Fallback: just list directories
     find "$snapshot_dir" -maxdepth 1 -type d -name "snapshot_*" -printf '%f\n' | sort
-  fi
+  }
 }
 # Delete Btrfs snapshot
 delete_btrfs_snapshot(){
