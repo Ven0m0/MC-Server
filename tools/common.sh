@@ -50,20 +50,31 @@ get_json_processor(){
 # ============================================================================
 # DOWNLOAD FUNCTIONS
 # ============================================================================
-fetch_url(){
-  local url="$1"
-  has curl && { curl -fsSL -H "Accept-Encoding: identity" -H "Accept-Language: en" -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4.212 Safari/537.36" "$url"; return; }
-  has wget && { wget -qO- "$url"; return; }
-  printf 'Error: No download tool found (curl or wget)\n' >&2
-  return 1
-}
-download_file(){
-  local url="$1" output="$2" connections="${3:-8}"
-  has aria2c && { aria2c -x "$connections" -s "$connections" -o "$output" "$url" &>/dev/null; return; }
-  has curl && { curl -fsL -H "Accept-Encoding: identity" -H "Accept-Language: en" -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4.212 Safari/537.36" -o "$output" "$url"; return; }
-  has wget && { wget -qO "$output" "$url"; return; }
+DEFAULT_USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4.212 Safari/537.36"
+
+_do_download(){
+  local url="$1" output="${2:-}" connections="${3:-8}"
+  local headers=(-H "Accept-Encoding: identity" -H "Accept-Language: en" -A "$DEFAULT_USER_AGENT")
+
+  if [[ -n $output ]]; then
+    has aria2c && { aria2c -x "$connections" -s "$connections" -o "$output" "$url" &>/dev/null; return; }
+    has curl && { curl -fsL "${headers[@]}" -L -o "$output" "$url"; return; }
+    has wget && { wget -qO "$output" "$url"; return; }
+  else
+    has curl && { curl -fsSL "${headers[@]}" -L "$url"; return; }
+    has wget && { wget -qO- "$url"; return; }
+  fi
+
   printf 'Error: No download tool found (aria2c, curl, or wget)\n' >&2
   return 1
+}
+
+fetch_url(){
+  _do_download "$1"
+}
+
+download_file(){
+  _do_download "$1" "$2" "${3:-8}"
 }
 verify_checksum(){
   local file="$1" expected_sha256="$2"
