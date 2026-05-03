@@ -7,7 +7,7 @@ export LC_ALL=C
 # Given a 4-byte hex string, reverse byte order (little→big endian)
 reverse_hex_endian() {
   local INTEGER
-  while read -r -d '' -N 8 INTEGER; do
+  while read -r -d '' -N 8 INTEGER || [[ -n "$INTEGER" ]]; do
     if [[ "${#INTEGER}" -eq 8 ]]; then
       printf '%s' "${INTEGER:6:2}${INTEGER:4:2}${INTEGER:2:2}${INTEGER:0:2}"
     else
@@ -85,4 +85,6 @@ rcon_command() {
   exec 3>&-
 }
 
-rcon_command "${1:-${RCON_HOST:-localhost}}" "${2:-${RCON_PORT:-25575}}" "${3:-${RCON_PASSWORD:-}}" "$4"
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  rcon_command "${1:-${RCON_HOST:-localhost}}" "${2:-${RCON_PORT:-25575}}" "${3:-${RCON_PASSWORD:-}}" "$4"
+fi
