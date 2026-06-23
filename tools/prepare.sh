@@ -99,16 +99,7 @@ download_lazymc(){
   target_file="${INSTALL_DIR}/lazymc"
   expected_checksum=$(get_checksum_for_arch "lazymc" "$arch")
   mkdir -p "$INSTALL_DIR"
-  if has aria2c; then
-    aria2c -x 16 -s 16 -k 1M -d "$INSTALL_DIR" -o lazymc "$url"
-  elif has curl; then
-    curl -fsSL -o "$target_file" "$url"
-  elif has wget; then
-    wget -q -O "$target_file" "$url"
-  else
-    print_error "No download tool found (aria2c, curl, or wget required)"
-    exit 1
-  fi
+  download_file "$url" "$target_file" 16 || exit 1
   verify_checksum "$target_file" "$expected_checksum" || {
     print_error "Checksum verification failed - removing downloaded file"
     rm -f "$target_file"
