@@ -1,9 +1,17 @@
 #!/usr/bin/env bash
+# shellcheck enable=all shell=bash source-path=SCRIPTDIR
+set -euo pipefail
+shopt -s nullglob globstar
+export LC_ALL=C
+IFS=$'\n\t'
+
 # Unit tests for tools/rcon.sh
 
+# Source common library
+source "${PWD}/tools/common.sh"
+
 # Source the rcon.sh script
-# Since we wrapped the main execution call, it should only load functions
-source "$(dirname "$0")/../rcon.sh"
+source "${PWD}/tools/rcon.sh"
 
 # Test counter
 tests_run=0
