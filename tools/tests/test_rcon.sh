@@ -36,7 +36,7 @@ assert_equals() {
 # ----------------------------------------------------------------------------
 # Tests for reverse_hex_endian
 # ----------------------------------------------------------------------------
-printf "Running tests for reverse_hex_endian...\n"
+print_header "Running tests for reverse_hex_endian"
 
 # Standard 8-character hex
 result=$(printf "01020304" | reverse_hex_endian)
