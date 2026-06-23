@@ -24,9 +24,9 @@ assert_equals() {
   local description="$3"
   ((tests_run++))
   if [[ "$expected" == "$actual" ]]; then
-    printf "\e[32m[PASS]\e[0m %s\n" "$description"
+    print_success "[PASS] $description"
   else
-    printf "\e[31m[FAIL]\e[0m %s\n" "$description"
+    print_error "[FAIL] $description"
     printf "       Expected: '%s'\n" "$expected"
     printf "       Actual:   '%s'\n" "$actual"
     ((tests_failed++))
