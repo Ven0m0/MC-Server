@@ -1,0 +1,9 @@
+{
+  "extraPaths": ["tools"],
+  "typeCheckingMode": "standard",
+  "reportAny": "none",
+  "reportUnknownArgumentType": "none",
+  "reportUnknownVariableType": "none",
+  "reportUnknownMemberType": "none",
+  "reportPrivateUsage": "none"
+}

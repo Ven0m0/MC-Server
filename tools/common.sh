@@ -214,10 +214,7 @@ game_command(){
   local cmd="$1" host="${RCON_HOST:-localhost}" port="${RCON_PORT:-25575}" pass="${RCON_PASSWORD:-}"
   if has mcrcon; then
     MCRCON_HOST="$host" MCRCON_PORT="$port" MCRCON_PASS="$pass" mcrcon -c "$cmd"
-  elif [[ -f "${s%/*}/rcon.sh" ]]; then
-    RCON_HOST="$host" RCON_PORT="$port" RCON_PASSWORD="$pass" "${s%/*}/rcon.sh" "" "" "" "$cmd"
   else
-    print_error "Neither mcrcon nor rcon.sh found. Cannot send command."
-    return 1
+    python3 "${s%/*}/rcon.py" "$host" "$port" "$pass" "$cmd"
   fi
 }
