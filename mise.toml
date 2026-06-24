@@ -4,7 +4,7 @@ yes = true
 auto_install = true
 lockfile = true
 activate_aggressive = true
-gix = true
+#gix = true
 go_skip_checksum = true
 
 [settings.python]
