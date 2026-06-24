@@ -25,6 +25,10 @@ bun = true
 "cargo:https://github.com/ComunidadAylas/PackSquash" = "latest"
 "ubi:zeroBzeroT/ChunkCleaner" = "latest"
 "cargo:rustic-rs" = "latest"
+python = "3.14"
+uv = "latest"
+ruff = "latest"
+prek = "latest"
 
 #[env]
 #_.java.GRAALVM_HOME = "${MISE_INSTALLS}/graalvm/${version}"
