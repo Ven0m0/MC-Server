@@ -30,5 +30,20 @@ uv = "latest"
 ruff = "latest"
 prek = "latest"
 
-#[env]
+[env]
 #_.java.GRAALVM_HOME = "${MISE_INSTALLS}/graalvm/${version}"
+PROJECT_ROOT = "{{config_root}}"
+# Ensure uv uses the exact Python interpreter installed by `mise install`.
+# `tools = true` makes `tools.python.path` available when mise resolves tool-aware env vars at runime.
+UV_PYTHON = { value = "{{ tools.python.path }}", tools = true }
+UV_LINK_MODE = "symlink"
+_.python.venv = { path = ".venv", create = true, uv_create_args = ["--seed", "--system-site-packages"] }
+DO_NOT_TRACK = "1"
+NODE_NO_WARNINGS = "1"
+PYTHONOPTIMIZE = "1"
+CARGO_NET_GIT_FETCH_WITH_CLI = "false"
+CARGO_HTTP_MULTIPLEXING = "true"
+BINSTALL_DISABLE_TELEMETRY = "true"
+
+[hooks]
+enter = "mise i -yq"
