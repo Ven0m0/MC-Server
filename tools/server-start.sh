@@ -193,14 +193,14 @@ launch_server() {
   XMX="${HEAP_SIZE}G"
   print_info "Memory: ${XMS} - ${XMX} | CPU Cores: ${CPU_CORES}"
 
+  # Fix archlinux-java if available
+  if has archlinux-java; then
+    run_as_root archlinux-java fix &>/dev/null || :
+  fi
+
   # JDK Detection
   local JAVA_CMD JAVA_TYPE=""
   JAVA_CMD="$(detect_java)"
-
-  # Fix archlinux-java if available
-  if has archlinux-java; then
-    sudo archlinux-java fix &>/dev/null || :
-  fi
 
   # Detect if running GraalVM
   if "$JAVA_CMD" -version 2>&1 | grep -q "GraalVM"; then
