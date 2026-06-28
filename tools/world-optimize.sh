@@ -6,11 +6,11 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=tools/common.sh
 source "${SCRIPT_DIR}/tools/common.sh"
 # Additional formatting helper (not in common.sh)
-print_warning(){ printf '\033[1;33m⚠\033[0m %s\n' "$1"; }
+print_warning() { printf '\033[1;33m⚠\033[0m %s\n' "$1"; }
 # Directory size cache to avoid multiple du calls
 declare -A dir_size_cache
 # Get directory size with caching
-get_dir_size(){
+get_dir_size() {
   local dir="$1"
   if [[ -z ${dir_size_cache[$dir]:-} ]]; then
     dir_size_cache[$dir]=$(du -sb "$dir" 2>/dev/null | cut -f1)
@@ -29,25 +29,31 @@ DRY_RUN=false
 CREATE_BACKUP=true
 WORLD_DIR="${SCRIPT_DIR}/world"
 # Download ChunkCleaner if not present
-download_chunk_cleaner(){
-  [[ -f $CHUNK_CLEANER_BIN ]] && { print_info "ChunkCleaner already installed"; return 0; }
+download_chunk_cleaner() {
+  [[ -f $CHUNK_CLEANER_BIN ]] && {
+    print_info "ChunkCleaner already installed"
+    return 0
+  }
   print_info "Downloading ChunkCleaner v${CHUNK_CLEANER_VERSION}..."
   if has curl; then
     curl -L -o "$CHUNK_CLEANER_BIN" "$CHUNK_CLEANER_URL" || {
-      print_error "Failed to download ChunkCleaner"; return 1
+      print_error "Failed to download ChunkCleaner"
+      return 1
     }
   elif has wget; then
     wget -q --show-progress -O "$CHUNK_CLEANER_BIN" "$CHUNK_CLEANER_URL" || {
-      print_error "Failed to download ChunkCleaner"; return 1
+      print_error "Failed to download ChunkCleaner"
+      return 1
     }
   else
-    print_error "Neither wget nor curl found. Please install one of them."; return 1
+    print_error "Neither wget nor curl found. Please install one of them."
+    return 1
   fi
   chmod +x "$CHUNK_CLEANER_BIN"
   print_success "ChunkCleaner installed successfully"
 }
 # Create backup before optimization
-create_backup(){
+create_backup() {
   [[ $CREATE_BACKUP != "true" ]] && return 0
   print_info "Creating backup before optimization..."
   "${SCRIPT_DIR}/tools/backup.sh" backup world &>/dev/null || {
@@ -56,7 +62,7 @@ create_backup(){
   print_success "Backup created"
 }
 # Process single dimension (helper for parallel execution)
-process_dimension(){
+process_dimension() {
   local dimension_path="$1" min_ticks="$2"
   local dim_name="${dimension_path##*/}"
   local region_dir=""
@@ -83,22 +89,27 @@ process_dimension(){
     "$CHUNK_CLEANER_BIN" -path "$region_dir" \
       -newPath "$backup_region" \
       -minInhabitedTicks "$min_ticks" || {
-      print_error "ChunkCleaner failed for ${dim_name}"; return 1
+      print_error "ChunkCleaner failed for ${dim_name}"
+      return 1
     }
     # Calculate space saved
     if [[ -d $backup_region ]]; then
       local old_size=$(get_dir_size "$backup_region") new_size=$(get_dir_size "$region_dir")
-      local saved=$((old_size - new_size)); local saved_mb=$((saved / 1024 / 1024))
+      local saved=$((old_size - new_size))
+      local saved_mb=$((saved / 1024 / 1024))
       print_success "${dim_name}: Saved ${saved_mb}MB (backup: ${backup_region})"
     fi
   fi
 }
 
 # Clean chunks using ChunkCleaner
-clean_chunks(){
+clean_chunks() {
   local world_path="${1:-${WORLD_DIR}}"
   local min_ticks="${2:-${MIN_INHABITED_TICKS}}"
-  [[ ! -d $world_path ]] && { print_error "World directory not found: ${world_path}"; return 1; }
+  [[ ! -d $world_path ]] && {
+    print_error "World directory not found: ${world_path}"
+    return 1
+  }
   print_header "Chunk Cleaning"
   print_info "World: ${world_path}"
   print_info "Minimum inhabited ticks: ${min_ticks}"
@@ -127,10 +138,13 @@ clean_chunks(){
   [[ $failed -gt 0 ]] && print_error "Some dimension processing failed" || return 0
 }
 # Clean old player data
-clean_player_data(){
+clean_player_data() {
   local world_path="${1:-${WORLD_DIR}}"
   local days="${2:-${PLAYER_INACTIVITY_DAYS}}"
-  [[ ! -d "${world_path}/playerdata" ]] && { print_info "No playerdata directory found"; return 0; }
+  [[ ! -d "${world_path}/playerdata" ]] && {
+    print_info "No playerdata directory found"
+    return 0
+  }
   print_header "Player Data Cleanup"
   print_info "Removing player data older than ${days} days..."
   local count=0 total_size=0
@@ -139,8 +153,8 @@ clean_player_data(){
 
   if [[ $DRY_RUN == "true" ]]; then
     # In dry run, we print messages and calculate stats
-    find "${world_path}/playerdata" -name "*.dat" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null | \
-    awk -v RS='\0' -v stats_file="$stats_file" '
+    find "${world_path}/playerdata" -name "*.dat" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null \
+      | awk -v RS='\0' -v stats_file="$stats_file" '
       BEGIN { s=0; c=0 }
       {
         if ($0 == "") next
@@ -165,8 +179,8 @@ clean_player_data(){
     temp_list=$(mktemp)
 
     # In normal run, we output file paths to temp_list and calculate stats
-    find "${world_path}/playerdata" -name "*.dat" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null | \
-    awk -v RS='\0' -v stats_file="$stats_file" '
+    find "${world_path}/playerdata" -name "*.dat" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null \
+      | awk -v RS='\0' -v stats_file="$stats_file" '
       BEGIN { s=0; c=0 }
       {
         if ($0 == "") next
@@ -179,15 +193,15 @@ clean_player_data(){
         printf "%s\0", path
       }
       END { print s, c > stats_file }
-    ' > "$temp_list"
+    ' >"$temp_list"
 
     if [[ -s "$temp_list" ]]; then
-      xargs -0 rm -f < "$temp_list"
+      xargs -0 rm -f <"$temp_list"
     fi
     rm -f "$temp_list"
   fi
 
-  IFS=" " read -r total_size count < "$stats_file"
+  IFS=" " read -r total_size count <"$stats_file"
   rm -f "$stats_file"
   if [[ $count -gt 0 ]]; then
     local size_mb=$((total_size / 1024 / 1024))
@@ -201,18 +215,21 @@ clean_player_data(){
   fi
 }
 # Clean old statistics
-clean_statistics(){
+clean_statistics() {
   local world_path="${1:-${WORLD_DIR}}"
   local days="${2:-${PLAYER_INACTIVITY_DAYS}}"
-  [[ ! -d "${world_path}/stats" ]] && { print_info "No stats directory found"; return 0; }
+  [[ ! -d "${world_path}/stats" ]] && {
+    print_info "No stats directory found"
+    return 0
+  }
   print_header "Statistics Cleanup"
   print_info "Removing statistics older than ${days} days..."
   local count=0 total_size=0
   local stats_file
   stats_file=$(mktemp)
   if [[ $DRY_RUN == "true" ]]; then
-    find "${world_path}/stats" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null | \
-    awk -v RS='\0' -v stats_file="$stats_file" -F'|' '
+    find "${world_path}/stats" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null \
+      | awk -v RS='\0' -v stats_file="$stats_file" -F'|' '
       BEGIN { s=0; c=0 }
       {
         size = $1 + 0; path = $2
@@ -223,9 +240,10 @@ clean_statistics(){
       END { print s, c > stats_file }
     '
   else
-    local temp_list; temp_list=$(mktemp)
-    find "${world_path}/stats" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null | \
-    awk -v RS='\0' -v stats_file="$stats_file" -F'|' '
+    local temp_list
+    temp_list=$(mktemp)
+    find "${world_path}/stats" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null \
+      | awk -v RS='\0' -v stats_file="$stats_file" -F'|' '
       BEGIN { s=0; c=0 }
       {
         size = $1 + 0; path = $2
@@ -233,14 +251,14 @@ clean_statistics(){
         printf "%s\0", path
       }
       END { print s, c > stats_file }
-    ' > "$temp_list"
+    ' >"$temp_list"
 
     if [[ -s "$temp_list" ]]; then
-      xargs -0 rm -f < "$temp_list"
+      xargs -0 rm -f <"$temp_list"
     fi
     rm -f "$temp_list"
   fi
-  IFS=" " read -r total_size count < "$stats_file"
+  IFS=" " read -r total_size count <"$stats_file"
   rm -f "$stats_file"
   if [[ $count -gt 0 ]]; then
     local size_mb=$((total_size / 1024 / 1024))
@@ -254,18 +272,21 @@ clean_statistics(){
   fi
 }
 # Clean advancements
-clean_advancements(){
+clean_advancements() {
   local world_path="${1:-${WORLD_DIR}}"
   local days="${2:-${PLAYER_INACTIVITY_DAYS}}"
-  [[ ! -d "${world_path}/advancements" ]] && { print_info "No advancements directory found"; return 0; }
+  [[ ! -d "${world_path}/advancements" ]] && {
+    print_info "No advancements directory found"
+    return 0
+  }
   print_header "Advancements Cleanup"
   print_info "Removing advancements older than ${days} days..."
   local count=0 total_size=0
   local stats_file
   stats_file=$(mktemp)
   if [[ $DRY_RUN == "true" ]]; then
-    find "${world_path}/advancements" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null | \
-    awk -v RS='\0' -v stats_file="$stats_file" -F'|' '
+    find "${world_path}/advancements" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null \
+      | awk -v RS='\0' -v stats_file="$stats_file" -F'|' '
       BEGIN { s=0; c=0 }
       {
         size = $1 + 0; path = $2
@@ -276,9 +297,10 @@ clean_advancements(){
       END { print s, c > stats_file }
     '
   else
-    local temp_list; temp_list=$(mktemp)
-    find "${world_path}/advancements" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null | \
-    awk -v RS='\0' -v stats_file="$stats_file" -F'|' '
+    local temp_list
+    temp_list=$(mktemp)
+    find "${world_path}/advancements" -name "*.json" -type f -mtime "+${days}" -printf '%s|%p\0' 2>/dev/null \
+      | awk -v RS='\0' -v stats_file="$stats_file" -F'|' '
       BEGIN { s=0; c=0 }
       {
         size = $1 + 0; path = $2
@@ -286,14 +308,14 @@ clean_advancements(){
         printf "%s\0", path
       }
       END { print s, c > stats_file }
-    ' > "$temp_list"
+    ' >"$temp_list"
 
     if [[ -s "$temp_list" ]]; then
-      xargs -0 rm -f < "$temp_list"
+      xargs -0 rm -f <"$temp_list"
     fi
     rm -f "$temp_list"
   fi
-  IFS=" " read -r total_size count < "$stats_file"
+  IFS=" " read -r total_size count <"$stats_file"
   rm -f "$stats_file"
   if [[ $count -gt 0 ]]; then
     local size_kb=$((total_size / 1024))
@@ -307,7 +329,7 @@ clean_advancements(){
   fi
 }
 # Clean session lock files
-clean_session_locks(){
+clean_session_locks() {
   local world_path="${1:-${WORLD_DIR}}"
   print_header "Session Lock Cleanup"
   local count=0
@@ -333,7 +355,7 @@ clean_session_locks(){
   fi
 }
 # Optimize region files (remove empty chunks)
-optimize_regions(){
+optimize_regions() {
   local world_path="${1:-${WORLD_DIR}}"
   print_header "Region File Optimization"
   print_info "Analyzing region files for optimization..."
@@ -355,8 +377,8 @@ optimize_regions(){
     local small_count=0
     local stats_file
     stats_file=$(mktemp)
-    find "$region_dir" -name "*.mca" -type f -printf '%s|%f\0' 2>/dev/null | \
-    awk -v RS='\0' -v dry_run="$DRY_RUN" -v stats_file="$stats_file" -F'|' '
+    find "$region_dir" -name "*.mca" -type f -printf '%s|%f\0' 2>/dev/null \
+      | awk -v RS='\0' -v dry_run="$DRY_RUN" -v stats_file="$stats_file" -F'|' '
       BEGIN { count = 0 }
       $1 < 8192 {
         count++
@@ -367,7 +389,7 @@ optimize_regions(){
       }
       END { print count + 0 > stats_file }
     '
-    IFS=" " read -r small_count < "$stats_file"
+    IFS=" " read -r small_count <"$stats_file"
     rm -f "$stats_file"
     local after=$(get_dir_size "$region_dir")
     total_after=$((total_after + after))
@@ -379,7 +401,7 @@ optimize_regions(){
 }
 
 # Show world statistics
-show_stats(){
+show_stats() {
   local world_path="${1:-${WORLD_DIR}}"
   print_header "World Statistics"
 
@@ -475,7 +497,7 @@ show_stats(){
   printf '\nTotal world size: %s\n' "${sizes[$world_path]:-Unknown}"
 }
 # Show usage
-show_usage(){
+show_usage() {
   cat <<EOF
 Minecraft World Optimization Tool
 
@@ -517,13 +539,35 @@ COMMAND="${1:-help}"
 shift || true
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --world) WORLD_DIR="$2"; shift 2 ;;
-    --min-ticks) MIN_INHABITED_TICKS="$2"; shift 2 ;;
-    --player-days) PLAYER_INACTIVITY_DAYS="$2"; shift 2 ;;
-    --dry-run) DRY_RUN=true; shift ;;
-    --no-backup) CREATE_BACKUP=false; shift ;;
-    --install-cleaner) download_chunk_cleaner; exit 0 ;;
-    *) print_error "Unknown option: $1"; show_usage; exit 1 ;;
+    --world)
+      WORLD_DIR="$2"
+      shift 2
+      ;;
+    --min-ticks)
+      MIN_INHABITED_TICKS="$2"
+      shift 2
+      ;;
+    --player-days)
+      PLAYER_INACTIVITY_DAYS="$2"
+      shift 2
+      ;;
+    --dry-run)
+      DRY_RUN=true
+      shift
+      ;;
+    --no-backup)
+      CREATE_BACKUP=false
+      shift
+      ;;
+    --install-cleaner)
+      download_chunk_cleaner
+      exit 0
+      ;;
+    *)
+      print_error "Unknown option: $1"
+      show_usage
+      exit 1
+      ;;
   esac
 done
 # Main execution
@@ -569,5 +613,9 @@ case "$COMMAND" in
     ;;
   info) show_stats "$WORLD_DIR" ;;
   help | --help | -h) show_usage ;;
-  *) print_error "Unknown command: ${COMMAND}"; show_usage; exit 1 ;;
+  *)
+    print_error "Unknown command: ${COMMAND}"
+    show_usage
+    exit 1
+    ;;
 esac

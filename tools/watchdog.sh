@@ -20,15 +20,15 @@ LAST_RESTART_TIME=0
 
 # Logging - use exec for better performance
 mkdir -p "${LOG_FILE%/*}"
-exec 3>>"$LOG_FILE"  # Open log file once
-log(){ printf '[%(%Y-%m-%d %H:%M:%S)T] %s\n' -1 "$*" | tee /dev/fd/3; }
-cleanup(){
+exec 3>>"$LOG_FILE" # Open log file once
+log() { printf '[%(%Y-%m-%d %H:%M:%S)T] %s\n' -1 "$*" | tee /dev/fd/3; }
+cleanup() {
   exec 3>&-
 }
 trap cleanup EXIT
 
-check_network(){ check_server_port "$SERVER_PORT"; }
-check_health(){
+check_network() { check_server_port "$SERVER_PORT"; }
+check_health() {
   if ! is_server_running; then
     log "Process not running."
     return 1
@@ -51,7 +51,7 @@ check_health(){
 }
 
 # Check if can restart (rate limiting)
-can_restart(){
+can_restart() {
   local now
   now=$(printf '%(%s)T' -1)
   local time_since_last=$((now - LAST_RESTART_TIME))
@@ -67,7 +67,7 @@ can_restart(){
 }
 
 # Start server
-start_server(){
+start_server() {
   if [[ ! -x $SERVER_START_SCRIPT ]]; then
     log "Server start script not found or not executable: ${SERVER_START_SCRIPT}"
     return 1
@@ -79,7 +79,7 @@ start_server(){
 }
 
 # Stop server
-stop_server(){
+stop_server() {
   log "Stopping server..."
   pkill -f "fabric-server-launch.jar" || pkill -f "server.jar" || true
   sleep 2
@@ -87,7 +87,7 @@ stop_server(){
 }
 
 # Restart server
-restart_server(){
+restart_server() {
   log "Restarting server..."
   can_restart || return 1
   is_server_running && stop_server
@@ -95,7 +95,7 @@ restart_server(){
 }
 
 # Monitor mode
-monitor_mode(){
+monitor_mode() {
   log "Watchdog started (interval: ${CHECK_INTERVAL}s, max attempts: ${MAX_RESTART_ATTEMPTS})"
   while true; do
     check_health || {
@@ -119,7 +119,7 @@ monitor_mode(){
 }
 
 # Show usage
-show_usage(){
+show_usage() {
   cat <<EOF
 Minecraft Server Watchdog
 

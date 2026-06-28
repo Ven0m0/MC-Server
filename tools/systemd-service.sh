@@ -17,7 +17,7 @@ SERVICE_NAME="minecraft-server"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 
 # Create systemd service file
-create_service(){
+create_service() {
   local start_script="${1:-${SCRIPT_DIR}/tools/server-start.sh}"
   local working_dir="${2:-${SCRIPT_DIR}}"
   local run_user="${3:-${USER}}"
@@ -90,7 +90,7 @@ EOF
 }
 
 # Create Infrarust proxy systemd service
-create_infrarust_service(){
+create_infrarust_service() {
   local infrarust_dir="${1:-/opt/infrarust}"
   local run_user="${2:-minecraft}"
 
@@ -113,7 +113,7 @@ create_infrarust_service(){
 
   # Create working directory
   run_as_root mkdir -p "$infrarust_dir"
-    run_as_root chown "$run_user:$run_user" "$infrarust_dir" 2>/dev/null || true
+  run_as_root chown "$run_user:$run_user" "$infrarust_dir" 2>/dev/null || true
 
   # Detect infrarust binary location
   local infrarust_bin
@@ -154,7 +154,7 @@ EOF
   local infrarust_service="/etc/systemd/system/infrarust.service"
 
   printf '%s\n' "$service_content" | run_as_root tee "$infrarust_service" >/dev/null
-    run_as_root systemctl daemon-reload
+  run_as_root systemctl daemon-reload
 
   print_success "Infrarust service created"
   print_info "Enable with: sudo systemctl enable infrarust"
@@ -163,7 +163,7 @@ EOF
 }
 
 # Remove systemd service
-remove_service(){
+remove_service() {
   check_root || return 1
 
   print_header "Removing systemd service"
@@ -192,7 +192,7 @@ remove_service(){
 }
 
 # Enable service
-enable_service(){
+enable_service() {
   check_root || return 1
 
   [[ ! -f $SERVICE_FILE ]] && {
@@ -208,7 +208,7 @@ enable_service(){
 }
 
 # Start service
-start_service(){
+start_service() {
   check_root || return 1
 
   [[ ! -f $SERVICE_FILE ]] && {
@@ -224,7 +224,7 @@ start_service(){
 }
 
 # Stop service
-stop_service(){
+stop_service() {
   check_root || return 1
 
   print_info "Stopping ${SERVICE_NAME}..."
@@ -235,7 +235,7 @@ stop_service(){
 }
 
 # Show service status
-show_status(){
+show_status() {
   if [[ ! -f $SERVICE_FILE ]]; then
     print_info "Service not installed"
     return 0
@@ -245,7 +245,7 @@ show_status(){
 }
 
 # Show logs
-show_logs(){
+show_logs() {
   local lines="${1:-50}"
 
   [[ ! -f $SERVICE_FILE ]] && {
@@ -257,7 +257,7 @@ show_logs(){
 }
 
 # Follow logs
-follow_logs(){
+follow_logs() {
   [[ ! -f $SERVICE_FILE ]] && {
     print_error "Service not found"
     return 1
@@ -267,7 +267,7 @@ follow_logs(){
 }
 
 # Show usage
-show_usage(){
+show_usage() {
   cat <<EOF
 Minecraft Server Systemd Service Management
 
