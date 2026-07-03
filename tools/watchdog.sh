@@ -20,7 +20,7 @@ LAST_RESTART_TIME=0
 
 # Logging - use exec for better performance
 mkdir -p "${LOG_FILE%/*}"
-exec 3>>"$LOG_FILE" # Open log file once
+exec 3>>"$LOG_FILE"  # Open log file once
 log() { printf '[%(%Y-%m-%d %H:%M:%S)T] %s\n' -1 "$*" | tee /dev/fd/3; }
 cleanup() {
   exec 3>&-

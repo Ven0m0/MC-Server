@@ -22,7 +22,7 @@ LAZYMC_CONFIG="${CONFIG_DIR}/lazymc.toml"
 # ============================================================================
 # SERVER PREPARATION FUNCTIONS
 # ============================================================================
-prepare_server(){
+prepare_server() {
   print_header "Minecraft Environment Preparation"
   local total_ram server_heap client_heap
   total_ram=$(get_total_ram_gb)
@@ -89,7 +89,7 @@ prepare_server(){
 # ============================================================================
 # LAZYMC FUNCTIONS
 # ============================================================================
-download_lazymc(){
+download_lazymc() {
   local arch version url target_file expected_checksum
   arch="$(detect_arch)"
   version="$1"
@@ -117,7 +117,7 @@ download_lazymc(){
   chmod +x "$target_file"
   print_success "lazymc installed to ${target_file}"
 }
-generate_lazymc_config(){
+generate_lazymc_config() {
   print_header "Generating lazymc configuration"
   mkdir -p "$CONFIG_DIR"
   cat >"$LAZYMC_CONFIG" <<'EOF'
@@ -149,7 +149,7 @@ EOF
   print_info "NOTE: You may need to adjust server port configuration"
   print_info "lazymc listens on 25565, server should run on 25566"
 }
-show_lazymc_usage(){
+show_lazymc_usage() {
   print_header "lazymc Setup Complete!"
   printf '\n'
   print_info "Installation directory: ${INSTALL_DIR}"
@@ -167,7 +167,7 @@ show_lazymc_usage(){
   print_info "4. Edit ${LAZYMC_CONFIG} to customize settings"
   printf '\n'
 }
-install_lazymc(){
+install_lazymc() {
   download_lazymc "$LAZYMC_VERSION"
   generate_lazymc_config
   show_lazymc_usage
@@ -175,7 +175,7 @@ install_lazymc(){
 # ============================================================================
 # HELP
 # ============================================================================
-show_help(){
+show_help() {
   print_header "Minecraft Server Preparation Script"
   printf '\n'
   printf 'Usage: %s [command]\n' "$0"
@@ -201,7 +201,7 @@ show_help(){
 # ============================================================================
 # MAIN
 # ============================================================================
-main(){
+main() {
   local cmd="${1:-server}"
   case "$cmd" in
     server) prepare_server ;;

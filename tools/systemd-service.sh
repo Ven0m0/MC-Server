@@ -113,7 +113,7 @@ create_infrarust_service() {
 
   # Create working directory
   run_as_root mkdir -p "$infrarust_dir"
-  run_as_root chown "$run_user:$run_user" "$infrarust_dir" 2>/dev/null || true
+    run_as_root chown "$run_user:$run_user" "$infrarust_dir" 2>/dev/null || true
 
   # Detect infrarust binary location
   local infrarust_bin
@@ -154,7 +154,7 @@ EOF
   local infrarust_service="/etc/systemd/system/infrarust.service"
 
   printf '%s\n' "$service_content" | run_as_root tee "$infrarust_service" >/dev/null
-  run_as_root systemctl daemon-reload
+    run_as_root systemctl daemon-reload
 
   print_success "Infrarust service created"
   print_info "Enable with: sudo systemctl enable infrarust"

@@ -3,22 +3,22 @@
 set -euo pipefail; shopt -s nullglob globstar
 IFS=$'\n\t' LC_ALL=C
 s=${BASH_SOURCE[0]}; [[ $s != /* ]] && s=$PWD/$s; cd -P -- "${s%/*}"
-has(){ command -v -- "$1" &>/dev/null; }
-sleepy(){ read -rt "${1:-1}" -- <><(:) &>/dev/null || :; }
+has() { command -v -- "$1" &>/dev/null; }
+sleepy() { read -rt "${1:-1}" -- <><(:) &>/dev/null || :; }
 # ============================================================================
 # common.sh: Shared library for Minecraft server management scripts
 # This file is sourced by all scripts in the tools/ directory
 # ============================================================================
 # OUTPUT FORMATTING FUNCTIONS
 # ============================================================================
-print_header(){ printf '\033[0;34m==>\033[0m %s\n' "$1"; }
-print_success(){ printf '\033[0;32m✓\033[0m %s\n' "$1"; }
-print_error(){ printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
-print_info(){ printf '\033[1;33m→\033[0m %s\n' "$1"; }
+print_header() { printf '\033[0;34m==>\033[0m %s\n' "$1"; }
+print_success() { printf '\033[0;32m✓\033[0m %s\n' "$1"; }
+print_error() { printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
+print_info() { printf '\033[1;33m→\033[0m %s\n' "$1"; }
 # ============================================================================
 # SYSTEM FUNCTIONS
 # ============================================================================
-detect_arch(){
+detect_arch() {
   local arch; arch="$(uname -m)"
   case "$arch" in
     x86_64|amd64) printf 'x86_64';;
@@ -27,7 +27,7 @@ detect_arch(){
     *) print_error "Unsupported architecture: $arch"; exit 1;;
   esac
 }
-check_dependencies(){
+check_dependencies() {
   local missing=()
   for cmd in "$@"; do
     has "$cmd" || missing+=("$cmd")
@@ -41,7 +41,7 @@ check_dependencies(){
 # ============================================================================
 # JSON PROCESSOR DETECTION
 # ============================================================================
-get_json_processor(){
+get_json_processor() {
   has jaq && { printf 'jaq'; return; }
   has jq && { printf 'jq'; return; }
   printf 'Error: No JSON processor found. Please install jq or jaq.\n' >&2
@@ -50,14 +50,14 @@ get_json_processor(){
 # ============================================================================
 # DOWNLOAD FUNCTIONS
 # ============================================================================
-fetch_url(){
+fetch_url() {
   local url="$1"
   has curl && { curl -fsSL -H "Accept-Encoding: identity" -H "Accept-Language: en" -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4.212 Safari/537.36" "$url"; return; }
   has wget && { wget -qO- "$url"; return; }
   printf 'Error: No download tool found (curl or wget)\n' >&2
   return 1
 }
-download_file(){
+download_file() {
   local url="$1" output="$2" connections="${3:-8}"
   has aria2c && { aria2c -x "$connections" -s "$connections" -o "$output" "$url" &>/dev/null; return; }
   has curl && { curl -fsL -H "Accept-Encoding: identity" -H "Accept-Language: en" -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4.212 Safari/537.36" -o "$output" "$url"; return; }
@@ -65,7 +65,7 @@ download_file(){
   printf 'Error: No download tool found (aria2c, curl, or wget)\n' >&2
   return 1
 }
-verify_checksum(){
+verify_checksum() {
   local file="$1" expected_sha256="$2"
   [[ -z $expected_sha256 ]] && { print_info "No checksum provided, skipping verification"; return 0; }
   [[ ! -f $file ]] && { print_error "File not found: $file"; return 1; }
@@ -82,23 +82,23 @@ verify_checksum(){
 # ============================================================================
 # MEMORY CALCULATION FUNCTIONS
 # ============================================================================
-get_total_ram_gb(){
+get_total_ram_gb() {
   awk '/MemTotal/{printf "%.0f\n",$2/1024/1024}' /proc/meminfo &>/dev/null
 }
-get_heap_size_gb(){
+get_heap_size_gb() {
   local reserved="${1:-2}" total_ram; total_ram=$(get_total_ram_gb)
   local heap=$((total_ram - reserved)); ((heap < 1)) && heap=1
   printf '%s' "$heap"
 }
-get_minecraft_memory_gb(){
+get_minecraft_memory_gb() {
   get_heap_size_gb "${1:-3}"
 }
-get_client_xms_gb(){
+get_client_xms_gb() {
   local total_ram; total_ram=$(get_total_ram_gb)
   local xms=$((total_ram / 4)); ((xms < 1)) && xms=1
   printf '%s' "$xms"
 }
-get_client_xmx_gb(){
+get_client_xmx_gb() {
   local total_ram; total_ram=$(get_total_ram_gb)
   local xmx=$((total_ram / 2)); ((xmx < 2)) && xmx=2
   printf '%s' "$xmx"
@@ -106,25 +106,25 @@ get_client_xmx_gb(){
 # ============================================================================
 # SYSTEM INFORMATION FUNCTIONS
 # ============================================================================
-get_cpu_cores(){
+get_cpu_cores() {
   nproc 2>/dev/null || printf '4'
 }
 # ============================================================================
 # DOWNLOAD CONFIGURATION FUNCTIONS
 # ============================================================================
-get_aria2c_opts(){
+get_aria2c_opts() {
   printf '%s' "-x 16 -s 16"
 }
-get_aria2c_opts_array(){
+get_aria2c_opts_array() {
   printf '%s\n' "-x" "16" "-s" "16"
 }
 # ============================================================================
 # FILE SYSTEM FUNCTIONS
 # ============================================================================
-ensure_dir(){
+ensure_dir() {
   [[ ! -d $1 ]] && mkdir -p "$1" || return 0
 }
-format_size_bytes(){
+format_size_bytes() {
   local bytes="$1"
   if ((bytes >= 1073741824)); then
     local gb=$((bytes / 1073741824)) decimal=$(((bytes % 1073741824) * 10 / 1073741824))
@@ -142,10 +142,10 @@ format_size_bytes(){
 # ============================================================================
 # HEALTH CHECK FUNCTIONS
 # ============================================================================
-is_server_running(){
+is_server_running() {
   pgrep -f "fabric-server-launch.jar" &>/dev/null || pgrep -f "server.jar" &>/dev/null
 }
-check_server_port(){
+check_server_port() {
   local port="${1:-25565}"
   if has nc; then
     nc -z localhost "$port" &>/dev/null
@@ -158,7 +158,7 @@ check_server_port(){
 # ============================================================================
 # JAVA DETECTION FUNCTIONS
 # ============================================================================
-detect_java(){
+detect_java() {
   if [[ -n "${JAVA_HOME:-}" ]] && [[ -x "${JAVA_HOME}/bin/java" ]]; then
     printf '%s' "${JAVA_HOME}/bin/java"; return
   fi
@@ -175,19 +175,19 @@ detect_java(){
 # ============================================================================
 # ROOT/SUDO CHECK FUNCTIONS
 # ============================================================================
-check_root(){
+check_root() {
   [[ "$EUID" -eq 0 ]] && return 0
   has sudo && { print_info "Root access required. Using sudo..."; return 0; }
   print_error "Root access required but sudo not available"; return 1
 }
-run_as_root(){
+run_as_root() {
   if [[ "$EUID" -eq 0 ]]; then
     "$@"
   else
     sudo "$@"
   fi
 }
-send_command(){
+send_command() {
   local cmd="$1" session_name="minecraft"
   if command -v screen &>/dev/null && screen -list | rg -q "$session_name" &>/dev/null; then
     print_info "Sending command to Screen: $cmd"
@@ -199,7 +199,7 @@ send_command(){
     print_error "Server session '$session_name' not found (Screen/Tmux)."; return 1
   fi
 }
-game_command(){
+game_command() {
   local cmd="$1" host="${RCON_HOST:-localhost}" port="${RCON_PORT:-25575}" pass="${RCON_PASSWORD:-}"
   if has mcrcon; then
     MCRCON_HOST="$host" MCRCON_PORT="$port" MCRCON_PASS="$pass" mcrcon -c "$cmd"

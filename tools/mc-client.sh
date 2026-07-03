@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=tools/common.sh
 source "${SCRIPT_DIR}/tools/common.sh"
 # Extract natives from JAR file
-extract_natives(){
+extract_natives() {
   local jar_file="$1" dest_dir="$2"
   ensure_dir "$dest_dir"
   unzip -q -o "$jar_file" -d "$dest_dir" 2>/dev/null || :

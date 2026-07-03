@@ -13,14 +13,14 @@ source "${PWD}/tools/common.sh"
 MC_REPACK_CONFIG="${HOME}/.config/mc-repack.toml"
 JSON_PROC=$(get_json_processor) || exit 1
 
-clean_mod_name(){
+clean_mod_name() {
   echo "$1" | sed -E 's/\.jar$//; s/[-_+]+(v|mc)?[0-9].*//; s/[-_]fabric$//I'
 }
 
 # ============================================================================
 # FABRIC SERVER INSTALLATION
 # ============================================================================
-install_fabric(){
+install_fabric() {
   local mc_version="${1:-}"
   local loader="${2:-}"
   print_header "Installing Fabric Server"
@@ -39,7 +39,7 @@ install_fabric(){
   if [[ -z $mc_version ]]; then
     (
       fetch_url "https://meta.fabricmc.net/v2/versions/game" | \
-        "$JSON_PROC" -r '[.[] | select(.stable == true)][0].version' > "$tmp_mc"
+        "$JSON_PROC" -r '[.[] | select(.stable == true)][0].version' >"$tmp_mc"
     ) &
     pids+=($!)
   fi
@@ -48,7 +48,7 @@ install_fabric(){
   local fabric_installer
   (
     fetch_url "https://meta.fabricmc.net/v2/versions/installer" | \
-      "$JSON_PROC" -r '.[0].version' > "$tmp_installer"
+      "$JSON_PROC" -r '.[0].version' >"$tmp_installer"
   ) &
   pids+=($!)
 
@@ -56,7 +56,7 @@ install_fabric(){
   if [[ -z $loader ]]; then
     (
       fetch_url "https://meta.fabricmc.net/v2/versions/loader" | \
-        "$JSON_PROC" -r '[.[] | select(.stable==true)][0].version' > "$tmp_loader"
+        "$JSON_PROC" -r '[.[] | select(.stable==true)][0].version' >"$tmp_loader"
     ) &
     pids+=($!)
   fi
@@ -95,14 +95,14 @@ install_fabric(){
 # ============================================================================
 # SERVER SETUP
 # ============================================================================
-setup_server(){
+setup_server() {
   print_header "Setting up server environment"
   printf 'eula=true\n' >eula.txt
   [[ -d world ]] && sudo chown -R "$(id -un):$(id -gn)" world &>/dev/null || :
   sudo chmod -R 755 ./*.sh &>/dev/null || :
   print_success "Server setup complete"
 }
-setup_ferium(){
+setup_ferium() {
   has ferium || { print_error "Ferium not installed"; return 1; }
   print_header "Setting up Ferium profile"
 
@@ -125,7 +125,7 @@ setup_ferium(){
 
       print_info "Adding mod: $mod_name (from $line)"
       ferium add "$mod_name" || print_info "Failed to add $mod_name"
-    done < "$mods_file"
+    done <"$mods_file"
   else
     print_info "$mods_file not found. Installing defaults."
     ferium add fabric-api
@@ -136,7 +136,7 @@ setup_ferium(){
 # ============================================================================
 # MC-REPACK CONFIGURATION
 # ============================================================================
-setup_mc_repack(){
+setup_mc_repack() {
   print_header "Configuring mc-repack"
   mkdir -p "$(dirname "$MC_REPACK_CONFIG")"
   cat >"$MC_REPACK_CONFIG" <<'EOF'
@@ -158,7 +158,7 @@ EOF
 # ============================================================================
 # MOD MANAGEMENT
 # ============================================================================
-ferium_update(){
+ferium_update() {
   has ferium || { print_error "Ferium not installed"; return 1; }
   print_header "Running Ferium update"
   ferium scan && ferium upgrade
@@ -166,7 +166,7 @@ ferium_update(){
   print_success "Ferium update complete"
 }
 
-repack_mods(){
+repack_mods() {
   has mc-repack || { print_error "mc-repack not installed"; return 1; }
   print_header "Repacking mods"
   local mods_src="${1:-$HOME/Documents/MC/Minecraft/mods}"
@@ -175,7 +175,7 @@ repack_mods(){
   mc-repack jars -c "$MC_REPACK_CONFIG" --in "$mods_src" --out "$mods_dst"
   print_success "Repack complete: $mods_dst"
 }
-update_geyserconnect(){
+update_geyserconnect() {
   print_header "Updating GeyserConnect"
   local dest_dir="${1:-$PWD/minecraft/config/Geyser-Fabric/extensions}"
   local url="\
@@ -196,7 +196,7 @@ update_geyserconnect(){
 # ============================================================================
 # FULL UPDATE WORKFLOW
 # ============================================================================
-full_update(){
+full_update() {
   print_header "Running full update"
   setup_server
   setup_mc_repack
@@ -208,7 +208,7 @@ full_update(){
 # ============================================================================
 # HELP
 # ============================================================================
-show_help(){
+show_help() {
   cat <<EOF
 Fabric Server & Mod Management System
 

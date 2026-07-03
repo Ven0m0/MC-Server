@@ -12,7 +12,7 @@ SERVER_PORT=25565
 CHECK_INTERVAL=60
 
 # Get server status
-get_status(){
+get_status() {
   print_header "Server Status"
   is_server_running && printf '  Process: Running\n' || printf '  Process: Not Running\n'
   check_server_port "$SERVER_PORT" && printf '  Port %s: Listening\n' "$SERVER_PORT" || printf '  Port %s: Not Listening\n' "$SERVER_PORT"
@@ -20,7 +20,7 @@ get_status(){
 }
 
 # Get memory usage
-get_memory(){
+get_memory() {
   local pid="${1:-}"
   # Accept PID as parameter to avoid repeated pgrep calls
   [[ -z $pid ]] && pid=$(pgrep -f "fabric-server-launch.jar" | head -1)
@@ -37,7 +37,7 @@ get_memory(){
 }
 
 # Get disk usage
-get_disk(){
+get_disk() {
   print_header "Disk Usage"
   # Run single du command for all directories (much faster than separate calls)
   local dirs_to_check=()
@@ -58,7 +58,7 @@ get_disk(){
 }
 
 # Get player activity
-get_players(){
+get_players() {
   print_header "Recent Player Activity"
   # Use tac (reverse) to find last 5 matches efficiently
   local recent_activity
@@ -68,7 +68,7 @@ get_players(){
 }
 
 # Check for errors
-check_errors(){
+check_errors() {
   print_header "Recent Errors"
   # Cache log content to avoid reading file multiple times
   local log_tail
@@ -93,7 +93,7 @@ check_errors(){
 }
 
 # Get uptime
-get_uptime(){
+get_uptime() {
   local pid="${1:-}"
   # Accept PID as parameter to avoid repeated pgrep calls
   [[ -z $pid ]] && pid=$(pgrep -f "fabric-server-launch.jar" | head -1)
@@ -109,7 +109,7 @@ get_uptime(){
 }
 
 # Show comprehensive status
-show_status(){
+show_status() {
   printf '\n'
   printf '════════════════════════════════════════════════════════\n'
   printf '      Minecraft Server Monitor - %(%Y-%m-%d %H:%M:%S)T\n' -1
@@ -127,7 +127,7 @@ show_status(){
 }
 
 # Watch mode
-watch_mode(){
+watch_mode() {
   printf 'Starting monitor (Ctrl+C to stop)\n'
   printf 'Update interval: %ss\n\n' "$CHECK_INTERVAL"
   while true; do
@@ -138,7 +138,7 @@ watch_mode(){
 }
 
 # Alert mode
-alert_mode(){
+alert_mode() {
   local issues=0
   is_server_running || {
     print_error "Process not running"
@@ -171,7 +171,7 @@ alert_mode(){
 }
 
 # Show usage
-show_usage(){
+show_usage() {
   cat <<EOF
 Minecraft Server Monitor
 

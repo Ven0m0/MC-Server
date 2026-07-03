@@ -47,7 +47,7 @@ FORMAT_SIZE_AWK="
 # RUSTIC FUNCTIONS
 # ----------------------------------------------------------------------------
 # Install rustic binary
-install_rustic(){
+install_rustic() {
   if [[ -f "$RUSTIC_BIN" ]]; then return 0; fi
   if has rustic; then
     RUSTIC_BIN="rustic"
@@ -86,12 +86,12 @@ install_rustic(){
   fi
 }
 # Wrapper for rustic command
-rustic_cmd(){
+rustic_cmd() {
   install_rustic || exit 1
   "$RUSTIC_BIN" "$@"
 }
 # Initialize rustic repository
-rustic_init(){
+rustic_init() {
   mkdir -p "$RUSTIC_REPO"
   if [[ ! -f "$RUSTIC_PASS_FILE" ]]; then
     print_info "Generating rustic password..."
@@ -107,7 +107,7 @@ rustic_init(){
   fi
 }
 # Perform rustic backup
-rustic_backup(){
+rustic_backup() {
   local tag="${1:-manual}"
   rustic_init
   print_header "Running Rustic Backup"
@@ -128,7 +128,7 @@ rustic_backup(){
   print_success "Rustic backup complete"
 }
 # Restore from rustic
-rustic_restore(){
+rustic_restore() {
   local snapshot="${1:-latest}"
   local dest="${2:-${SCRIPT_DIR}}"
   print_header "Restoring from Rustic"
@@ -146,7 +146,7 @@ rustic_restore(){
 # EXISTING TAR FUNCTIONS
 # ----------------------------------------------------------------------------
 # Backup world data
-backup_world(){
+backup_world() {
   print_info "Backing up world..."
   [[ ! -d "${SCRIPT_DIR}/world" ]] && {
     print_error "No world directory found"
@@ -167,7 +167,7 @@ backup_world(){
   print_success "World backup created: world_${TIMESTAMP}.tar.gz"
 }
 # Backup configs
-backup_configs(){
+backup_configs() {
   print_info "Backing up configs..."
   cd "$SCRIPT_DIR"
   tar -czf "${BACKUP_DIR}/configs/config_${TIMESTAMP}.tar.gz" \
@@ -177,7 +177,7 @@ backup_configs(){
   print_success "Config backup created: config_${TIMESTAMP}.tar.gz"
 }
 # Backup mods
-backup_mods(){
+backup_mods() {
   print_info "Backing up mods..."
   [[ ! -d "${SCRIPT_DIR}/mods" ]] && {
     print_info "No mods directory"
@@ -188,7 +188,7 @@ backup_mods(){
   print_success "Mods backup created: mods_${TIMESTAMP}.tar.gz"
 }
 # Clean old backups
-cleanup_old_backups(){
+cleanup_old_backups() {
   print_info "Cleaning old backups (keeping last ${MAX_BACKUPS})..."
   for dir in worlds configs; do
     local backup_path="${BACKUP_DIR}/${dir}"
@@ -208,7 +208,7 @@ cleanup_old_backups(){
   print_success "Cleanup complete"
 }
 # List backups
-list_backups(){
+list_backups() {
   print_header "Available Tar Backups"
   printf '\n'
   printf 'World Backups:\n'
@@ -226,7 +226,7 @@ list_backups(){
   fi
 }
 # Restore backup
-restore_backup(){
+restore_backup() {
   local file="$1"
   [[ ! -f $file ]] && {
     print_error "File not found: $file"
@@ -246,12 +246,12 @@ restore_backup(){
 # BTRFS FUNCTIONS
 # ----------------------------------------------------------------------------
 # Check if path is on Btrfs filesystem
-is_btrfs(){
+is_btrfs() {
   local path="${1:-${SCRIPT_DIR}}"
   [[ $(stat -f -c %T "$path" 2>/dev/null) == "btrfs" ]]
 }
 # Wrapper for btrfs command with sudo if needed
-btrfs_cmd(){
+btrfs_cmd() {
   has btrfs || {
     print_error "btrfs command not found"
     return 1
@@ -259,7 +259,7 @@ btrfs_cmd(){
   run_as_root btrfs "$@"
 }
 # Create Btrfs snapshot
-create_btrfs_snapshot(){
+create_btrfs_snapshot() {
   local source="${1:-${SCRIPT_DIR}/world}"
   local snapshot_name="${2:-snapshot_${TIMESTAMP}}"
   [[ ! -d $source ]] && {
@@ -279,7 +279,7 @@ create_btrfs_snapshot(){
   print_success "Btrfs snapshot created: ${snapshot_path}"
 }
 # List Btrfs snapshots
-list_btrfs_snapshots(){
+list_btrfs_snapshots() {
   local snapshot_dir="${BACKUP_DIR}/btrfs-snapshots"
   [[ ! -d $snapshot_dir ]] && {
     print_info "No Btrfs snapshots found"
@@ -298,7 +298,7 @@ list_btrfs_snapshots(){
   }
 }
 # Delete Btrfs snapshot
-delete_btrfs_snapshot(){
+delete_btrfs_snapshot() {
   local snapshot_name="$1"
   local snapshot_dir="${BACKUP_DIR}/btrfs-snapshots"
   local snapshot_path="${snapshot_dir}/${snapshot_name}"
@@ -316,7 +316,7 @@ delete_btrfs_snapshot(){
   print_success "Snapshot deleted"
 }
 # Restore Btrfs snapshot
-restore_btrfs_snapshot(){
+restore_btrfs_snapshot() {
   local snapshot_name="$1"
   local target="${2:-${SCRIPT_DIR}/world}"
   local snapshot_dir="${BACKUP_DIR}/btrfs-snapshots"
@@ -343,7 +343,7 @@ restore_btrfs_snapshot(){
 }
 
 # Show usage
-show_usage(){
+show_usage() {
   cat <<EOF
 Minecraft Server Backup Tool
 

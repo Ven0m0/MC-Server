@@ -17,7 +17,7 @@ LOG_SIZE_LIMIT_MB=100
 mkdir -p "$ARCHIVE_DIR"
 
 # Rotate log file
-rotate_log(){
+rotate_log() {
   local log_file="$1"
   [[ ! -f $log_file ]] && return 1
   local size_mb=$(du -m "$log_file" 2>/dev/null | cut -f1)
@@ -35,7 +35,7 @@ rotate_log(){
 }
 
 # Rotate all logs
-rotate_all(){
+rotate_all() {
   print_header "Rotating logs"
   [[ -f "${LOGS_DIR}/latest.log" ]] && rotate_log "${LOGS_DIR}/latest.log"
   [[ -f "${LOGS_DIR}/debug.log" ]] && rotate_log "${LOGS_DIR}/debug.log"
@@ -47,7 +47,7 @@ rotate_all(){
 }
 
 # Compress old logs
-compress_old(){
+compress_old() {
   print_header "Compressing old logs"
 
   local file_list
@@ -57,10 +57,10 @@ compress_old(){
     find "$LOGS_DIR" -maxdepth 1 -name "*.log" -type f \
       ! -name "latest.log" ! -name "debug.log" ! -name "watchdog.log" -print0
     find "$ARCHIVE_DIR" -name "*.log" -type f -print0 2>/dev/null
-  } > "$file_list"
+  } >"$file_list"
 
   local count
-  count=$(tr -cd '\0' < "$file_list" | wc -c)
+  count=$(tr -cd '\0' <"$file_list" | wc -c)
 
   if ((count > 0)); then
     local threads
@@ -76,7 +76,7 @@ compress_old(){
 }
 
 # Clean old logs
-clean_old(){
+clean_old() {
   print_header "Cleaning logs older than ${MAX_LOG_AGE_DAYS} days"
   local count=0
   # Single find call for both directories
@@ -93,7 +93,7 @@ clean_old(){
 }
 
 # Limit archived logs
-limit_archives(){
+limit_archives() {
   print_header "Limiting archives to ${MAX_ARCHIVED_LOGS}"
   # Single find with -printf is more efficient than find | wc -l
   local files
@@ -113,7 +113,7 @@ limit_archives(){
 }
 
 # Show statistics
-show_stats(){
+show_stats() {
   printf '\n'
   printf '═══════════════════════════════════════════\n'
   printf '        Log Management Statistics\n'
@@ -162,7 +162,7 @@ show_stats(){
 }
 
 # View log
-view_log(){
+view_log() {
   local log="${1:-latest.log}"
   local lines="${2:-50}"
   local path="${LOGS_DIR}/${log}"
@@ -175,7 +175,7 @@ view_log(){
 }
 
 # Search logs
-search_log(){
+search_log() {
   local pattern="$1"
   local log="${2:-latest.log}"
   local path="${LOGS_DIR}/${log}"
@@ -192,7 +192,7 @@ fi
 }
 
 # Full maintenance
-full_maintenance(){
+full_maintenance() {
   print_header "Full log maintenance"
   printf '\n'
   rotate_all
@@ -207,7 +207,7 @@ full_maintenance(){
 }
 
 # Show usage
-show_usage(){
+show_usage() {
   cat <<EOF
 Minecraft Server Log Management
 
