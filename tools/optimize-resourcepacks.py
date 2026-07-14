@@ -233,20 +233,19 @@ def _capture_pack_metadata(
     return mcmeta_bytes, overlays
 
 
-def _inject_file_into_zip(zip_path: Path, name: str, content: bytes) -> None:
-    """Add or replace a file in a ZIP archive.
+def _repack_zip(src_dir: Path, zip_path: Path) -> None:
+    """Repack a directory into a ZIP.
 
-    Re-writes the entire archive so the replacement takes effect (zipfile
-    doesn't support replacing entries in place).
+    Creates a fresh ZIP file (no PackSquash obfuscation issues since we control
+    the content being written).
     """
-    with zipfile.ZipFile(zip_path, "r") as zf:
-        entries = [(n, zf.read(n), zf.getinfo(n)) for n in zf.namelist() if n != name]
-    with zipfile.ZipFile(zip_path, "w") as zf:
-        for n, data, info in entries:
-            new_info = zipfile.ZipInfo(n, date_time=info.date_time)
-            new_info.compress_type = info.compress_type
-            zf.writestr(new_info, data)
-        zf.writestr(name, content)
+    temp_zip = zip_path.with_suffix(".temp.zip")
+    with zipfile.ZipFile(temp_zip, "w") as zf:
+        for f in src_dir.rglob("*"):
+            if f.is_file():
+                rel = f.relative_to(src_dir).as_posix()
+                zf.write(f, rel)
+    temp_zip.replace(zip_path)
 
 
 def _restore_pack_metadata(
@@ -255,36 +254,28 @@ def _restore_pack_metadata(
     overlays: dict[str, list[tuple[str, bytes]]],
 ) -> None:
     """Restore original pack.mcmeta and overlay files into output ZIP."""
-    if mcmeta_bytes is not None:
-        _inject_file_into_zip(zip_path, "pack.mcmeta", mcmeta_bytes)
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        work_dir = Path(tmp_dir) / "work"
+        work_dir.mkdir()
+        _extract(zip_path, work_dir)
 
-    if not overlays:
-        return
+        existing = set(
+            f.relative_to(work_dir).as_posix()
+            for f in work_dir.rglob("*")
+            if f.is_file()
+        )
 
-    with zipfile.ZipFile(zip_path, "r") as zf:
-        existing = set(zf.namelist())
+        if mcmeta_bytes is not None:
+            (work_dir / "pack.mcmeta").write_bytes(mcmeta_bytes)
 
-    for name, files in overlays.items():
-        prefix = f"{name}/"
-        already_present = any(n.startswith(prefix) for n in existing)
-        if not already_present:
-            _inject_files_into_zip(zip_path, files)
+        for name, files in overlays.items():
+            for arcname, data in files:
+                if arcname not in existing:
+                    target = work_dir / arcname
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    target.write_bytes(data)
 
-
-def _inject_files_into_zip(zip_path: Path, new_files: list[tuple[str, bytes]]) -> None:
-    """Add or replace multiple files in a ZIP archive."""
-    with zipfile.ZipFile(zip_path, "r") as zf:
-        new_names = {n for n, _ in new_files}
-        entries = [
-            (n, zf.read(n), zf.getinfo(n)) for n in zf.namelist() if n not in new_names
-        ]
-    with zipfile.ZipFile(zip_path, "w") as zf:
-        for n, data, info in entries:
-            new_info = zipfile.ZipInfo(n, date_time=info.date_time)
-            new_info.compress_type = info.compress_type
-            zf.writestr(new_info, data)
-        for arcname, data in new_files:
-            zf.writestr(arcname, data)
+        _repack_zip(work_dir, zip_path)
 
 
 def _unwrap(d: Path) -> Path:
