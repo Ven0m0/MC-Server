@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"\\\"/c/Users/Ven0m0/AppData/Local/Programs/Python/Python314/python\\\" -c \\\"\\nimport json\\ndata = json.load(open('/tmp/packsquash_releases.json'))\\nfor r in data[:6]:\\n    print(r['tag_name'],...",
-  "error": "Exit code 1\nTraceback (most recent call last):\r\n  File \"<string>\", line 3, in <module>\r\n    data = json.load(open('/tmp/packsquash_releases.json'))\r\n                     ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nFileNotFoundError: [Errno 2] No such file or directory: '/tmp/packsquash_releases.json'\r\n===CHANGELOG===\nTraceback (most recent call last):\r\n  File \"<string>\", line 2, in <module>\r\n    text = open('/tmp/packsquash_changelog.md', encoding='utf-8').read()\r\n           ~~~~^^^^^^^^^^^^^^^^^^^^^...",
-  "timestamp": "2026-07-14T00:26:01.133Z",
-  "retry_count": 1
-}

@@ -67,3 +67,9 @@ ehthumbs.db
 # Local configuration overrides
 local.properties
 .env
+
+.serena/
+!.serena/project.yml
+.omc/
+.codegraph/
+undefined/

@@ -29,6 +29,14 @@ _EXTRA_HINTS = [
     Path.home() / ".local/bin/packsquash",
 ]
 
+# Common 7-Zip install locations for ZIP extraction fallback
+_EXTRA_7Z_HINTS = [
+    Path(r"C:\Program Files\7-Zip\7z.exe"),
+    Path.home() / "7z.exe",
+    Path.home() / "7z",
+    Path.home() / ".local/bin/7z",
+]
+
 
 def find_packsquash() -> str:
     if shutil.which("mise"):
@@ -45,6 +53,17 @@ def find_packsquash() -> str:
             return str(hint)
     print("ERROR: packsquash not found. Run: mise install", file=sys.stderr)
     sys.exit(1)
+
+
+def find_7zip() -> str | None:
+    """Find 7-Zip binary for ZIP extraction fallback. Returns path or None."""
+    z = shutil.which("7z")
+    if z:
+        return z
+    for hint in _EXTRA_7Z_HINTS:
+        if hint.is_file():
+            return str(hint)
+    return None
 
 
 def fmt_bytes(n: int) -> str:
@@ -172,6 +191,102 @@ def _fix_pack_metadata(d: Path) -> None:
         meta.write_text(json.dumps(data), encoding="utf-8")
 
 
+def _capture_pack_metadata(
+    pack_dir: Path,
+) -> tuple[bytes | None, dict[str, list[tuple[str, bytes]]]]:
+    """Capture pack.mcmeta and overlay file contents before PackSquash runs.
+
+    PackSquash may rewrite pack.mcmeta (changing format numbers) and strip
+    overlay directories it doesn't recognize. This captures the originals so
+    they can be restored into the output ZIP afterward.
+
+    Returns (mcmeta_bytes_or_None, {overlay_name: [(arcname, content), ...]}).
+    File contents are read into memory because the source pack_dir lives in a
+    temp directory that is cleaned up before restore time.
+    """
+    mcmeta_bytes: bytes | None = None
+    meta = pack_dir / "pack.mcmeta"
+    if meta.exists():
+        mcmeta_bytes = meta.read_bytes()
+
+    overlays: dict[str, list[tuple[str, bytes]]] = {}
+    for entry in (
+        json.loads(mcmeta_bytes).get("overlays", {}).get("entries", [])
+        if mcmeta_bytes
+        else []
+    ):
+        name = entry.get("directory")
+        if not name:
+            continue
+        overlay_path = pack_dir / name
+        if not overlay_path.is_dir():
+            continue
+        files: list[tuple[str, bytes]] = []
+        for f in overlay_path.rglob("*"):
+            if f.is_file():
+                rel = f.relative_to(overlay_path).as_posix()
+                arcname = f"{name}/{rel}"
+                files.append((arcname, f.read_bytes()))
+        if files:
+            overlays[name] = files
+
+    return mcmeta_bytes, overlays
+
+
+def _inject_file_into_zip(zip_path: Path, name: str, content: bytes) -> None:
+    """Add or replace a file in a ZIP archive.
+
+    Re-writes the entire archive so the replacement takes effect (zipfile
+    doesn't support replacing entries in place).
+    """
+    with zipfile.ZipFile(zip_path, "r") as zf:
+        entries = [(n, zf.read(n), zf.getinfo(n)) for n in zf.namelist() if n != name]
+    with zipfile.ZipFile(zip_path, "w") as zf:
+        for n, data, info in entries:
+            new_info = zipfile.ZipInfo(n, date_time=info.date_time)
+            new_info.compress_type = info.compress_type
+            zf.writestr(new_info, data)
+        zf.writestr(name, content)
+
+
+def _restore_pack_metadata(
+    zip_path: Path,
+    mcmeta_bytes: bytes | None,
+    overlays: dict[str, list[tuple[str, bytes]]],
+) -> None:
+    """Restore original pack.mcmeta and overlay files into output ZIP."""
+    if mcmeta_bytes is not None:
+        _inject_file_into_zip(zip_path, "pack.mcmeta", mcmeta_bytes)
+
+    if not overlays:
+        return
+
+    with zipfile.ZipFile(zip_path, "r") as zf:
+        existing = set(zf.namelist())
+
+    for name, files in overlays.items():
+        prefix = f"{name}/"
+        already_present = any(n.startswith(prefix) for n in existing)
+        if not already_present:
+            _inject_files_into_zip(zip_path, files)
+
+
+def _inject_files_into_zip(zip_path: Path, new_files: list[tuple[str, bytes]]) -> None:
+    """Add or replace multiple files in a ZIP archive."""
+    with zipfile.ZipFile(zip_path, "r") as zf:
+        new_names = {n for n, _ in new_files}
+        entries = [
+            (n, zf.read(n), zf.getinfo(n)) for n in zf.namelist() if n not in new_names
+        ]
+    with zipfile.ZipFile(zip_path, "w") as zf:
+        for n, data, info in entries:
+            new_info = zipfile.ZipInfo(n, date_time=info.date_time)
+            new_info.compress_type = info.compress_type
+            zf.writestr(new_info, data)
+        for arcname, data in new_files:
+            zf.writestr(arcname, data)
+
+
 def _unwrap(d: Path) -> Path:
     """If d contains only one subdirectory with pack.mcmeta, return that subdir."""
     children = list(d.iterdir())
@@ -190,6 +305,17 @@ def _extract(zip_path: Path, dest: Path) -> None:
         with zipfile.ZipFile(zip_path, "r") as zf:
             zf.extractall(dest)
     except zipfile.BadZipFile:
+        z7 = find_7zip()
+        if z7:
+            try:
+                subprocess.run(
+                    [z7, "x", str(zip_path), f"-o{dest}", "-y", "-bb0", "-bd"],
+                    check=True,
+                    capture_output=True,
+                )
+                return
+            except subprocess.CalledProcessError:
+                pass
         if sys.platform == "win32":
             subprocess.run(
                 [
@@ -216,12 +342,14 @@ def process_zip(ps_bin: str, zip_path: Path) -> tuple[int, int]:
         pack_dir = _unwrap(Path(tmp_dir))
         _remove_problematic(pack_dir)
         _fix_pack_metadata(pack_dir)
+        mcmeta_bytes, overlay_dirs = _capture_pack_metadata(pack_dir)
         _run(ps_bin, pack_dir, zip_path)
     try:
         _verify_zip_integrity(zip_path)
     except Exception:
         shutil.copy2(bak, zip_path)
         raise
+    _restore_pack_metadata(zip_path, mcmeta_bytes, overlay_dirs)
     return before, zip_path.stat().st_size
 
 
@@ -236,6 +364,7 @@ def process_dir(ps_bin: str, pack_dir: Path) -> tuple[int, int]:
         shutil.copytree(pack_dir, tmp_pack, copy_function=shutil.copy)
         _remove_problematic(tmp_pack)
         _fix_pack_metadata(tmp_pack)
+        mcmeta_bytes, overlay_dirs = _capture_pack_metadata(tmp_pack)
         _run(ps_bin, tmp_pack, output_zip)
     try:
         _verify_zip_integrity(output_zip)
@@ -245,6 +374,7 @@ def process_dir(ps_bin: str, pack_dir: Path) -> tuple[int, int]:
         else:
             output_zip.unlink(missing_ok=True)
         raise
+    _restore_pack_metadata(output_zip, mcmeta_bytes, overlay_dirs)
     return before, output_zip.stat().st_size
 
 

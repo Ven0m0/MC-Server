@@ -1,7 +1,0 @@
-{
-  "tool_name": "PowerShell",
-  "tool_input_preview": "{\"command\":\"$toml = @'\\npack_directory = 'C:/temp/psdbg/pack3'\\noutput_file_path = 'C:/temp/psdbg/out5.zip'\\nzip_spec_conformance_level = 'balanced'\\n\\n['pack.png']\\nmaximum_width_and_height = 4096\\n\\...",
-  "error": "Exit code 128\n! \u001b[7mpack.png\u001b[0m: Invalid PNG: The texture width or height exceeds the configured maximum size. More information: <https://packsquash.aylas.org/links/Too-big-PNG-help>\r\n! Pack processing \u001b[7merror\u001b[0m: An error occurred while processing a pack file\r\n  Another \u001b[7merror\u001b[0m message with more information was emitted before. You might need to scroll up to see it.\r\n  These troubleshooting instructions might be useful: <https://packsquash.aylas.org/links/Troubleshooting-pack-processin...",
-  "timestamp": "2026-07-10T23:06:52.787Z",
-  "retry_count": 2
-}
