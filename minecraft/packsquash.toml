@@ -18,8 +18,8 @@ work_around_minecraft_quirks = [
 
 automatic_asset_types_mask_detection = true
 
-recompress_compressed_files = true
-zip_compression_iterations = 30
+recompress_compressed_files = false
+zip_compression_iterations = 5
 zip_spec_conformance_level = 'balanced'
 percentage_of_zip_structures_tuned_for_obfuscation_discretion = 0
 size_increasing_zip_obfuscation = false
@@ -33,7 +33,7 @@ size_increasing_zip_obfuscation = false
 downsize_if_single_color = true
 skip_alpha_optimizations = false
 maximum_width_and_height = 2048
-image_data_compression_iterations = 50
+image_data_compression_iterations = 20
 color_quantization_target = 'auto'
 
 # OptiFine sky textures can be non-power-of-two — copy as-is

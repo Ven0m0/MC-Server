@@ -70,6 +70,12 @@ local.properties
 
 .serena/
 !.serena/project.yml
+.opencode/
 .omc/
 .codegraph/
 undefined/
+__pycache__/
+**/__pycache__/
+**/node_modules/
+.ruff_cache/
+.venv/

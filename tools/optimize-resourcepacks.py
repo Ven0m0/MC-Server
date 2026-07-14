@@ -37,6 +37,13 @@ _EXTRA_7Z_HINTS = [
     Path.home() / ".local/bin/7z",
 ]
 
+# Broad format range applied to every pack for maximum client compatibility
+MIN_PACK_FORMAT = 15
+MAX_PACK_FORMAT = 255
+
+# Language codes to keep when stripping language assets
+_KEEP_LANGS = frozenset({"en_us", "en_gb", "de_de"})
+
 
 def find_packsquash() -> str:
     if shutil.which("mise"):
@@ -119,6 +126,7 @@ def _verify_zip_integrity(zip_path: Path) -> None:
     with tempfile.TemporaryDirectory() as tmp_dir:
         dest = Path(tmp_dir)
         _extract(zip_path, dest)
+        _verify_pack_format(zip_path, dest)
         for f in dest.rglob("*"):
             if not f.is_file():
                 continue
@@ -164,6 +172,20 @@ def _remove_problematic(d: Path) -> None:
                 f.unlink()
 
 
+def _strip_languages(d: Path) -> None:
+    """Remove all language files except en_us, en_gb, de_de from `*/lang/` dirs."""
+    for lang_dir in d.rglob("lang"):
+        if not lang_dir.is_dir():
+            continue
+        for f in list(lang_dir.iterdir()):
+            if not f.is_file():
+                continue
+            stem = f.stem.lower()
+            if stem not in _KEEP_LANGS:
+                f.chmod(0o644)
+                f.unlink()
+
+
 def _fix_pack_metadata(d: Path) -> None:
     """Fix pack.mcmeta for newer MC versions:
     - Inject pack_format if only min_format/max_format are present (1.20.2+ packs)
@@ -181,6 +203,8 @@ def _fix_pack_metadata(d: Path) -> None:
         changed = True
     for entry in data.get("overlays", {}).get("entries", []):
         fmt = entry.get("formats", {})
+        if not isinstance(fmt, dict):
+            continue
         if "min_format" not in entry and "min_inclusive" in fmt:
             entry["min_format"] = fmt["min_inclusive"]
             changed = True
@@ -189,6 +213,53 @@ def _fix_pack_metadata(d: Path) -> None:
             changed = True
     if changed:
         meta.write_text(json.dumps(data), encoding="utf-8")
+
+
+def _widen_pack_format(d: Path) -> None:
+    """Widen pack.mcmeta's format range for broader client compatibility.
+
+    Sets min_format/max_format to [MIN_PACK_FORMAT, MAX_PACK_FORMAT] and updates
+    supported_formats to match, preserving whichever form (list or
+    min_inclusive/max_inclusive dict) the pack already used. pack_format is
+    left untouched since it stays valid as long as it falls within the range.
+    """
+    meta = d / "pack.mcmeta"
+    if not meta.exists():
+        return
+    data = json.loads(meta.read_bytes())
+    pack = data.get("pack", {})
+    if "pack_format" not in pack:
+        return
+    pack["min_format"] = MIN_PACK_FORMAT
+    pack["max_format"] = MAX_PACK_FORMAT
+    if isinstance(pack.get("supported_formats"), dict):
+        pack["supported_formats"] = {
+            "min_inclusive": MIN_PACK_FORMAT,
+            "max_inclusive": MAX_PACK_FORMAT,
+        }
+    else:
+        pack["supported_formats"] = [MIN_PACK_FORMAT, MAX_PACK_FORMAT]
+    meta.write_text(json.dumps(data), encoding="utf-8")
+
+
+def _verify_pack_format(zip_path: Path, d: Path) -> None:
+    """Verify pack.mcmeta's format fields are sane after widening."""
+    meta = d / "pack.mcmeta"
+    if not meta.exists():
+        return
+    pack = json.loads(meta.read_bytes()).get("pack", {})
+    min_f, max_f = pack.get("min_format"), pack.get("max_format")
+    if min_f is None or max_f is None:
+        return
+    if min_f > max_f:
+        raise RuntimeError(
+            f"invalid format range in {zip_path.name}: min_format {min_f} > max_format {max_f}"
+        )
+    pack_format = pack.get("pack_format")
+    if pack_format is not None and not (min_f <= pack_format <= max_f):
+        raise RuntimeError(
+            f"pack_format {pack_format} outside [{min_f}, {max_f}] in {zip_path.name}"
+        )
 
 
 def _capture_pack_metadata(
@@ -233,6 +304,28 @@ def _capture_pack_metadata(
     return mcmeta_bytes, overlays
 
 
+def _merge_overlays_into_main(
+    pack_dir: Path,
+    overlays: dict[str, list[tuple[str, bytes]]],
+) -> dict[str, str]:
+    """Copy overlay files into main pack dir so PackSquash optimizes them.
+
+    Returns dict mapping overlay_arcname -> main_arcname for reconstruction.
+    """
+    mapping: dict[str, str] = {}
+    for name, files in overlays.items():
+        prefix = f"{name}/"
+        for arcname, data in files:
+            if not arcname.startswith(prefix):
+                continue
+            main_arcname = arcname[len(prefix) :]
+            main_file = pack_dir / main_arcname
+            main_file.parent.mkdir(parents=True, exist_ok=True)
+            main_file.write_bytes(data)
+            mapping[arcname] = main_arcname
+    return mapping
+
+
 def _repack_zip(src_dir: Path, zip_path: Path) -> None:
     """Repack a directory into a ZIP.
 
@@ -252,8 +345,14 @@ def _restore_pack_metadata(
     zip_path: Path,
     mcmeta_bytes: bytes | None,
     overlays: dict[str, list[tuple[str, bytes]]],
+    overlay_mapping: dict[str, str] | None = None,
 ) -> None:
-    """Restore original pack.mcmeta and overlay files into output ZIP."""
+    """Restore original pack.mcmeta and overlay files into output ZIP.
+
+    overlay_mapping maps overlay_arcname -> main_arcname so that optimized
+    main-path files can be copied into overlay paths when PackSquash strips
+    the overlay directory entirely.
+    """
     with tempfile.TemporaryDirectory() as tmp_dir:
         work_dir = Path(tmp_dir) / "work"
         work_dir.mkdir()
@@ -265,15 +364,29 @@ def _restore_pack_metadata(
             if f.is_file()
         )
 
+        # Reconstruct overlay dirs from optimized main-path files
+        if overlay_mapping:
+            for overlay_arcname, main_arcname in overlay_mapping.items():
+                overlay_target = work_dir / overlay_arcname
+                if overlay_arcname in existing:
+                    continue
+                main_src = work_dir / main_arcname
+                if main_src.exists():
+                    overlay_target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(main_src, overlay_target)
+
         if mcmeta_bytes is not None:
             (work_dir / "pack.mcmeta").write_bytes(mcmeta_bytes)
 
         for name, files in overlays.items():
             for arcname, data in files:
-                if arcname not in existing:
-                    target = work_dir / arcname
-                    target.parent.mkdir(parents=True, exist_ok=True)
-                    target.write_bytes(data)
+                if arcname in existing or (
+                    overlay_mapping and arcname in overlay_mapping
+                ):
+                    continue
+                target = work_dir / arcname
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(data)
 
         _repack_zip(work_dir, zip_path)
 
@@ -332,20 +445,23 @@ def process_zip(ps_bin: str, zip_path: Path) -> tuple[int, int]:
         _extract(source, Path(tmp_dir))
         pack_dir = _unwrap(Path(tmp_dir))
         _remove_problematic(pack_dir)
+        _strip_languages(pack_dir)
         _fix_pack_metadata(pack_dir)
+        _widen_pack_format(pack_dir)
         mcmeta_bytes, overlay_dirs = _capture_pack_metadata(pack_dir)
+        overlay_mapping = _merge_overlays_into_main(pack_dir, overlay_dirs)
         _run(ps_bin, pack_dir, zip_path)
     try:
         _verify_zip_integrity(zip_path)
     except Exception:
         shutil.copy2(bak, zip_path)
         raise
-    _restore_pack_metadata(zip_path, mcmeta_bytes, overlay_dirs)
+    _restore_pack_metadata(zip_path, mcmeta_bytes, overlay_dirs, overlay_mapping)
     return before, zip_path.stat().st_size
 
 
 def process_dir(ps_bin: str, pack_dir: Path) -> tuple[int, int]:
-    output_zip = pack_dir.with_suffix(".zip")
+    output_zip = pack_dir.with_name(pack_dir.name + ".zip")
     bak = output_zip.with_suffix(output_zip.suffix + ".bak")
     before = output_zip.stat().st_size if output_zip.exists() else 0
     if output_zip.exists():
@@ -354,8 +470,11 @@ def process_dir(ps_bin: str, pack_dir: Path) -> tuple[int, int]:
         tmp_pack = Path(tmp_dir) / pack_dir.name
         shutil.copytree(pack_dir, tmp_pack, copy_function=shutil.copy)
         _remove_problematic(tmp_pack)
+        _strip_languages(tmp_pack)
         _fix_pack_metadata(tmp_pack)
+        _widen_pack_format(tmp_pack)
         mcmeta_bytes, overlay_dirs = _capture_pack_metadata(tmp_pack)
+        overlay_mapping = _merge_overlays_into_main(tmp_pack, overlay_dirs)
         _run(ps_bin, tmp_pack, output_zip)
     try:
         _verify_zip_integrity(output_zip)
@@ -365,7 +484,7 @@ def process_dir(ps_bin: str, pack_dir: Path) -> tuple[int, int]:
         else:
             output_zip.unlink(missing_ok=True)
         raise
-    _restore_pack_metadata(output_zip, mcmeta_bytes, overlay_dirs)
+    _restore_pack_metadata(output_zip, mcmeta_bytes, overlay_dirs, overlay_mapping)
     return before, output_zip.stat().st_size
 
 
@@ -424,6 +543,62 @@ def _selftest() -> None:
                 pass
             else:
                 raise AssertionError(f"expected RuntimeError for corrupted {name}")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        meta = d / "pack.mcmeta"
+
+        meta.write_text(
+            json.dumps(
+                {
+                    "pack": {
+                        "pack_format": 75,
+                        "min_format": 75,
+                        "max_format": 88,
+                        "supported_formats": [75, 88],
+                    }
+                }
+            )
+        )
+        _widen_pack_format(d)
+        pack = json.loads(meta.read_bytes())["pack"]
+        assert pack["min_format"] == MIN_PACK_FORMAT
+        assert pack["max_format"] == MAX_PACK_FORMAT
+        assert pack["supported_formats"] == [MIN_PACK_FORMAT, MAX_PACK_FORMAT]
+
+        meta.write_text(
+            json.dumps(
+                {
+                    "pack": {
+                        "pack_format": 34,
+                        "min_format": 34,
+                        "max_format": 88,
+                        "supported_formats": {"min_inclusive": 34, "max_inclusive": 88},
+                    }
+                }
+            )
+        )
+        _widen_pack_format(d)
+        pack = json.loads(meta.read_bytes())["pack"]
+        assert pack["supported_formats"] == {
+            "min_inclusive": MIN_PACK_FORMAT,
+            "max_inclusive": MAX_PACK_FORMAT,
+        }
+
+        _verify_pack_format(Path("dummy.zip"), d)  # must not raise, format is sane
+
+        meta.write_text(
+            json.dumps(
+                {"pack": {"pack_format": 300, "min_format": 15, "max_format": 255}}
+            )
+        )
+        try:
+            _verify_pack_format(Path("dummy.zip"), d)
+        except RuntimeError:
+            pass
+        else:
+            raise AssertionError("expected RuntimeError for pack_format outside range")
+
     print("selftest OK")
 
 
