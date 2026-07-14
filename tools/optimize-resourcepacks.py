@@ -1,6 +1,6 @@
 #!/usr/bin/env -S uv run --script
 # /// script
-# requires-python = ">=3.10"
+# requires-python = ">=3.13"
 # ///
 """optimize-resourcepacks.py: Optimize resource packs with PackSquash.
 
@@ -83,6 +83,44 @@ def _is_power_of_two(n: int) -> bool:
     return n > 0 and (n & (n - 1)) == 0
 
 
+_TEXTURE_EXTS = {".png"}
+_SHADER_EXTS = {".fsh", ".vsh", ".glsl"}
+
+
+def _verify_zip_integrity(zip_path: Path) -> None:
+    """Verify a PackSquash output ZIP is not corrupted.
+
+    PackSquash can legitimately store byte-identical files (e.g. arrow.png /
+    tipped_arrow.png) as overlapping ZIP entries to save space -- valid for
+    Minecraft's own reader, but rejected by Python's strict zipfile module.
+    So this extracts with the same tolerant path _extract() uses (falls back
+    to system unzip tools on BadZipFile) rather than trusting zipfile's CRC
+    checks directly, then checks the extracted textures/shaders on disk.
+    """
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        dest = Path(tmp_dir)
+        _extract(zip_path, dest)
+        for f in dest.rglob("*"):
+            if not f.is_file():
+                continue
+            ext = f.suffix.lower()
+            if ext not in _TEXTURE_EXTS and ext not in _SHADER_EXTS:
+                continue
+            data = f.read_bytes()
+            rel = f.relative_to(dest)
+            if not data:
+                raise RuntimeError(f"empty file in {zip_path.name}: {rel}")
+            if ext == ".png" and not data.startswith(b"\x89PNG\r\n\x1a\n"):
+                raise RuntimeError(f"bad PNG signature in {zip_path.name}: {rel}")
+            if ext in _SHADER_EXTS:
+                try:
+                    data.decode("utf-8")
+                except UnicodeDecodeError as e:
+                    raise RuntimeError(
+                        f"corrupted shader (invalid utf-8) in {zip_path.name}: {rel}"
+                    ) from e
+
+
 def _remove_problematic(d: Path) -> None:
     """Remove files that PackSquash cannot process:
     - Empty/whitespace-only files (would fail JSON/shader parsing)
@@ -96,7 +134,9 @@ def _remove_problematic(d: Path) -> None:
             f.chmod(0o644)
             f.unlink()
             continue
-        if f.suffix.lower() == ".png" and len(data) >= 24:
+        # pack.png (the pack icon) is never atlas-stitched, so it has no
+        # power-of-two requirement -- Minecraft displays it at any size.
+        if f.suffix.lower() == ".png" and len(data) >= 24 and f.name != "pack.png":
             # PNG header: width at bytes 16-20, height at bytes 20-24
             w = int.from_bytes(data[16:20], "big")
             h = int.from_bytes(data[20:24], "big")
@@ -177,11 +217,17 @@ def process_zip(ps_bin: str, zip_path: Path) -> tuple[int, int]:
         _remove_problematic(pack_dir)
         _fix_pack_metadata(pack_dir)
         _run(ps_bin, pack_dir, zip_path)
+    try:
+        _verify_zip_integrity(zip_path)
+    except Exception:
+        shutil.copy2(bak, zip_path)
+        raise
     return before, zip_path.stat().st_size
 
 
 def process_dir(ps_bin: str, pack_dir: Path) -> tuple[int, int]:
     output_zip = pack_dir.with_suffix(".zip")
+    bak = output_zip.with_suffix(output_zip.suffix + ".bak")
     before = output_zip.stat().st_size if output_zip.exists() else 0
     if output_zip.exists():
         backup(output_zip)
@@ -191,6 +237,14 @@ def process_dir(ps_bin: str, pack_dir: Path) -> tuple[int, int]:
         _remove_problematic(tmp_pack)
         _fix_pack_metadata(tmp_pack)
         _run(ps_bin, tmp_pack, output_zip)
+    try:
+        _verify_zip_integrity(output_zip)
+    except Exception:
+        if bak.exists():
+            shutil.copy2(bak, output_zip)
+        else:
+            output_zip.unlink(missing_ok=True)
+        raise
     return before, output_zip.stat().st_size
 
 
@@ -221,15 +275,45 @@ def process_one(ps_bin: str, target: Path) -> bool:
         saved = f"  saved {fmt_bytes(before - after)}" if before > after else ""
         print(f"  done  {fmt_bytes(after)}{saved}")
         return True
-    except subprocess.CalledProcessError:
-        print("  FAILED", file=sys.stderr)
+    except (subprocess.CalledProcessError, RuntimeError) as e:
+        print(f"  FAILED: {e}", file=sys.stderr)
         return False
+
+
+def _selftest() -> None:
+    """assert-based self-check for _verify_zip_integrity. Run via --selftest."""
+    good_png = b"\x89PNG\r\n\x1a\n" + b"\0" * 20
+    with tempfile.TemporaryDirectory() as tmp:
+        ok_zip = Path(tmp) / "ok.zip"
+        with zipfile.ZipFile(ok_zip, "w") as zf:
+            zf.writestr("assets/x/textures/block/stone.png", good_png)
+            zf.writestr("assets/x/shaders/core/rendertype_solid.fsh", "void main() {}")
+        _verify_zip_integrity(ok_zip)  # must not raise
+
+        for name, data in [
+            ("assets/x/textures/block/stone.png", b"not a png"),
+            ("assets/x/shaders/core/rendertype_solid.fsh", b"\xff\xfe\x00bad"),
+        ]:
+            bad_zip = Path(tmp) / "bad.zip"
+            with zipfile.ZipFile(bad_zip, "w") as zf:
+                zf.writestr(name, data)
+            try:
+                _verify_zip_integrity(bad_zip)
+            except RuntimeError:
+                pass
+            else:
+                raise AssertionError(f"expected RuntimeError for corrupted {name}")
+    print("selftest OK")
 
 
 def main() -> None:
     if len(sys.argv) < 2:
         print(__doc__, file=sys.stderr)
         sys.exit(1)
+
+    if sys.argv[1] == "--selftest":
+        _selftest()
+        return
 
     target = Path(sys.argv[1]).resolve()
     if not target.exists():

@@ -1,6 +1,5 @@
 # Mise Configuration | https://mise.jdx.dev/configuration.html
 [settings]
-yes = true
 auto_install = true
 lockfile = true
 activate_aggressive = true
@@ -22,21 +21,18 @@ bun = true
 
 [tools]
 #java = "oracle-graalvm"
-java = "temurin-25.0.3+9.0.LTS"
-"cargo:https://github.com/ComunidadAylas/PackSquash" = "latest"
-"ubi:zeroBzeroT/ChunkCleaner" = "latest"
-"cargo:rustic-rs" = "latest"
-python = "3.14"
-uv = "latest"
-ruff = "latest"
-prek = "latest"
+#java = "temurin-25.0.3+9.0.LTS"
+"github:ComunidadAylas/PackSquash" = "latest"
+"github:zeroBzeroT/ChunkCleaner" = "latest"
+#"cargo:rustic-rs" = "latest"
+#python = "3.14"
+#uv = "latest"
+#ruff = "latest"
+#prek = "latest"
 
 [env]
 #_.java.GRAALVM_HOME = "${MISE_INSTALLS}/graalvm/${version}"
 PROJECT_ROOT = "{{config_root}}"
-# Ensure uv uses the exact Python interpreter installed by `mise install`.
-# `tools = true` makes `tools.python.path` available when mise resolves tool-aware env vars at runime.
-UV_PYTHON = { value = "{{ tools.python.path }}", tools = true }
 UV_LINK_MODE = "symlink"
 _.python.venv = { path = ".venv", create = true, uv_create_args = ["--seed", "--system-site-packages"] }
 DO_NOT_TRACK = "1"

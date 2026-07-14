@@ -1,0 +1,112 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1783987178080,
+  "projectRoot": "C:\\Users\\Ven0m0\\project\\MC-Server",
+  "techStack": {
+    "languages": [],
+    "frameworks": [],
+    "packageManager": null,
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": null,
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {}
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "docs"
+    ],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 6,
+      "lastAccessed": 1783987178069,
+      "keyFiles": [
+        "Flags.txt",
+        "HOSTING.md",
+        "mods-links.txt",
+        "mods.txt",
+        "SETUP.md"
+      ]
+    },
+    "minecraft": {
+      "path": "minecraft",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1783987178070,
+      "keyFiles": [
+        "packsquash.toml",
+        "server.properties"
+      ]
+    },
+    "tools": {
+      "path": "tools",
+      "purpose": null,
+      "fileCount": 14,
+      "lastAccessed": 1783987178070,
+      "keyFiles": [
+        "backup.sh",
+        "common.py",
+        "common.sh",
+        "logrotate.py",
+        "mc-client.sh"
+      ]
+    },
+    "minecraft\\config": {
+      "path": "minecraft\\config",
+      "purpose": "Configuration files",
+      "fileCount": 18,
+      "lastAccessed": 1783987178071,
+      "keyFiles": [
+        "annuus.json",
+        "async.toml",
+        "cesium.json"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "tools/optimize-resourcepacks.py",
+      "accessCount": 8,
+      "lastAccessed": 1783724634282,
+      "type": "file"
+    },
+    {
+      "path": "AGENTS.md",
+      "accessCount": 5,
+      "lastAccessed": 1783987376987,
+      "type": "file"
+    },
+    {
+      "path": "mise.toml",
+      "accessCount": 4,
+      "lastAccessed": 1783987329545,
+      "type": "file"
+    },
+    {
+      "path": "minecraft/packsquash.toml",
+      "accessCount": 3,
+      "lastAccessed": 1783724906927,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

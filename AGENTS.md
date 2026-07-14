@@ -88,6 +88,7 @@ MC-Server/
 │   ├── mc-client.sh                 # Minecraft client and console helper
 │   ├── mod-updates.sh               # Fabric installation and mod updates
 │   ├── monitor.sh                   # Server health monitoring and metrics
+│   ├── optimize-resourcepacks.py    # PackSquash wrapper for resource pack ZIPs/dirs
 │   ├── prepare.sh                   # Initial server setup (EULA, directories)
 │   ├── rcon.sh                      # RCON client for remote commands
 │   ├── server-start.sh              # Server startup with JVM optimization
@@ -160,6 +161,7 @@ MC-Server/
 | `tools/monitor.sh` | ~350 | Health monitoring and metrics |
 | `tools/mod-updates.sh` | ~250 | Fabric and mod management |
 | `tools/common.sh` | ~150 | Shared utility library |
+| `tools/optimize-resourcepacks.py` | ~250 | Runs PackSquash against a pack ZIP, pack directory, or a folder of packs |
 | `README.md` | 539 | Complete project documentation |
 | `docs/SETUP.md` | ~150 | Step-by-step setup guide |
 | `.github/workflows/shell-validation.yml` | ~100 | Comprehensive linting config |
@@ -218,6 +220,23 @@ mise install
 - Applies optimized flags from `docs/Flags.txt`
 - Configures G1GC, huge pages, GameMode integration
 - See `tools/server-start.sh:150-250` for flag logic
+
+**Resource Pack Optimization:**
+```bash
+# Single ZIP pack (creates a .bak backup before overwriting)
+./tools/optimize-resourcepacks.py path/to/pack.zip
+
+# Single unpacked pack directory (writes <dir>.zip next to it)
+./tools/optimize-resourcepacks.py path/to/pack_dir/
+
+# Batch: optimize every pack found in a folder
+./tools/optimize-resourcepacks.py resourcepacks/
+```
+- Requires `packsquash` on PATH, via `mise which packsquash`, or in `~/packsquash(.exe)`/`~/.local/bin/packsquash`
+- Uses `minecraft/packsquash.toml` as a template, filling in `pack_directory`/`output_file_path` per run
+- Strips files PackSquash can't process (empty files, non-power-of-two PNGs) and backfills `pack_format`/overlay `min_format`/`max_format` in `pack.mcmeta` before squashing
+- Verifies the output ZIP's textures/shaders after each run and restores the `.bak` on failure
+- `./tools/optimize-resourcepacks.py --selftest` runs an assert-based check of the integrity verifier
 
 ### Testing
 

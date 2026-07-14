@@ -25,10 +25,14 @@ percentage_of_zip_structures_tuned_for_obfuscation_discretion = 0
 size_increasing_zip_obfuscation = false
 
 # Images
+# maximum_width_and_height applies to all PNGs, including pack.png (the pack
+# icon, which isn't atlas-stitched and has no power-of-two requirement) --
+# PackSquash doesn't support a per-file override for this option, so the
+# global limit must be high enough to admit oversized icons too.
 ['**/*.png']
 downsize_if_single_color = true
 skip_alpha_optimizations = false
-maximum_width_and_height = 1024
+maximum_width_and_height = 2048
 image_data_compression_iterations = 25
 color_quantization_target = 'auto'
 
