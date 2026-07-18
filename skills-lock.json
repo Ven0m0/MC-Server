@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "graal": {
+      "source": "oracle/skills",
+      "sourceType": "github",
+      "skillPath": "graal/SKILL.md",
+      "computedHash": "cc3bf0d7a947be36c97480cd1b24f42473c056ef459d807d50f874165c04dfad"
+    }
+  }
+}
