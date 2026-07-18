@@ -421,6 +421,8 @@ Detailed documentation available in `docs/`:
 - **[SETUP.md](docs/SETUP.md)** - Comprehensive setup guide
 - **[TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 - **[TOOLS.md](docs/TOOLS.md)** - Detailed tool documentation
+- **[OPTIMIZE-RESOURCEPACKS.md](docs/OPTIMIZE-RESOURCEPACKS.md)** - PackSquash resource pack optimization
+- **[MOD-JAR-COMPRESSION.md](docs/MOD-JAR-COMPRESSION.md)** - mc-repack mod jar compression
 - **[Flags.txt](docs/Flags.txt)** - JVM optimization flags reference
 - **[mods.txt](docs/mods.txt)** - Complete list of installed mods
 
