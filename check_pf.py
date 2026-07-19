@@ -1,4 +1,7 @@
-import urllib.request, json, zipfile, io
+import urllib.request
+import json
+import zipfile
+import io
 
 manifest = json.loads(
     urllib.request.urlopen(
