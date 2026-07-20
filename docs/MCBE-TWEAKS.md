@@ -29,32 +29,13 @@ and set **gfx_vsync** to 0.
 
 **RENDER DISTANCE:** **16** - **12** *for high and mid pc's, 8 for low end machines. Due to how bedrock works, having tiny renderdistance barely improves performance and can sometimes make it worse due to unbalanced load on the CPU and GPU.*
 
-## **Make Bedrock Edition less ugly**
-**Clean HUD Pack** - This pack is made by me, and adds transparent Java Chat and a Clear scoreboard without numbers.
-- https://mcpedl.com/clean-hud-pack/
+## **Improve Bedrock graphics**
 
-![cleanhud1](https://api.mcpedl.com/storage/submissions/166701/images/better-hud-pack_7.png)
-
-## **Java Animations**
-Bedrock's vanilla animations are horrificly bad, this resource pack by ambient makes the animations look and feel like Minecraft Java 1.7x.
-- https://mcpedl.com/java-1-7-animations/
-
-## **Fog Remover Shader**
-there is a pack for non renderdragon versions of minecraft, however for renderdragon I have compiled my own shader that you will have to drop into the game's files.
-
-**Non-RenderDragon:** https://www.mediafire.com/file/33ibsfwwehokkvy/
-Double-Click the MCPACK file to import.
-
-**RenderDragon:** https://github.com/Furzide/RenderDragonFogRemover
+- [cleanhud](https://mcpedl.com/clean-hud-pack)
+- [Java Animations](https://mcpedl.com/java-1-7-animations)
+- [Fog Remover Shader](https://github.com/Furzide/RenderDragonFogRemover)
 
 ## **Fix Performance on RTX GPUs**
-download and run **Nvidia Profile Inspector 2.4.0.1** or later  
-- https://github.com/Orbmu2k/nvidiaProfileInspector/releases  
-
+download and run **Nvidia Profile Inspector** or later  
 search and open the profile for **Minecraft**  
-
 scroll down until you see the **"Raytracing - (DXR) Enabled"** setting. Set this to **RT Disabled.**  
-
-Click **Apply Changes** at the top right of the screen.  
-![npi1](https://cdn.discordapp.com/attachments/1037432674672967733/1047221676254953472/image.png)  
-![npi2](https://cdn.discordapp.com/attachments/1037432674672967733/1047221676686970950/image.png)
