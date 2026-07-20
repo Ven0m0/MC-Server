@@ -133,10 +133,10 @@ config/
 
 ### Version Tracking
 
-#### **versions.sh** (`versions.sh`)
+#### **versions.py** (`versions.py`)
 - **Purpose**: Track installed mod/plugin versions for documentation
 - **Type**: Shell script (source file)
-- **Usage**: Sourced by management scripts (prepare.sh, mcctl.sh)
+- **Usage**: Sourced by management scripts (prepare.py, mcctl.sh)
 - **Contains**: Version numbers for lazymc, LuckPerms, FreedomChat, etc.
 
 ## Configuration Best Practices
@@ -145,7 +145,7 @@ config/
 
 1. **Backup First**: Always backup configs before making changes
    ```bash
-   ./tools/backup.sh backup config
+   ./tools/backup.py backup config
    ```
 
 2. **Test Changes**: Test configuration changes in a development environment first
@@ -209,7 +209,7 @@ mob_spawning:
 
 1. Check server logs: `logs/latest.log`
 2. Look for config-related errors
-3. Restore from backup: `./tools/backup.sh restore [backup-file]`
+3. Restore from backup: `./tools/backup.py restore [backup-file]`
 4. Validate JSON/YAML syntax using online validators
 
 ### Configuration Not Taking Effect
@@ -237,13 +237,13 @@ Some mods may override others. Load order considerations:
 
 ## Version Management
 
-Version numbers for key components are tracked in `versions.sh`. This file is sourced by:
+Version numbers for key components are tracked in `versions.py`. This file is sourced by:
 
-- `tools/prepare.sh` - For lazymc installation
+- `tools/prepare.py` - For lazymc installation
 
 To update a version:
 
-1. Edit `minecraft/config/versions.sh`
+1. Edit `minecraft/config/versions.py`
 2. Update the version variable (e.g., `LAZYMC_VERSION="0.2.11"`)
 
 ---

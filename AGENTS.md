@@ -19,7 +19,7 @@
 
 ## Project Overview
 
-**MC-Server** is a production-ready Minecraft Fabric server management suite built entirely in Bash. It provides comprehensive automation for server lifecycle management, backups, monitoring, optimization, and deployment.
+**MC-Server** is a production-ready Minecraft Fabric server management suite built entirely in Python. It provides comprehensive automation for server lifecycle management, backups, monitoring, optimization, and deployment.
 
 ### Key Features
 
@@ -36,7 +36,7 @@
 
 - **Minecraft Version:** 1.21.5 (Fabric)
 - **Java Version:** 21+ (GraalVM Enterprise/Community or Eclipse Temurin)
-- **Bash Version:** 5.0+ required
+- **Python Version:** 3.11+ required
 - **Modding Framework:** Fabric Loader
 - **Primary Mods:** ServerCore, GeyserMC, Floodgate, Cesium, performance optimizations
 
@@ -48,7 +48,7 @@
 
 | Component | Technology | Version | Purpose |
 |-----------|-----------|---------|---------|
-| **Server Scripts** | Bash | 5.0+ | All automation and management |
+| **Server Scripts** | Python | 3.11+ | All automation and management |
 | **Game Runtime** | Java | 21+ | Minecraft server execution |
 | **Modding Framework** | Fabric Loader | Latest | Server-side modifications |
 | **Config Formats** | YAML, JSON, TOML, Properties | - | Server and mod configuration |
@@ -68,8 +68,7 @@
 ### CI/CD & Quality Assurance
 
 - **GitHub Actions** - Automated workflows for linting, image optimization, dependency updates
-- **Shell validation** - Bash syntax, ShellCheck, and shfmt checks via GitHub Actions
-- **ShellCheck** - Bash script static analysis
+- **Python validation** - `py_compile` syntax checks and ruff linting via GitHub Actions
 - **Dependabot** - Automated dependency updates
 - **PackSquash** - Resource pack validation and optimization
 
@@ -82,19 +81,19 @@
 ```
 MC-Server/
 ├── tools/                           # Server management scripts
-│   ├── backup.sh                    # Backup creation/restoration (tar, rustic, btrfs)
-│   ├── common.sh                    # Shared utility functions (logging, colors)
-│   ├── logrotate.sh                 # Log file rotation and maintenance
-│   ├── mc-client.sh                 # Minecraft client and console helper
-│   ├── mod-updates.sh               # Fabric installation and mod updates
-│   ├── monitor.sh                   # Server health monitoring and metrics
+│   ├── backup.py                    # Backup creation/restoration (tar, rustic, btrfs)
+│   ├── common.py                    # Shared utility functions (logging, colors)
+│   ├── logrotate.py                 # Log file rotation and maintenance
+│   ├── mc-client.py                 # Minecraft client and console helper
+│   ├── mod-updates.py               # Fabric installation and mod updates
+│   ├── monitor.py                   # Server health monitoring and metrics
 │   ├── optimize-resourcepacks.py    # PackSquash wrapper for resource pack ZIPs/dirs
-│   ├── prepare.sh                   # Initial server setup (EULA, directories)
-│   ├── rcon.sh                      # RCON client for remote commands
-│   ├── server-start.sh              # Server startup with JVM optimization
-│   ├── systemd-service.sh           # Systemd service creation and management
-│   ├── watchdog.sh                  # Auto-restart on crashes
-│   ├── world-optimize.sh            # World pruning and optimization
+│   ├── prepare.py                   # Initial server setup (EULA, directories)
+│   ├── rcon.py                      # RCON client for remote commands
+│   ├── server-start.py              # Server startup with JVM optimization
+│   ├── systemd-service.py           # Systemd service creation and management
+│   ├── watchdog.py                  # Auto-restart on crashes
+│   ├── world-optimize.py            # World pruning and optimization
 │   └── systemd/                     # Systemd unit templates
 │       ├── mc-server@.service
 │       ├── minecraft-backup-new@.service
@@ -110,7 +109,7 @@ MC-Server/
 │   │   ├── Geyser-Fabric/
 │   │   ├── floodgate/
 │   │   ├── servercore/
-│   │   └── versions.sh
+│   │   └── versions.py
 │   ├── packsquash.toml
 │   └── server.properties
 │
@@ -127,14 +126,14 @@ MC-Server/
 │   │   ├── copilot-setup-steps.yml
 │   │   ├── image-optimization.yml
 │   │   ├── packsquash.yml
-│   │   └── shell-validation.yml
+│   │   └── python-validation.yml
 │   ├── instructions/
 │   │   ├── agent-guidance.instructions.md
-│   │   ├── shell-tools.instructions.md
+│   │   ├── python-tools.instructions.md
 │   │   └── workflows.instructions.md
 │   ├── skills/
 │   │   ├── copilot-init/
-│   │   ├── maintain-shell-tools/
+│   │   ├── maintain-python-tools/
 │   │   └── validate/
 │   └── dependabot.yml
 │
@@ -147,7 +146,7 @@ MC-Server/
 ├── mise.toml
 ├── server.toml
 ├── .editorconfig
-├── .shellcheckrc
+├── pyproject.toml
 ├── .gitignore
 └── .gitattributes
 ```
@@ -156,15 +155,15 @@ MC-Server/
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `tools/server-start.sh` | ~300 | Main server launcher with JVM optimization |
-| `tools/backup.sh` | ~400 | Multi-strategy backup and restore |
-| `tools/monitor.sh` | ~350 | Health monitoring and metrics |
-| `tools/mod-updates.sh` | ~250 | Fabric and mod management |
-| `tools/common.sh` | ~150 | Shared utility library |
+| `tools/server-start.py` | ~300 | Main server launcher with JVM optimization |
+| `tools/backup.py` | ~400 | Multi-strategy backup and restore |
+| `tools/monitor.py` | ~350 | Health monitoring and metrics |
+| `tools/mod-updates.py` | ~250 | Fabric and mod management |
+| `tools/common.py` | ~150 | Shared utility library |
 | `tools/optimize-resourcepacks.py` | ~250 | Runs PackSquash against a pack ZIP, pack directory, or a folder of packs |
 | `README.md` | 539 | Complete project documentation |
 | `docs/SETUP.md` | ~150 | Step-by-step setup guide |
-| `.github/workflows/shell-validation.yml` | ~100 | Comprehensive linting config |
+| `.github/workflows/python-validation.yml` | ~100 | Comprehensive linting config |
 
 ---
 
@@ -175,10 +174,8 @@ MC-Server/
 **Prerequisites:**
 ```bash
 # System requirements
-- Bash 5.0+
+- Python 3.11+
 - Java 21+ (GraalVM or Temurin)
-- curl/wget for downloads
-- jq/jaq for JSON parsing (optional)
 - aria2c for parallel downloads (optional)
 ```
 
@@ -189,16 +186,16 @@ git clone https://github.com/Ven0m0/MC-Server.git
 cd MC-Server
 
 # 2. Run initial preparation
-./tools/prepare.sh
+./tools/prepare.py
 
 # 3. Install Fabric server
-./tools/mod-updates.sh install-fabric
+./tools/mod-updates.py install-fabric
 
 # 4. Install tools via mise
 mise install
 
 # 5. Start server
-./tools/server-start.sh
+./tools/server-start.py
 ```
 
 ### Build Process
@@ -206,20 +203,20 @@ mise install
 **Server Installation:**
 ```bash
 # Install latest Fabric
-./tools/mod-updates.sh install-fabric
+./tools/mod-updates.py install-fabric
 
 # Install specific version
-./tools/mod-updates.sh install-fabric 1.21.5
+./tools/mod-updates.py install-fabric 1.21.5
 
 # Update mods via Ferium
-./tools/mod-updates.sh ferium
+./tools/mod-updates.py ferium
 ```
 
 **JVM Optimization:**
 - Server automatically detects JVM type (GraalVM vs. standard JDK)
 - Applies optimized flags from `docs/Flags.txt`
 - Configures G1GC, huge pages, GameMode integration
-- See `tools/server-start.sh:150-250` for flag logic
+- See `tools/server-start.py:150-250` for flag logic
 
 **Resource Pack Optimization:**
 ```bash
@@ -243,30 +240,30 @@ mise install
 **Automated Testing (GitHub Actions):**
 ```bash
 # Runs on push to main/claude/* branches
-- ShellCheck validation of all .sh files
+- Python syntax/lint validation of all .py files
 - YAML/JSON/TOML syntax validation
 - Markdown linting
 - Image optimization
 - Resource pack validation
 
 # Local testing
-bash -n tools/*.sh && shellcheck tools/*.sh  # Run MegaLinter locally
-shellcheck tools/*.sh      # Check Bash scripts
+python3 -m py_compile tools/*.py minecraft/config/versions.py  # Run MegaLinter locally
+ruff check tools/ minecraft/config/versions.py  # Check Python scripts (if ruff installed)
 ```
 
 **Manual Testing:**
 ```bash
 # Syntax check all scripts
-for f in tools/*.sh; do bash -n "$f"; done
+for f in tools/*.py; do python3 -m py_compile "$f"; done
 
 # Check server status
-./tools/monitor.sh status
+./tools/monitor.py status
 
 # Test backup creation
-./tools/backup.sh backup test-backup
+./tools/backup.py backup test-backup
 
 # Verify systemd service
-./tools/systemd-service.sh validate
+./tools/systemd-service.py validate
 ```
 
 ### Deployment
@@ -274,37 +271,37 @@ for f in tools/*.sh; do bash -n "$f"; done
 **Systemd Service Deployment:**
 ```bash
 # Create and enable service
-./tools/systemd-service.sh create
-./tools/systemd-service.sh enable
-./tools/systemd-service.sh start
+./tools/systemd-service.py create
+./tools/systemd-service.py enable
+./tools/systemd-service.py start
 
 # With proxy (Playit.gg or Infrarust)
-./tools/systemd-service.sh create-infrarust
-./tools/systemd-service.sh create-playit
+./tools/systemd-service.py create-infrarust
+./tools/systemd-service.py create-playit
 ```
 
 **Manual Deployment:**
 ```bash
 # Start in screen/tmux
-screen -dmS minecraft bash -c "cd /path/to/MC-Server && ./tools/server-start.sh"
+screen -dmS minecraft bash -c "cd /path/to/MC-Server && ./tools/server-start.py"
 
 # Attach to console
-./tools/mc-client.sh attach
+./tools/mc-client.py attach
 
 # With watchdog (auto-restart)
-screen -dmS watchdog bash -c "cd /path/to/MC-Server && ./tools/watchdog.sh monitor"
+screen -dmS watchdog bash -c "cd /path/to/MC-Server && ./tools/watchdog.py monitor"
 ```
 
 **Automated Maintenance (Cron):**
 ```bash
 # Daily backup at 4 AM
-0 4 * * * cd /path/to/MC-Server && ./tools/backup.sh backup all
+0 4 * * * cd /path/to/MC-Server && ./tools/backup.py backup all
 
 # Weekly log rotation (Sunday 3 AM)
-0 3 * * 0 cd /path/to/MC-Server && ./tools/logrotate.sh maintenance
+0 3 * * 0 cd /path/to/MC-Server && ./tools/logrotate.py maintenance
 
 # Monthly world optimization (1st of month, 2 AM)
-0 2 1 * * cd /path/to/MC-Server && ./tools/world-optimize.sh --chunks unused --backup
+0 2 1 * * cd /path/to/MC-Server && ./tools/world-optimize.py --chunks unused --backup
 ```
 
 ---
@@ -323,7 +320,7 @@ export LC_ALL=C
 IFS=$'\n\t'
 
 # Source common library
-source "${PWD}/tools/common.sh"
+source "${PWD}/tools/common.py"
 
 # Configuration with defaults
 : "${VAR_NAME:=default_value}"
@@ -397,7 +394,7 @@ result=`command`  # WRONG - use $() instead
 rm -rf $dir/*  # WRONG - use "$dir"
 ```
 
-**Output Functions (from `tools/common.sh`):**
+**Output Functions (from `tools/common.py`):**
 ```bash
 print_header "Installing Fabric"     # Blue "==> Installing Fabric"
 print_success "Server started"       # Green "✓ Server started"
@@ -422,7 +419,7 @@ trap 'cleanup_function' EXIT
 
 ### ShellCheck Compliance
 
-**Enabled Rules (from `.shellcheckrc`):**
+**Enabled Rules (from `pyproject.toml`):**
 ```bash
 # All rules enabled by default
 enable=all
@@ -467,7 +464,7 @@ shell=bash
 ```
 
 **Via Scripts:**
-- **Fabric Loader** - Downloaded by `mod-updates.sh`
+- **Fabric Loader** - Downloaded by `mod-updates.py`
 - **Ferium** - Auto-downloaded for mod management
 - **lazymc** - Optional, for auto-sleep proxy
 - **Playit.gg** - Optional, for public tunneling
@@ -493,7 +490,7 @@ shell=bash
 **Update Process:**
 ```bash
 # Update mods via Ferium
-./tools/mod-updates.sh ferium
+./tools/mod-updates.py ferium
 
 # Update mise tools
 mise upgrade
@@ -506,7 +503,7 @@ mise upgrade
 - Minecraft version: `server.toml` (mcman config)
 - Fabric Loader: `server.toml`
 - Java: `mise.toml` (optional)
-- Mods: Ferium profile (created locally by `./tools/mod-updates.sh setup-ferium`)
+- Mods: Ferium profile (created locally by `./tools/mod-updates.py setup-ferium`)
 
 ---
 
@@ -517,17 +514,17 @@ mise upgrade
 **Start/Stop:**
 ```bash
 # Start server (with optimization)
-./tools/server-start.sh
+./tools/server-start.py
 
 # Start with lazymc proxy
-./tools/server-start.sh --proxy lazymc
+./tools/server-start.py --proxy lazymc
 
 # Start with Infrarust proxy
-./tools/server-start.sh --proxy infrarust
+./tools/server-start.py --proxy infrarust
 
 # Stop server (via RCON or console)
-./tools/rcon.sh stop
-./tools/mc-client.sh send stop
+./tools/rcon.py stop
+./tools/mc-client.py send stop
 
 # Force stop
 pkill -INT -f minecraft_server
@@ -536,25 +533,25 @@ pkill -INT -f minecraft_server
 **Console Management:**
 ```bash
 # Attach to console
-./tools/mc-client.sh attach
+./tools/mc-client.py attach
 
 # Send command
-./tools/mc-client.sh send "say Hello"
+./tools/mc-client.py send "say Hello"
 
 # Send RCON command
-./tools/rcon.sh "whitelist add PlayerName"
+./tools/rcon.py "whitelist add PlayerName"
 ```
 
 **Monitoring:**
 ```bash
 # Full status report
-./tools/monitor.sh status
+./tools/monitor.py status
 
 # Continuous monitoring
-./tools/monitor.sh watch
+./tools/monitor.py watch
 
 # Health check (for scripts)
-./tools/monitor.sh alert
+./tools/monitor.py alert
 ```
 
 ### Backup & Recovery
@@ -562,31 +559,31 @@ pkill -INT -f minecraft_server
 **Create Backups:**
 ```bash
 # Tar archive backup
-./tools/backup.sh backup my-backup
+./tools/backup.py backup my-backup
 
 # Rustic deduplicated backup
-./tools/backup.sh backup --rustic
+./tools/backup.py backup --rustic
 
 # Btrfs snapshot
-./tools/backup.sh backup --btrfs
+./tools/backup.py backup --btrfs
 
 # Backup everything (worlds + configs)
-./tools/backup.sh backup all
+./tools/backup.py backup all
 ```
 
 **Restore Backups:**
 ```bash
 # List available backups
-./tools/backup.sh list
+./tools/backup.py list
 
 # Restore tar backup
-./tools/backup.sh restore backup-name.tar.gz
+./tools/backup.py restore backup-name.tar.gz
 
 # Restore Rustic snapshot
-./tools/backup.sh restore --rustic snapshot-id
+./tools/backup.py restore --rustic snapshot-id
 
 # Restore Btrfs snapshot
-./tools/backup.sh restore --btrfs snapshot-name
+./tools/backup.py restore --btrfs snapshot-name
 ```
 
 ### Maintenance
@@ -594,34 +591,34 @@ pkill -INT -f minecraft_server
 **Log Management:**
 ```bash
 # Rotate logs
-./tools/logrotate.sh rotate
+./tools/logrotate.py rotate
 
 # Clean old logs (keep last 7 days)
-./tools/logrotate.sh clean
+./tools/logrotate.py clean
 
 # Full maintenance
-./tools/logrotate.sh maintenance
+./tools/logrotate.py maintenance
 ```
 
 **World Optimization:**
 ```bash
 # Remove unused chunks
-./tools/world-optimize.sh --chunks unused
+./tools/world-optimize.py --chunks unused
 
 # Optimize with backup
-./tools/world-optimize.sh --chunks unused --backup
+./tools/world-optimize.py --chunks unused --backup
 
 # Prune specific world
-./tools/world-optimize.sh --world world_the_nether --chunks unused
+./tools/world-optimize.py --world world_the_nether --chunks unused
 ```
 
 **Mod Updates:**
 ```bash
 # Update all mods via Ferium
-./tools/mod-updates.sh ferium
+./tools/mod-updates.py ferium
 
 # Install new Fabric version
-./tools/mod-updates.sh install-fabric 1.21.5
+./tools/mod-updates.py install-fabric 1.21.5
 
 # Download specific mod (manual)
 cd minecraft/mods && wget https://example.com/mod.jar
@@ -632,52 +629,58 @@ cd minecraft/mods && wget https://example.com/mod.jar
 **Linting & Formatting:**
 ```bash
 # Run MegaLinter on all files
-bash -n tools/*.sh && shellcheck tools/*.sh
+python3 -m py_compile tools/*.py
 
 # Check specific script
-shellcheck tools/backup.sh
+ruff check tools/backup.py
 
-# Format with shfmt
-shfmt -w -i 2 -bn tools/*.sh
+# Format with ruff
+ruff format tools/*.py
 ```
 
 **Testing:**
 ```bash
 # Syntax check all scripts
-for f in tools/*.sh; do bash -n "$f" || echo "Error in $f"; done
+for f in tools/*.py; do python3 -m py_compile "$f" || echo "Error in $f"; done
 
 # Dry-run backup
-./tools/backup.sh backup test --dry-run
+./tools/backup.py backup test --dry-run
 
 # Test systemd service creation
-./tools/systemd-service.sh validate
+./tools/systemd-service.py validate
 ```
 
 **Adding New Scripts:**
 ```bash
 # 1. Create script in tools/
-cat > tools/new-script.sh << 'EOF'
-#!/usr/bin/env bash
-# shellcheck enable=all shell=bash source-path=SCRIPTDIR
-set -euo pipefail
-source "${PWD}/tools/common.sh"
+cat > tools/new-script.py << 'EOF'
+#!/usr/bin/env python3
+"""New Script"""
 
-main() {
-  print_header "New Script"
-  # Implementation
-}
+import sys
+from pathlib import Path
 
-main "$@"
+sys.path.insert(0, str(Path(__file__).parent))
+from common import header
+
+
+def main() -> None:
+    header("New Script")
+    # Implementation
+
+
+if __name__ == "__main__":
+    main()
 EOF
 
 # 2. Make executable
-chmod +x tools/new-script.sh
+chmod +x tools/new-script.py
 
 # 3. Test syntax
-bash -n tools/new-script.sh
+python3 -m py_compile tools/new-script.py
 
-# 4. Run ShellCheck
-shellcheck tools/new-script.sh
+# 4. Run ruff
+ruff check tools/new-script.py
 
 # 5. Document in README.md
 ```
@@ -700,8 +703,8 @@ shellcheck tools/new-script.sh
 | File | Format | Purpose |
 |------|--------|---------|
 | `.editorconfig` | INI | Universal editor settings |
-| `.github/workflows/shell-validation.yml` | YAML | Multi-language linting |
-| `.shellcheckrc` | RC | Bash linting rules |
+| `.github/workflows/python-validation.yml` | YAML | Multi-language linting |
+| `pyproject.toml`/`ruff.toml` | TOML | Python linting rules (if present) |
 | `.github/workflows/packsquash.yml` | YAML | CI linting automation |
 
 **Mod Configurations:**
@@ -768,11 +771,11 @@ export DRY_RUN=true
 
 1. **Always read files first** - Use Read tool before Edit/Write
 2. **Preserve existing patterns** - Match the codebase style
-3. **Follow Bash conventions** - 2-space indent, strict mode, quoting
-4. **Run ShellCheck mentally** - Quote vars, use `[[ ]]`, avoid backticks
+3. **Follow Python conventions** - 4-space indent, type hints, `pathlib` over string paths
+4. **Keep it lint-clean** - Run `ruff check` mentally, avoid unused imports
 5. **Minimize changes** - Edit existing files, don't create new ones unnecessarily
-6. **Use common.sh functions** - `print_header`, `print_success`, etc.
-7. **Test syntax** - Ensure valid Bash with `bash -n script.sh`
+6. **Use common.py functions** - `header`, `success`, `info`, `error`, etc.
+7. **Test syntax** - Ensure valid Python with `python3 -m py_compile script.py`
 
 ### When Answering Questions
 
@@ -794,8 +797,8 @@ export DRY_RUN=true
 
 When referencing code, use this format for easy navigation:
 ```
-The backup function is defined in tools/backup.sh:45
-Server startup logic is in tools/server-start.sh:150-250
+The backup function is defined in tools/backup.py:45
+Server startup logic is in tools/server-start.py:150-250
 JVM flags are documented in docs/Flags.txt:10-30
 ```
 
@@ -806,12 +809,12 @@ JVM flags are documented in docs/Flags.txt:10-30
 ### Regular Updates
 
 **Weekly:**
-- Run `./tools/mod-updates.sh ferium` - Update mods
-- Check `./tools/monitor.sh status` - Verify health
+- Run `./tools/mod-updates.py ferium` - Update mods
+- Check `./tools/monitor.py status` - Verify health
 - Review `minecraft/logs/latest.log` - Check for errors
 
 **Monthly:**
-- Run `./tools/world-optimize.sh` - Prune unused chunks
+- Run `./tools/world-optimize.py` - Prune unused chunks
 - Update Java version if available
 - Review and close completed TODO.md items
 
@@ -823,8 +826,8 @@ JVM flags are documented in docs/Flags.txt:10-30
 ### Contributing
 
 **Before Submitting PRs:**
-1. Run `bash -n tools/*.sh && shellcheck tools/*.sh` locally
-2. Ensure all scripts pass `shellcheck`
+1. Run `python3 -m py_compile tools/*.py` locally
+2. Ensure all scripts pass `ruff check` (if installed)
 3. Test changes manually
 4. Update `README.md` if adding features
 5. Add entry to `TODO.md` if applicable
@@ -846,7 +849,7 @@ chore: Update dependencies via Dependabot
 | Problem | Solution | Reference |
 |---------|----------|-----------|
 | Server won't start | Check Java version, EULA acceptance | `docs/TROUBLESHOOTING.md` |
-| Backup fails | Verify disk space, permissions | `tools/backup.sh` logs |
+| Backup fails | Verify disk space, permissions | `tools/backup.py` logs |
 | Mods not loading | Check Fabric version compatibility | `docs/mods.txt` |
 | RCON timeout | Verify port, password in `server.properties` | `docs/SETUP.md` |
 
@@ -854,13 +857,13 @@ chore: Update dependencies via Dependabot
 ```bash
 # Enable verbose logging
 export DEBUG=true
-./tools/server-start.sh
+./tools/server-start.py
 
 # Check systemd service logs
 journalctl -u minecraft@default -f
 
 # Monitor in real-time
-./tools/monitor.sh watch
+./tools/monitor.py watch
 ```
 
 **Getting Help:**
@@ -876,20 +879,20 @@ journalctl -u minecraft@default -f
 
 **Essential Commands:**
 ```bash
-./tools/prepare.sh                    # Initial setup
-./tools/mod-updates.sh install-fabric # Install server
-./tools/server-start.sh              # Start server
-./tools/mc-client.sh attach          # Open console
-./tools/monitor.sh status            # Check health
-./tools/backup.sh backup all         # Create backup
-./tools/logrotate.sh maintenance     # Clean logs
-./tools/world-optimize.sh            # Optimize world
+./tools/prepare.py                    # Initial setup
+./tools/mod-updates.py install-fabric # Install server
+./tools/server-start.py              # Start server
+./tools/mc-client.py attach          # Open console
+./tools/monitor.py status            # Check health
+./tools/backup.py backup all         # Create backup
+./tools/logrotate.py maintenance     # Clean logs
+./tools/world-optimize.py            # Optimize world
 ```
 
 **Key Files:**
-- `tools/server-start.sh` - Server launcher
-- `tools/backup.sh` - Backup/restore
-- `tools/monitor.sh` - Health monitoring
+- `tools/server-start.py` - Server launcher
+- `tools/backup.py` - Backup/restore
+- `tools/monitor.py` - Health monitoring
 - `README.md` - Main documentation
 - `server.toml` - Server configuration
 

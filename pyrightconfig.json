@@ -1,5 +1,7 @@
 {
-  "extraPaths": ["tools"],
+  "extraPaths": ["tools", "minecraft/config"],
+  "exclude": ["tools/mcpe-world-prune", ".venv"],
+  "pythonPlatform": "Linux",
   "typeCheckingMode": "standard",
   "reportAny": "none",
   "reportUnknownArgumentType": "none",

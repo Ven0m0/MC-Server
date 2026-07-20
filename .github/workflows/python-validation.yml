@@ -1,0 +1,58 @@
+name: Python validation
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - tools/**/*.py
+      - minecraft/config/versions.py
+      - .editorconfig
+      - .github/workflows/python-validation.yml
+  pull_request:
+    paths:
+      - tools/**/*.py
+      - minecraft/config/versions.py
+      - .editorconfig
+      - .github/workflows/python-validation.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python-lint:
+    name: Python syntax and lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install ruff
+        run: pip install --user ruff
+
+      - name: Collect Python files
+        id: python-files
+        run: |
+          mapfile -d '' -t python_files < <(find tools -maxdepth 1 -type f -name '*.py' -print0 | sort -z)
+          # versions.py is the only tracked Python helper outside tools/ that this repo validates.
+          [[ -f minecraft/config/versions.py ]] && python_files+=(minecraft/config/versions.py)
+          [[ ${#python_files[@]} -gt 0 ]]
+          printf '%s\n' "${python_files[@]}" > /tmp/mc-server-python-files.txt
+
+      - name: Run Python syntax checks
+        run: |
+          mapfile -t python_files < /tmp/mc-server-python-files.txt
+          python3 -m py_compile "${python_files[@]}"
+
+      - name: Run ruff
+        run: |
+          mapfile -t python_files < /tmp/mc-server-python-files.txt
+          ~/.local/bin/ruff check "${python_files[@]}"
+
+      - name: Check formatting
+        run: |
+          mapfile -t python_files < /tmp/mc-server-python-files.txt
+          ~/.local/bin/ruff format --diff "${python_files[@]}"

@@ -4,7 +4,7 @@ After=local-fs.target network.target
 
 [Service]
 Type=simple
-ExecStart=/bin/bash %h/MC-Server/tools/backup.sh backup all
+ExecStart=/usr/bin/env python3 %h/MC-Server/tools/backup.py backup all
 WorkingDirectory=%h/MC-Server
 Restart=on-failure
 RestartSec=10

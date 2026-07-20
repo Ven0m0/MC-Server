@@ -78,17 +78,17 @@ git clone <your-repo-url>
 cd MC-Server
 
 # Make scripts executable (if not already)
-chmod +x tools/*.sh tools/*.sh
+chmod +x tools/*.py
 ```
 
 ### 2. Download Fabric Server
 
 ```bash
 # Download latest version
-./tools/mod-updates.sh install-fabric
+./tools/mod-updates.py install-fabric
 
 # Or specify version
-./tools/mod-updates.sh install-fabric 1.21.5
+./tools/mod-updates.py install-fabric 1.21.5
 ```
 
 This will download:
@@ -101,7 +101,7 @@ This will download:
 ### 3. Accept EULA and Prepare
 
 ```bash
-./tools/prepare.sh
+./tools/prepare.py
 ```
 
 This script:
@@ -113,7 +113,7 @@ This script:
 ### 4. First Server Start
 
 ```bash
-./tools/server-start.sh
+./tools/server-start.py
 ```
 
 First start will:
@@ -202,7 +202,7 @@ mobcap:
 
 The server uses optimized flags automatically. To customize:
 
-Edit `tools/server-start.sh` and modify the JVM_OPTS section:
+Edit `tools/server-start.py` and modify the JVM_OPTS section:
 
 ```bash
 # Memory settings (auto-calculated by default)
@@ -269,10 +269,10 @@ echo "net.core.wmem_max=16777216" | sudo tee -a /etc/sysctl.conf
 crontab -e
 
 # Add daily backup at 4 AM
-0 4 * * * cd /path/to/MC-Server && ./tools/backup.sh backup all >> /var/log/mc-backup.log 2>&1
+0 4 * * * cd /path/to/MC-Server && ./tools/backup.py backup all >> /var/log/mc-backup.log 2>&1
 
 # Weekly full maintenance
-0 3 * * 0 cd /path/to/MC-Server && ./tools/logrotate.sh maintenance >> /var/log/mc-logrotate.log 2>&1
+0 3 * * 0 cd /path/to/MC-Server && ./tools/logrotate.py maintenance >> /var/log/mc-logrotate.log 2>&1
 ```
 
 ### Watchdog Service (Auto-Restart)
@@ -290,7 +290,7 @@ After=network.target
 Type=simple
 User=your-username
 WorkingDirectory=/path/to/MC-Server
-ExecStart=/path/to/MC-Server/tools/watchdog.sh monitor
+ExecStart=/path/to/MC-Server/tools/watchdog.py monitor
 Restart=always
 RestartSec=10
 
@@ -310,7 +310,7 @@ sudo systemctl start minecraft-watchdog
 
 ```bash
 # Start watchdog in screen
-screen -dmS mc-watchdog bash -c "cd /path/to/MC-Server && ./tools/watchdog.sh monitor"
+screen -dmS mc-watchdog bash -c "cd /path/to/MC-Server && ./tools/watchdog.py monitor"
 
 # Attach to view logs
 screen -r mc-watchdog
@@ -322,7 +322,7 @@ Set up continuous monitoring:
 
 ```bash
 # In a tmux/screen session
-./tools/monitor.sh watch --interval 30
+./tools/monitor.py watch --interval 30
 ```
 
 ## Security
@@ -353,7 +353,7 @@ sudo chown -R minecraft:minecraft /opt/minecraft/
 # Run as minecraft user
 sudo -u minecraft bash
 cd /opt/minecraft/MC-Server
-./tools/server-start.sh
+./tools/server-start.py
 ```
 
 ### Whitelist Setup
@@ -428,7 +428,7 @@ nano MC-Server-2/server.properties
 
 # Start second server
 cd MC-Server-2
-./tools/server-start.sh
+./tools/server-start.py
 ```
 
 ### Mod Management
@@ -437,25 +437,25 @@ cd MC-Server-2
 
 ```bash
 # Create mod profile
-./tools/mod-updates.sh profile create my-server 1.21.5 fabric ./mods
+./tools/mod-updates.py profile create my-server 1.21.5 fabric ./mods
 
 # Add performance mods
-./tools/mod-updates.sh add modrinth lithium
-./tools/mod-updates.sh add modrinth ferritecore
-./tools/mod-updates.sh add modrinth krypton
+./tools/mod-updates.py add modrinth lithium
+./tools/mod-updates.py add modrinth ferritecore
+./tools/mod-updates.py add modrinth krypton
 
 # Download all mods
-./tools/mod-updates.sh upgrade
+./tools/mod-updates.py upgrade
 ```
 
 #### Updating Mods
 
 ```bash
 # Update all mods to latest compatible versions
-./tools/mod-updates.sh upgrade
+./tools/mod-updates.py upgrade
 
 # List installed mods
-./tools/mod-updates.sh list
+./tools/mod-updates.py list
 ```
 
 ### Custom World Generation
@@ -472,10 +472,10 @@ Use custom world generation mods:
 
 ```bash
 # Quick status check
-./tools/monitor.sh status
+./tools/monitor.py status
 
 # Detailed health check
-./tools/monitor.sh alert
+./tools/monitor.py alert
 ```
 
 ### Test Connections
@@ -495,10 +495,10 @@ nc -u localhost 19132
 tail -f logs/latest.log
 
 # Search for errors
-./tools/logrotate.sh search "error" latest.log
+./tools/logrotate.py search "error" latest.log
 
 # View log statistics
-./tools/logrotate.sh stats
+./tools/logrotate.py stats
 ```
 
 ## Next Steps

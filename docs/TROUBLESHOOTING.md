@@ -26,7 +26,7 @@ You need to agree to the EULA in order to run the server
 
 ```bash
 # Run prepare script
-./tools/prepare.sh
+./tools/prepare.py
 
 # Or manually
 echo "eula=true" > eula.txt
@@ -73,7 +73,7 @@ free -h
 # The script auto-calculates, but you can override:
 export MIN_RAM="4G"
 export MAX_RAM="8G"
-./tools/server-start.sh
+./tools/server-start.py
 ```
 
 ### Issue: Java version mismatch
@@ -110,7 +110,7 @@ Error: Unable to access jarfile fabric-server-launch.jar
 
 ```bash
 # Re-download Fabric server
-./tools/mod-updates.sh install-fabric
+./tools/mod-updates.py install-fabric
 
 # Or manually download
 wget https://meta.fabricmc.net/v2/versions/loader/1.21.5/0.16.2/1.0.1/server/jar -O fabric-server-launch.jar
@@ -130,10 +130,10 @@ wget https://meta.fabricmc.net/v2/versions/loader/1.21.5/0.16.2/1.0.1/server/jar
 
 ```bash
 # Check server status
-./tools/monitor.sh status
+./tools/monitor.py status
 
 # Check for errors
-./tools/monitor.sh errors
+./tools/monitor.py errors
 
 # View performance metrics
 tail -f logs/latest.log | grep -i "tps\|mspt"
@@ -148,7 +148,7 @@ tail -f logs/latest.log | grep -i "tps\|mspt"
 top -p $(pgrep -f fabric-server-launch)
 
 # Memory usage
-./tools/monitor.sh status
+./tools/monitor.py status
 
 # Disk I/O
 iotop -o
@@ -191,7 +191,7 @@ dynamic:
 **Solution:**
 
 ```bash
-# Adjust GC settings in tools/server-start.sh
+# Adjust GC settings in tools/server-start.py
 # Add these flags:
 -XX:+UseG1GC \
 -XX:MaxGCPauseMillis=200 \
@@ -227,7 +227,7 @@ jstack $(pgrep -f fabric-server-launch) > threads.txt
 
 ```bash
 # Check if server is running
-./tools/monitor.sh status
+./tools/monitor.py status
 
 # Check if port is open
 nc -zv localhost 25565
@@ -344,7 +344,7 @@ ls -lt | grep ".dump"
 
 ```bash
 # Start watchdog service
-./tools/watchdog.sh monitor
+./tools/watchdog.py monitor
 ```
 
 1. **Increase memory:**
@@ -357,7 +357,7 @@ export MAX_RAM="8G"
 1. **Update mods:**
 
 ```bash
-./tools/mod-updates.sh upgrade
+./tools/mod-updates.py upgrade
 ```
 
 1. **Check mod compatibility:**
@@ -379,7 +379,7 @@ ps aux | grep fabric-server-launch
 pkill -9 -f fabric-server-launch
 
 # Clean up and restart
-./tools/watchdog.sh start
+./tools/watchdog.py start
 ```
 
 ### Issue: World corruption
@@ -394,8 +394,8 @@ pkill -9 -f fabric-server-launch
 
 ```bash
 # Restore from backup
-./tools/backup.sh list
-./tools/backup.sh restore backups/worlds/world_20250119_120000.tar.gz
+./tools/backup.py list
+./tools/backup.py restore backups/worlds/world_20250119_120000.tar.gz
 
 # Or use Minecraft tools to repair
 # Install MCC Tools and scan for errors
@@ -415,7 +415,7 @@ df -h
 ls -la backups/
 
 # Test backup manually
-./tools/backup.sh backup world
+./tools/backup.py backup world
 ```
 
 **Solutions:**
@@ -424,10 +424,10 @@ ls -la backups/
 
 ```bash
 # Clean old logs
-./tools/logrotate.sh clean 7
+./tools/logrotate.py clean 7
 
 # Clean old backups
-./tools/backup.sh cleanup --max-backups 5
+./tools/backup.py cleanup --max-backups 5
 ```
 
 1. **Fix permissions:**
@@ -445,7 +445,7 @@ chmod -R u+w backups/
 tar -tzf backups/worlds/world_20250119_120000.tar.gz
 
 # Stop server first
-./tools/watchdog.sh stop
+./tools/watchdog.py stop
 
 # Remove old world
 mv world world.old
@@ -454,7 +454,7 @@ mv world world.old
 tar -xzf backups/worlds/world_20250119_120000.tar.gz
 
 # Start server
-./tools/watchdog.sh start
+./tools/watchdog.py start
 ```
 
 ## Mod Issues
@@ -471,13 +471,13 @@ Mod X requires mod Y version Z
 
 ```bash
 # Check mod dependencies
-./tools/mod-updates.sh list
+./tools/mod-updates.py list
 
 # Add missing dependency
-./tools/mod-updates.sh add modrinth <mod-slug>
+./tools/mod-updates.py add modrinth <mod-slug>
 
 # Download
-./tools/mod-updates.sh upgrade
+./tools/mod-updates.py upgrade
 ```
 
 ### Issue: Mod version incompatible
@@ -495,7 +495,7 @@ Incompatible mod set!
 rm mods/incompatible-mod.jar
 
 # Or update to compatible version
-./tools/mod-updates.sh upgrade
+./tools/mod-updates.py upgrade
 ```
 
 ### Issue: Mod conflicts
@@ -518,7 +518,7 @@ mv mods/*.jar mods-test/
 mv mods-test/mod1.jar mods-test/mod2.jar ... mods/
 
 # 3. Test
-./tools/server-start.sh
+./tools/server-start.py
 
 # 4. Repeat until found
 ```
@@ -534,7 +534,7 @@ mv mods-test/mod1.jar mods-test/mod2.jar ... mods/
 pgrep -f fabric-server-launch > .server.pid
 
 # Or restart monitoring
-./tools/monitor.sh status
+./tools/monitor.py status
 ```
 
 ### Issue: Backup script can't send server commands
@@ -543,10 +543,10 @@ pgrep -f fabric-server-launch > .server.pid
 
 ```bash
 # Start server in screen/tmux
-screen -dmS minecraft ./tools/server-start.sh
+screen -dmS minecraft ./tools/server-start.py
 
 # Or in tmux
-tmux new-session -d -s minecraft ./tools/server-start.sh
+tmux new-session -d -s minecraft ./tools/server-start.py
 ```
 
 ### Issue: Watchdog not restarting server
@@ -565,12 +565,12 @@ grep "restart" logs/watchdog.log
 
 ```bash
 # Increase max attempts
-./tools/watchdog.sh monitor --max-attempts 5
+./tools/watchdog.py monitor --max-attempts 5
 
 # Decrease cooldown
-./tools/watchdog.sh monitor --cooldown 120
+./tools/watchdog.py monitor --cooldown 120
 
-# Check start script path in watchdog.sh
+# Check start script path in watchdog.py
 # Ensure SERVER_START_SCRIPT path is correct
 ```
 
@@ -587,7 +587,7 @@ chmod u+w logs/
 chmod u+w logs/archive/
 
 # Test manually
-./tools/logrotate.sh rotate
+./tools/logrotate.py rotate
 ```
 
 ## Getting More Help
@@ -607,7 +607,7 @@ chmod u+w logs/archive/
     echo ""
 
     echo "=== Server Status ==="
-    ./tools/monitor.sh status
+    ./tools/monitor.py status
     echo ""
 
     echo "=== Disk Usage ==="
