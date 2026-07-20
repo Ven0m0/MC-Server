@@ -79,3 +79,12 @@ __pycache__/
 **/node_modules/
 .ruff_cache/
 .venv/
+MEMORY.md
+USER.md
+SCRATCHPAD*.md
+WORKING*.md
+TASK-QUEUE.md
+memory/
+knowledge/
+plans/
+tenants/
