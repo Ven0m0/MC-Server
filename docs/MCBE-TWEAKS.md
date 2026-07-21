@@ -36,6 +36,6 @@ and set **gfx_vsync** to 0.
 - [Fog Remover Shader](https://github.com/Furzide/RenderDragonFogRemover)
 
 ## **Fix Performance on RTX GPUs**
-download and run **Nvidia Profile Inspector** or later  
-search and open the profile for **Minecraft**  
-scroll down until you see the **"Raytracing - (DXR) Enabled"** setting. Set this to **RT Disabled.**  
+download and run **Nvidia Profile Inspector** or later
+search and open the profile for **Minecraft**
+scroll down until you see the **"Raytracing - (DXR) Enabled"** setting. Set this to **RT Disabled.**

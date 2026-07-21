@@ -1,0 +1,19 @@
+{
+    "rules" : [
+        {
+			"name" : "No Bats",
+            "what" : "DISALLOW_SPAWN",
+            "when" : {
+                "entityId" : [ "minecraft:bat" ]
+            }
+        },
+		{
+			"name" : "No Freshwater Squid",
+		    "what" : "DISALLOW_SPAWN",
+			"when" : {
+				"entityId" : [ "minecraft:squid" ],
+				"biomeId" : [ "minecraft:river", "minecraft:frozen_river" ]
+			}
+		}
+    ]
+}
