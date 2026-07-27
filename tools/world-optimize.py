@@ -56,8 +56,8 @@ def download_chunk_cleaner() -> bool:
     info(f"Downloading ChunkCleaner v{CHUNK_CLEANER_VERSION}...")
     try:
         download_file(CHUNK_CLEANER_URL, CHUNK_CLEANER_BIN)
-    except Exception:
-        error("Failed to download ChunkCleaner")
+    except (OSError, subprocess.CalledProcessError) as exc:
+        error(f"Failed to download ChunkCleaner: {exc}")
         return False
     CHUNK_CLEANER_BIN.chmod(0o755)
     success("ChunkCleaner installed successfully")
@@ -69,6 +69,7 @@ def create_backup() -> None:
     r = subprocess.run(
         [sys.executable, str(SCRIPT_DIR / "tools" / "backup.py"), "backup", "world"],
         capture_output=True,
+        check=False,
     )
     if r.returncode != 0:
         warning("Backup script failed, continuing anyway...")
@@ -102,7 +103,8 @@ def process_dimension(dimension_path: Path, min_ticks: int, dry_run: bool) -> bo
             str(backup_region),
             "-minInhabitedTicks",
             str(min_ticks),
-        ]
+        ],
+        check=False,
     )
     if r.returncode != 0:
         error(f"ChunkCleaner failed for {dim_name}")
@@ -337,6 +339,7 @@ Note: ChunkCleaner will be automatically downloaded on first use.
 def main() -> None:
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("command", nargs="?", default="help")
+    parser.add_argument("-h", "--help", action="store_true", dest="help_")
     parser.add_argument("--world", default=str(SCRIPT_DIR / "world"))
     parser.add_argument("--min-ticks", type=int, default=MIN_INHABITED_TICKS)
     parser.add_argument("--player-days", type=int, default=PLAYER_INACTIVITY_DAYS)
@@ -344,6 +347,10 @@ def main() -> None:
     parser.add_argument("--no-backup", action="store_true")
     parser.add_argument("--install-cleaner", action="store_true")
     ns = parser.parse_args()
+
+    if ns.help_:
+        show_usage()
+        return
 
     if ns.install_cleaner:
         download_chunk_cleaner()

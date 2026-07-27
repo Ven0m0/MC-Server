@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Minecraft server watchdog."""
 
-import argparse
 import subprocess
 import sys
 import time
@@ -69,13 +68,12 @@ def start_server() -> bool:
 def stop_server() -> bool:
     log("Stopping server...")
     for pattern in ("fabric-server-launch.jar", "server.jar"):
-        subprocess.run(["pkill", "-f", pattern], capture_output=True)
+        subprocess.run(["pkill", "-f", pattern], capture_output=True, check=False)
     time.sleep(2)
     return True
 
 
 def restart_server() -> bool:
-    global restart_count
     log("Restarting server...")
     if not can_restart():
         return False
@@ -128,13 +126,10 @@ Examples:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Minecraft server watchdog", add_help=False
-    )
-    parser.add_argument("command", nargs="?", default="help")
-    ns = parser.parse_args()
+    argv = sys.argv[1:]
+    command = argv[0] if argv else "help"
 
-    match ns.command:
+    match command:
         case "monitor":
             monitor_mode()
         case "restart":
@@ -152,7 +147,7 @@ def main() -> None:
         case "help" | "--help" | "-h":
             show_usage()
         case _:
-            log(f"Unknown command: {ns.command}")
+            log(f"Unknown command: {command}")
             show_usage()
             sys.exit(1)
 

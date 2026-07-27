@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from common import SCRIPT_DIR, header, success, error, info
+from common import SCRIPT_DIR, error, header, info, success
 
 LOGS_DIR = SCRIPT_DIR / "logs"
 ARCHIVE_DIR = LOGS_DIR / "archive"
@@ -24,7 +24,7 @@ def rotate_log(log_file: Path):
     if not log_file.exists() or log_file.stat().st_size == 0:
         return
     size_mb = log_file.stat().st_size // (1024 * 1024)
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    ts = datetime.now().astimezone().strftime("%Y%m%d_%H%M%S")
     dest = ARCHIVE_DIR / f"{log_file.stem}_{ts}.log.gz"
     info(f"Rotating {log_file.name} ({size_mb}MB)...")
     # ponytail: copy-then-truncate preserves open file handles (server may have file open)

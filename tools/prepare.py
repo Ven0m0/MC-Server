@@ -58,7 +58,7 @@ log_level = "warn"
 
 
 def _run_quiet(cmd: list[str]) -> bool:
-    return subprocess.run(cmd, capture_output=True).returncode == 0
+    return subprocess.run(cmd, capture_output=True, check=False).returncode == 0
 
 
 def prepare_server() -> None:
@@ -80,7 +80,8 @@ def prepare_server() -> None:
                 "-jar",
                 "server.jar",
                 "--nogui",
-            ]
+            ],
+            check=False,
         )
         if r.returncode != 0:
             error("Server AppCDS generation failed")
@@ -99,7 +100,8 @@ def prepare_server() -> None:
                 "-XX:ArchiveClassesAtExit=minecraft_client.jsa",
                 "-jar",
                 "client.jar",
-            ]
+            ],
+            check=False,
         )
         if r.returncode != 0:
             error("Client AppCDS generation failed")

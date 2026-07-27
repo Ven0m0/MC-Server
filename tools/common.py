@@ -76,14 +76,22 @@ def download_file(url: str, dest: str | Path, connections: int = 8) -> None:
 
 def is_server_running() -> bool:
     for pat in ("fabric-server-launch.jar", "server.jar"):
-        if subprocess.run(["pgrep", "-f", pat], capture_output=True).returncode == 0:
+        if (
+            subprocess.run(
+                ["pgrep", "-f", pat], capture_output=True, check=False
+            ).returncode
+            == 0
+        ):
             return True
     return False
 
 
 def get_server_pid() -> int | None:
     r = subprocess.run(
-        ["pgrep", "-f", "fabric-server-launch.jar"], capture_output=True, text=True
+        ["pgrep", "-f", "fabric-server-launch.jar"],
+        capture_output=True,
+        text=True,
+        check=False,
     )
     pids = r.stdout.strip().split()
     return int(pids[0]) if pids else None
@@ -179,7 +187,9 @@ def detect_java() -> str:
     if java_home and (Path(java_home) / "bin" / "java").is_file():
         return str(Path(java_home) / "bin" / "java")
     if shutil.which("mise"):
-        r = subprocess.run(["mise", "which", "java"], capture_output=True, text=True)
+        r = subprocess.run(
+            ["mise", "which", "java"], capture_output=True, text=True, check=False
+        )
         if r.returncode == 0 and r.stdout.strip():
             return r.stdout.strip()
     return "java"
@@ -193,18 +203,23 @@ def check_server_port(port: int = 25565, host: str = "localhost") -> bool:
 
 def send_command(cmd: str, session_name: str = "minecraft") -> bool:
     if shutil.which("screen"):
-        r = subprocess.run(["screen", "-list"], capture_output=True, text=True)
+        r = subprocess.run(
+            ["screen", "-list"], capture_output=True, text=True, check=False
+        )
         if session_name in r.stdout:
             info(f"Sending command to Screen: {cmd}")
             subprocess.run(
-                ["screen", "-S", session_name, "-p", "0", "-X", "stuff", f"{cmd}\r"]
+                ["screen", "-S", session_name, "-p", "0", "-X", "stuff", f"{cmd}\r"],
+                check=False,
             )
             return True
     if shutil.which("tmux"):
-        r = subprocess.run(["tmux", "has-session", "-t", session_name])
+        r = subprocess.run(["tmux", "has-session", "-t", session_name], check=False)
         if r.returncode == 0:
             info(f"Sending command to Tmux: {cmd}")
-            subprocess.run(["tmux", "send-keys", "-t", session_name, cmd, "Enter"])
+            subprocess.run(
+                ["tmux", "send-keys", "-t", session_name, cmd, "Enter"], check=False
+            )
             return True
     error(f"Server session '{session_name}' not found (Screen/Tmux).")
     return False

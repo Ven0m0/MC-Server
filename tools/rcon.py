@@ -9,7 +9,7 @@ from typing import Protocol
 
 
 class _Readable(Protocol):
-    def recv(self, __n: int) -> bytes: ...
+    def recv(self, n: int, /) -> bytes: ...
 
 
 def _recv(sock: _Readable, n: int) -> bytes:

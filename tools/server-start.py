@@ -146,7 +146,9 @@ def status_lazymc() -> None:
             success(f"Running (PID: {pid})")
             if shutil.which("ps"):
                 print()
-                subprocess.run(["ps", "-p", str(pid), "-o", "pid,ppid,cmd,etime,rss"])
+                subprocess.run(
+                    ["ps", "-p", str(pid), "-o", "pid,ppid,cmd,etime,rss"], check=False
+                )
         else:
             error("Not running (stale PID file)")
             LAZYMC_PID_FILE.unlink(missing_ok=True)
@@ -176,7 +178,7 @@ def follow_lazymc_logs() -> None:
     if not LAZYMC_LOG_FILE.is_file():
         error(f"Log file not found: {LAZYMC_LOG_FILE}")
         sys.exit(1)
-    subprocess.run(["tail", "-f", str(LAZYMC_LOG_FILE)])
+    subprocess.run(["tail", "-f", str(LAZYMC_LOG_FILE)], check=False)
 
 
 def launch_server() -> None:
@@ -201,9 +203,13 @@ def launch_server() -> None:
 
     java_cmd = detect_java()
     if shutil.which("archlinux-java"):
-        subprocess.run(["sudo", "archlinux-java", "fix"], capture_output=True)
+        subprocess.run(
+            ["sudo", "archlinux-java", "fix"], capture_output=True, check=False
+        )
 
-    version_out = subprocess.run([java_cmd, "-version"], capture_output=True, text=True)
+    version_out = subprocess.run(
+        [java_cmd, "-version"], capture_output=True, text=True, check=False
+    )
     is_graalvm = "GraalVM" in (version_out.stdout + version_out.stderr)
 
     jvm_flags = [
@@ -240,7 +246,9 @@ def launch_server() -> None:
     if ENABLE_PLAYIT and shutil.which("playit"):
         info("Starting playit...")
         if (
-            subprocess.run(["pgrep", "-x", "playit"], capture_output=True).returncode
+            subprocess.run(
+                ["pgrep", "-x", "playit"], capture_output=True, check=False
+            ).returncode
             != 0
         ):
             subprocess.Popen(

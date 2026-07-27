@@ -1,7 +1,7 @@
-import urllib.request
-import json
-import zipfile
 import io
+import json
+import urllib.request
+import zipfile
 
 manifest = json.loads(
     urllib.request.urlopen(
@@ -21,7 +21,7 @@ for vid in versions_to_check:
     try:
         pkg = json.loads(
             urllib.request.urlopen(
-                [v["url"] for v in manifest["versions"] if v["id"] == vid][0]
+                next(v["url"] for v in manifest["versions"] if v["id"] == vid)
             ).read()
         )
         svr_url = pkg["downloads"]["server"]["url"]
@@ -29,5 +29,11 @@ for vid in versions_to_check:
         with zipfile.ZipFile(io.BytesIO(data)) as z:
             vj = json.loads(z.read("version.json"))
             print(f"{vid}: {vj['pack_version']}")
-    except Exception as e:
+    except (
+        OSError,
+        KeyError,
+        StopIteration,
+        zipfile.BadZipFile,
+        json.JSONDecodeError,
+    ) as e:
         print(f"{vid}: ERROR {e}")

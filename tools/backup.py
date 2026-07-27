@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Simplified Minecraft server backup tool."""
 
-import argparse
 import os
 import subprocess
 import sys
@@ -68,7 +67,6 @@ def install_rustic() -> bool:
         error(f"Unsupported arch for rustic download: {arch}")
         return False
     url = f"https://github.com/rustic-rs/rustic/releases/download/v{RUSTIC_VERSION}/rustic-v{RUSTIC_VERSION}-{target}.tar.gz"
-    import shutil
     import tempfile
 
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -77,8 +75,8 @@ def install_rustic() -> bool:
             download_file(url, archive)
             with tarfile.open(archive) as tf:
                 tf.extractall(tmp_dir)
-        except Exception:
-            error("Failed to download/extract rustic")
+        except (OSError, subprocess.CalledProcessError, tarfile.TarError) as exc:
+            error(f"Failed to download/extract rustic: {exc}")
             return False
         found = next(
             (
@@ -100,7 +98,8 @@ def install_rustic() -> bool:
 def rustic_cmd(*args: str, **kwargs) -> subprocess.CompletedProcess:
     if not install_rustic():
         sys.exit(1)
-    return subprocess.run([_rustic_bin, *args], **kwargs)
+    check = kwargs.pop("check", False)
+    return subprocess.run([_rustic_bin, *args], check=check, **kwargs)
 
 
 def rustic_init() -> None:
@@ -287,7 +286,10 @@ def restore_backup(file: str) -> None:
 # ----------------------------------------------------------------------------
 def is_btrfs(path: Path) -> bool:
     r = subprocess.run(
-        ["stat", "-f", "-c", "%T", str(path)], capture_output=True, text=True
+        ["stat", "-f", "-c", "%T", str(path)],
+        capture_output=True,
+        text=True,
+        check=False,
     )
     return r.stdout.strip() == "btrfs"
 
@@ -411,13 +413,11 @@ Notes:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("command", nargs="?", default="backup")
-    parser.add_argument("args", nargs="*")
-    ns = parser.parse_args()
-    a = ns.args
+    argv = sys.argv[1:]
+    command = argv[0] if argv else "backup"
+    a = argv[1:]
 
-    match ns.command:
+    match command:
         case "backup":
             what = a[0] if a else "all"
             if what == "world":
@@ -458,7 +458,7 @@ def main() -> None:
         case "help" | "--help" | "-h":
             show_usage()
         case _:
-            error(f"Unknown command: {ns.command}")
+            error(f"Unknown command: {command}")
             show_usage()
             sys.exit(1)
 

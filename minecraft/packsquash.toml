@@ -30,7 +30,7 @@ size_increasing_zip_obfuscation = false
 ['**/*.png']
 downsize_if_single_color = true
 skip_alpha_optimizations = false
-maximum_width_and_height = 2048
+maximum_width_and_height = 4096
 image_data_compression_iterations = 50
 color_quantization_target = 'auto'
 

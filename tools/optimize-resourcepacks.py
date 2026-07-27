@@ -48,7 +48,7 @@ _KEEP_LANGS = frozenset({"en_us", "en_gb", "de_de"})
 def find_packsquash() -> str:
     if shutil.which("mise"):
         r = subprocess.run(
-            ["mise", "which", "packsquash"], capture_output=True, text=True
+            ["mise", "which", "packsquash"], capture_output=True, text=True, check=False
         )
         if r.returncode == 0 and Path(r.stdout.strip()).is_file():
             return r.stdout.strip()
@@ -156,6 +156,10 @@ def _remove_problematic(d: Path) -> None:
     for f in d.rglob("*"):
         if not f.is_file():
             continue
+        if f.name == ".DS_Store" or f.name.startswith("._"):
+            f.chmod(0o644)
+            f.unlink()
+            continue
         data = f.read_bytes()
         if not data.strip():
             f.chmod(0o644)
@@ -170,6 +174,13 @@ def _remove_problematic(d: Path) -> None:
             if not (_is_power_of_two(w) and _is_power_of_two(h)):
                 f.chmod(0o644)
                 f.unlink()
+
+
+def _remove_empty_dirs(d: Path) -> None:
+    """Remove empty directories left behind after stripping files."""
+    for dirpath, dirnames, filenames in os.walk(d, topdown=False):
+        if not dirnames and not filenames:
+            Path(dirpath).rmdir()
 
 
 def _strip_languages(d: Path) -> None:
@@ -358,11 +369,11 @@ def _restore_pack_metadata(
         work_dir.mkdir()
         _extract(zip_path, work_dir)
 
-        existing = set(
+        existing = {
             f.relative_to(work_dir).as_posix()
             for f in work_dir.rglob("*")
             if f.is_file()
-        )
+        }
 
         # Reconstruct overlay dirs from optimized main-path files
         if overlay_mapping:
@@ -378,7 +389,7 @@ def _restore_pack_metadata(
         if mcmeta_bytes is not None:
             (work_dir / "pack.mcmeta").write_bytes(mcmeta_bytes)
 
-        for name, files in overlays.items():
+        for files in overlays.values():
             for arcname, data in files:
                 if arcname in existing or (
                     overlay_mapping and arcname in overlay_mapping
@@ -446,6 +457,7 @@ def process_zip(ps_bin: str, zip_path: Path) -> tuple[int, int]:
         pack_dir = _unwrap(Path(tmp_dir))
         _remove_problematic(pack_dir)
         _strip_languages(pack_dir)
+        _remove_empty_dirs(pack_dir)
         _fix_pack_metadata(pack_dir)
         _widen_pack_format(pack_dir)
         mcmeta_bytes, overlay_dirs = _capture_pack_metadata(pack_dir)
@@ -499,7 +511,7 @@ def is_resource_pack(path: Path) -> bool:
             return "pack.mcmeta" in names or any(
                 n.endswith("/pack.mcmeta") for n in names
             )
-        except Exception:
+        except (zipfile.BadZipFile, OSError):
             return False
     return False
 

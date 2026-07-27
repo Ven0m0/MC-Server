@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Minecraft server systemd service management."""
 
-import argparse
 import shutil
 import subprocess
 import sys
@@ -178,7 +177,9 @@ def remove_service() -> None:
     header("Removing systemd service")
 
     if (
-        subprocess.run(["systemctl", "is-active", "--quiet", SERVICE_NAME]).returncode
+        subprocess.run(
+            ["systemctl", "is-active", "--quiet", SERVICE_NAME], check=False
+        ).returncode
         == 0
     ):
         info("Stopping service...")
@@ -186,7 +187,9 @@ def remove_service() -> None:
 
     if (
         subprocess.run(
-            ["systemctl", "is-enabled", "--quiet", SERVICE_NAME], capture_output=True
+            ["systemctl", "is-enabled", "--quiet", SERVICE_NAME],
+            capture_output=True,
+            check=False,
         ).returncode
         == 0
     ):
@@ -234,21 +237,23 @@ def show_status() -> None:
     if not SERVICE_FILE.is_file():
         info("Service not installed")
         return
-    subprocess.run(["systemctl", "status", SERVICE_NAME, "--no-pager"])
+    subprocess.run(["systemctl", "status", SERVICE_NAME, "--no-pager"], check=False)
 
 
 def show_logs(lines: int = 50) -> None:
     if not SERVICE_FILE.is_file():
         error("Service not found")
         return
-    subprocess.run(["journalctl", "-u", SERVICE_NAME, "-n", str(lines), "--no-pager"])
+    subprocess.run(
+        ["journalctl", "-u", SERVICE_NAME, "-n", str(lines), "--no-pager"], check=False
+    )
 
 
 def follow_logs() -> None:
     if not SERVICE_FILE.is_file():
         error("Service not found")
         return
-    subprocess.run(["journalctl", "-u", SERVICE_NAME, "-f"])
+    subprocess.run(["journalctl", "-u", SERVICE_NAME, "-f"], check=False)
 
 
 def show_usage() -> None:
@@ -291,15 +296,11 @@ NOTES:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Systemd service management", add_help=False
-    )
-    parser.add_argument("command", nargs="?", default="help")
-    parser.add_argument("args", nargs="*")
-    ns = parser.parse_args()
-    a = ns.args
+    argv = sys.argv[1:]
+    command = argv[0] if argv else "help"
+    a = argv[1:]
 
-    match ns.command:
+    match command:
         case "create":
             create_service(*(a + [""] * (3 - len(a)))[:3])
         case "create-infrarust":
@@ -330,7 +331,7 @@ def main() -> None:
         case "help" | "--help" | "-h":
             show_usage()
         case _:
-            error(f"Unknown command: {ns.command}")
+            error(f"Unknown command: {command}")
             show_usage()
             sys.exit(1)
 

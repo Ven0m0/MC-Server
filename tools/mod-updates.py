@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from common import SCRIPT_DIR, header, success, error, info, fetch_json, download_file
+from common import SCRIPT_DIR, download_file, error, fetch_json, header, info, success
 
 MC_REPACK_CONFIG = Path.home() / ".config" / "mc-repack.toml"
 
@@ -106,16 +106,19 @@ def setup_ferium():
             "fabric",
         ],
         capture_output=True,
+        check=False,
     )
     mods_file = SCRIPT_DIR / "docs" / "mods.txt"
     if mods_file.exists():
         for line in mods_file.read_text().splitlines():
             if name := clean_mod_name(line.strip()):
                 info(f"Adding: {name}")
-                subprocess.run(["ferium", "add", name], capture_output=True)
+                subprocess.run(
+                    ["ferium", "add", name], capture_output=True, check=False
+                )
     else:
         for mod in ("fabric-api", "lithium"):
-            subprocess.run(["ferium", "add", mod], capture_output=True)
+            subprocess.run(["ferium", "add", mod], capture_output=True, check=False)
     success("Ferium setup complete")
 
 

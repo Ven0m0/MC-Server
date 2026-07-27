@@ -12,11 +12,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from common import (
     SCRIPT_DIR,
-    header,
-    success,
     error,
-    is_server_running,
     get_server_pid,
+    header,
+    is_server_running,
+    success,
 )
 
 LOG_FILE = SCRIPT_DIR / "logs" / "latest.log"
@@ -46,7 +46,10 @@ def get_memory(pid=None):
         return
     header("Memory Usage")
     r = subprocess.run(
-        ["ps", "-p", str(pid), "-o", "rss="], capture_output=True, text=True
+        ["ps", "-p", str(pid), "-o", "rss="],
+        capture_output=True,
+        text=True,
+        check=False,
     )
     mem_mb = int(r.stdout.strip() or 0) // 1024
     print(f"  PID: {pid}")
@@ -58,7 +61,9 @@ def get_disk():
     dirs = [(SCRIPT_DIR / n, n.title()) for n in ("world", "backups", "logs")]
     paths = [str(d) for d, _ in dirs if d.exists()]
     if paths:
-        r = subprocess.run(["du", "-sh"] + paths, capture_output=True, text=True)
+        r = subprocess.run(
+            ["du", "-sh"] + paths, capture_output=True, text=True, check=False
+        )
         sizes = {
             line.split("\t")[1].strip(): line.split("\t")[0]
             for line in r.stdout.splitlines()
@@ -67,7 +72,9 @@ def get_disk():
         for d, label in dirs:
             if str(d) in sizes:
                 print(f"  {label}: {sizes[str(d)]}")
-    r = subprocess.run(["du", "-sh", str(SCRIPT_DIR)], capture_output=True, text=True)
+    r = subprocess.run(
+        ["du", "-sh", str(SCRIPT_DIR)], capture_output=True, text=True, check=False
+    )
     print(f"  Total: {r.stdout.split()[0] if r.returncode == 0 else '?'}\n")
 
 
@@ -109,7 +116,10 @@ def get_uptime(pid=None):
         return
     header("Server Uptime")
     r = subprocess.run(
-        ["ps", "-p", str(pid), "-o", "etimes="], capture_output=True, text=True
+        ["ps", "-p", str(pid), "-o", "etimes="],
+        capture_output=True,
+        text=True,
+        check=False,
     )
     secs = int(r.stdout.strip() or 0)
     print(f"  {secs // 86400}d {(secs % 86400) // 3600}h {(secs % 3600) // 60}m\n")
@@ -118,7 +128,9 @@ def get_uptime(pid=None):
 def show_status():
     print()
     print("=" * 56)
-    print(f"      Minecraft Server Monitor - {datetime.now():%Y-%m-%d %H:%M:%S}")
+    print(
+        f"      Minecraft Server Monitor - {datetime.now().astimezone():%Y-%m-%d %H:%M:%S}"
+    )
     print("=" * 56 + "\n")
     get_status()
     pid = get_server_pid()
@@ -167,7 +179,7 @@ if cmd == "status":
 elif cmd == "watch":
     print(f"Starting monitor (Ctrl+C to stop)\nUpdate interval: {CHECK_INTERVAL}s\n")
     while True:
-        subprocess.run(["clear"])
+        subprocess.run(["clear"], check=False)
         show_status()
         time.sleep(CHECK_INTERVAL)
 elif cmd == "alert":
