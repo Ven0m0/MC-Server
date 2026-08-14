@@ -41,5 +41,5 @@ CARGO_NET_GIT_FETCH_WITH_CLI = "false"
 CARGO_HTTP_MULTIPLEXING = "true"
 BINSTALL_DISABLE_TELEMETRY = "true"
 
-[hooks]
-enter = "mise i -yq"
+#[hooks]
+#enter = "mise i -yq"
