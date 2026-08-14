@@ -71,6 +71,7 @@ local.properties
 .serena/
 !.serena/project.yml
 .opencode/
+.opencode/memory
 .omc/
 .codegraph/
 undefined/

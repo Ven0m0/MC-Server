@@ -1,3 +1,4 @@
-kill @e[type=minecraft:item]
-kill @e[type=minecraft:boat]
-kill @e[type=minecraft:minecart]
+/kill @e[type=minecraft:item]
+/kill @e[type=minecraft:boat]
+/kill @e[type=minecraft:bat]
+/kill @e[type=minecraft:minecart]
