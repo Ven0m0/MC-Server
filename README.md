@@ -5,8 +5,8 @@ automated setup, comprehensive monitoring, backup solutions, and performance
 optimization.
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Fabric](https://img.shields.io/badge/Fabric-1.21.5-green.svg)](https://fabricmc.net/)
-[![GraalVM](https://img.shields.io/badge/GraalVM-Optimized-orange.svg)](https://www.graalvm.org/)
+[![Fabric](https://img.shields.io/badge/Fabric-1.21+-green.svg)](https://fabricmc.net/)
+[![GraalVM](https://img.shields.io/badge/GraalVM-support-orange.svg)](https://www.graalvmrg/)
 
 ## ✨ Features
 
