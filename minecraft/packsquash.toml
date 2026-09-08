@@ -18,7 +18,11 @@ work_around_minecraft_quirks = [
 automatic_asset_types_mask_detection = true
 recompress_compressed_files = true
 zip_compression_iterations = 25
-zip_spec_conformance_level = 'balanced'
+# 'pedantic' avoids the overlapping/deduplicated ZIP entry tricks that
+# 'balanced' and 'disregard' rely on Minecraft's own lenient ZIP reader to
+# resolve correctly -- those tricks caused real texture corruption on some
+# launcher/Java combinations. Costs a bit of size for correctness.
+zip_spec_conformance_level = 'pedantic'
 percentage_of_zip_structures_tuned_for_obfuscation_discretion = 0
 size_increasing_zip_obfuscation = false
 
