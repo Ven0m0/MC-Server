@@ -105,10 +105,6 @@ def _run(ps_bin: str, pack_dir: Path, output_zip: Path) -> None:
         os.unlink(tmp)
 
 
-def _is_power_of_two(n: int) -> bool:
-    return n > 0 and (n & (n - 1)) == 0
-
-
 _TEXTURE_EXTS = {".png"}
 _SHADER_EXTS = {".fsh", ".vsh", ".glsl"}
 
@@ -146,12 +142,30 @@ def _verify_zip_integrity(zip_path: Path) -> None:
                     raise RuntimeError(
                         f"corrupted shader (invalid utf-8) in {zip_path.name}: {rel}"
                     ) from e
+        for mcmeta in dest.rglob("*.png.mcmeta"):
+            anim = json.loads(mcmeta.read_bytes()).get("animation")
+            if anim is None:
+                continue
+            png = mcmeta.with_suffix("")
+            rel = mcmeta.relative_to(dest)
+            if not png.is_file():
+                raise RuntimeError(
+                    f"missing animated texture in {zip_path.name}: {rel}"
+                )
+            if "width" in anim or "height" in anim:
+                continue
+            png_data = png.read_bytes()
+            w = int.from_bytes(png_data[16:20], "big")
+            h = int.from_bytes(png_data[20:24], "big")
+            if w and h % w != 0:
+                raise RuntimeError(
+                    f"malformed animation frame strip in {zip_path.name}: {rel} ({w}x{h})"
+                )
 
 
 def _remove_problematic(d: Path) -> None:
     """Remove files that PackSquash cannot process:
     - Empty/whitespace-only files (would fail JSON/shader parsing)
-    - PNG files with non-power-of-two dimensions
     """
     for f in d.rglob("*"):
         if not f.is_file():
@@ -165,15 +179,6 @@ def _remove_problematic(d: Path) -> None:
             f.chmod(0o644)
             f.unlink()
             continue
-        # pack.png (the pack icon) is never atlas-stitched, so it has no
-        # power-of-two requirement -- Minecraft displays it at any size.
-        if f.suffix.lower() == ".png" and len(data) >= 24 and f.name != "pack.png":
-            # PNG header: width at bytes 16-20, height at bytes 20-24
-            w = int.from_bytes(data[16:20], "big")
-            h = int.from_bytes(data[20:24], "big")
-            if not (_is_power_of_two(w) and _is_power_of_two(h)):
-                f.chmod(0o644)
-                f.unlink()
 
 
 def _remove_empty_dirs(d: Path) -> None:
@@ -318,12 +323,15 @@ def _capture_pack_metadata(
 def _merge_overlays_into_main(
     pack_dir: Path,
     overlays: dict[str, list[tuple[str, bytes]]],
-) -> dict[str, str]:
+) -> tuple[dict[str, str], dict[str, bytes]]:
     """Copy overlay files into main pack dir so PackSquash optimizes them.
 
-    Returns dict mapping overlay_arcname -> main_arcname for reconstruction.
+    Returns (overlay_arcname -> main_arcname mapping for reconstruction,
+    main_arcname -> original main-file bytes for any file an overlay
+    clobbers, so the base pack's own version can be restored afterward).
     """
     mapping: dict[str, str] = {}
+    clobbered: dict[str, bytes] = {}
     for name, files in overlays.items():
         prefix = f"{name}/"
         for arcname, data in files:
@@ -331,10 +339,12 @@ def _merge_overlays_into_main(
                 continue
             main_arcname = arcname[len(prefix) :]
             main_file = pack_dir / main_arcname
+            if main_file.is_file() and main_arcname not in clobbered:
+                clobbered[main_arcname] = main_file.read_bytes()
             main_file.parent.mkdir(parents=True, exist_ok=True)
             main_file.write_bytes(data)
             mapping[arcname] = main_arcname
-    return mapping
+    return mapping, clobbered
 
 
 def _repack_zip(src_dir: Path, zip_path: Path) -> None:
@@ -344,7 +354,7 @@ def _repack_zip(src_dir: Path, zip_path: Path) -> None:
     the content being written).
     """
     temp_zip = zip_path.with_suffix(".temp.zip")
-    with zipfile.ZipFile(temp_zip, "w") as zf:
+    with zipfile.ZipFile(temp_zip, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
         for f in src_dir.rglob("*"):
             if f.is_file():
                 rel = f.relative_to(src_dir).as_posix()
@@ -357,12 +367,16 @@ def _restore_pack_metadata(
     mcmeta_bytes: bytes | None,
     overlays: dict[str, list[tuple[str, bytes]]],
     overlay_mapping: dict[str, str] | None = None,
+    clobbered_main_files: dict[str, bytes] | None = None,
 ) -> None:
     """Restore original pack.mcmeta and overlay files into output ZIP.
 
     overlay_mapping maps overlay_arcname -> main_arcname so that optimized
     main-path files can be copied into overlay paths when PackSquash strips
-    the overlay directory entirely.
+    the overlay directory entirely. clobbered_main_files holds the base
+    pack's original bytes for any main-path file an overlay merge overwrote
+    (see _merge_overlays_into_main), restored after overlay reconstruction
+    so the main pack keeps its own content instead of an overlay's.
     """
     with tempfile.TemporaryDirectory() as tmp_dir:
         work_dir = Path(tmp_dir) / "work"
@@ -385,6 +399,14 @@ def _restore_pack_metadata(
                 if main_src.exists():
                     overlay_target.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(main_src, overlay_target)
+
+        # Restore main-path files an overlay merge clobbered, now that any
+        # overlay-optimized content has been copied out to its own overlay dir
+        if clobbered_main_files:
+            for main_arcname, original_data in clobbered_main_files.items():
+                target = work_dir / main_arcname
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(original_data)
 
         if mcmeta_bytes is not None:
             (work_dir / "pack.mcmeta").write_bytes(mcmeta_bytes)
@@ -461,14 +483,16 @@ def process_zip(ps_bin: str, zip_path: Path) -> tuple[int, int]:
         _fix_pack_metadata(pack_dir)
         _widen_pack_format(pack_dir)
         mcmeta_bytes, overlay_dirs = _capture_pack_metadata(pack_dir)
-        overlay_mapping = _merge_overlays_into_main(pack_dir, overlay_dirs)
+        overlay_mapping, clobbered = _merge_overlays_into_main(pack_dir, overlay_dirs)
         _run(ps_bin, pack_dir, zip_path)
     try:
+        _restore_pack_metadata(
+            zip_path, mcmeta_bytes, overlay_dirs, overlay_mapping, clobbered
+        )
         _verify_zip_integrity(zip_path)
     except Exception:
         shutil.copy2(bak, zip_path)
         raise
-    _restore_pack_metadata(zip_path, mcmeta_bytes, overlay_dirs, overlay_mapping)
     return before, zip_path.stat().st_size
 
 
@@ -486,9 +510,12 @@ def process_dir(ps_bin: str, pack_dir: Path) -> tuple[int, int]:
         _fix_pack_metadata(tmp_pack)
         _widen_pack_format(tmp_pack)
         mcmeta_bytes, overlay_dirs = _capture_pack_metadata(tmp_pack)
-        overlay_mapping = _merge_overlays_into_main(tmp_pack, overlay_dirs)
+        overlay_mapping, clobbered = _merge_overlays_into_main(tmp_pack, overlay_dirs)
         _run(ps_bin, tmp_pack, output_zip)
     try:
+        _restore_pack_metadata(
+            output_zip, mcmeta_bytes, overlay_dirs, overlay_mapping, clobbered
+        )
         _verify_zip_integrity(output_zip)
     except Exception:
         if bak.exists():
@@ -496,7 +523,6 @@ def process_dir(ps_bin: str, pack_dir: Path) -> tuple[int, int]:
         else:
             output_zip.unlink(missing_ok=True)
         raise
-    _restore_pack_metadata(output_zip, mcmeta_bytes, overlay_dirs, overlay_mapping)
     return before, output_zip.stat().st_size
 
 
@@ -555,6 +581,34 @@ def _selftest() -> None:
                 pass
             else:
                 raise AssertionError(f"expected RuntimeError for corrupted {name}")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        # 16x80 frame strip: signature + fake IHDR chunk header + real dims
+        strip_png = (
+            b"\x89PNG\r\n\x1a\n"
+            + b"\0\0\0\rIHDR"
+            + (16).to_bytes(4, "big")
+            + (80).to_bytes(4, "big")
+        )
+        anim_meta = json.dumps({"animation": {"frametime": 5}})
+
+        anim_zip = Path(tmp) / "anim.zip"
+        with zipfile.ZipFile(anim_zip, "w") as zf:
+            zf.writestr("assets/x/textures/block/sea_lantern.png", strip_png)
+            zf.writestr("assets/x/textures/block/sea_lantern.png.mcmeta", anim_meta)
+        _verify_zip_integrity(anim_zip)  # must not raise
+
+        missing_zip = Path(tmp) / "missing.zip"
+        with zipfile.ZipFile(missing_zip, "w") as zf:
+            zf.writestr("assets/x/textures/block/sea_lantern.png.mcmeta", anim_meta)
+        try:
+            _verify_zip_integrity(missing_zip)
+        except RuntimeError:
+            pass
+        else:
+            raise AssertionError(
+                "expected RuntimeError for animated texture missing its PNG"
+            )
 
     with tempfile.TemporaryDirectory() as tmp:
         d = Path(tmp)

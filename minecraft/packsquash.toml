@@ -91,6 +91,13 @@ two_pass_vorbis_optimization_and_validation = false
 ['**/{COPYING,AUTHORS}']
 force_include = false
 
+# OptiFine custom colormap definitions (colormap/custom/*.properties) have
+# arbitrary filenames, so PackSquash's OptiFine support doesn't recognize
+# them and silently drops them even with allow_mods = ['OptiFine'] set --
+# breaking any custom leaf/foliage colors the pack defines. Force them in.
+['**/optifine/colormap/custom/*.properties']
+force_include = true
+
 # Dev/test JSON files that may be malformed
 ['**/test.json']
 force_include = false
