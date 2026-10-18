@@ -89,9 +89,13 @@ def backup(path: Path) -> None:
 def _run(ps_bin: str, pack_dir: Path, output_zip: Path) -> None:
     toml = (
         TOML_TEMPLATE.read_text()
-        .replace("pack_directory = ''", f"pack_directory = '{pack_dir.as_posix()}'")
+        # json.dumps yields a valid TOML basic string; '...' literals break on apostrophes
         .replace(
-            "output_file_path = ''", f"output_file_path = '{output_zip.as_posix()}'"
+            "pack_directory = ''", f"pack_directory = {json.dumps(pack_dir.as_posix())}"
+        )
+        .replace(
+            "output_file_path = ''",
+            f"output_file_path = {json.dumps(output_zip.as_posix())}",
         )
     )
     with tempfile.NamedTemporaryFile(
@@ -163,16 +167,32 @@ def _verify_zip_integrity(zip_path: Path) -> None:
                 )
 
 
+def _force_remove(func, path, _exc) -> None:
+    """rmtree error handler: clear the read-only bit and retry (Windows)."""
+    os.chmod(path, 0o700)
+    func(path)
+
+
+def _remove_macos_junk(d: Path) -> None:
+    """Recursively delete __MACOSX dirs, .DS_Store and AppleDouble (._*) files.
+
+    Must run before _unwrap(): a sibling __MACOSX dir hides the single pack dir.
+    """
+    for p in list(d.rglob("__MACOSX")):
+        if p.is_dir():
+            shutil.rmtree(p, onexc=_force_remove)
+    for f in list(d.rglob("*")):
+        if f.is_file() and (f.name == ".DS_Store" or f.name.startswith("._")):
+            f.chmod(0o644)
+            f.unlink()
+
+
 def _remove_problematic(d: Path) -> None:
     """Remove files that PackSquash cannot process:
     - Empty/whitespace-only files (would fail JSON/shader parsing)
     """
     for f in d.rglob("*"):
         if not f.is_file():
-            continue
-        if f.name == ".DS_Store" or f.name.startswith("._"):
-            f.chmod(0o644)
-            f.unlink()
             continue
         data = f.read_bytes()
         if not data.strip():
@@ -476,6 +496,7 @@ def process_zip(ps_bin: str, zip_path: Path) -> tuple[int, int]:
         backup(zip_path)
     with tempfile.TemporaryDirectory() as tmp_dir:
         _extract(source, Path(tmp_dir))
+        _remove_macos_junk(Path(tmp_dir))
         pack_dir = _unwrap(Path(tmp_dir))
         _remove_problematic(pack_dir)
         _strip_languages(pack_dir)
@@ -505,6 +526,7 @@ def process_dir(ps_bin: str, pack_dir: Path) -> tuple[int, int]:
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp_pack = Path(tmp_dir) / pack_dir.name
         shutil.copytree(pack_dir, tmp_pack, copy_function=shutil.copy)
+        _remove_macos_junk(tmp_pack)
         _remove_problematic(tmp_pack)
         _strip_languages(tmp_pack)
         _fix_pack_metadata(tmp_pack)
@@ -664,6 +686,26 @@ def _selftest() -> None:
             pass
         else:
             raise AssertionError("expected RuntimeError for pack_format outside range")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "__MACOSX" / "pack").mkdir(parents=True)
+        (d / "__MACOSX" / "pack" / "pack.mcmeta").write_text("{}")
+        (d / "pack" / "assets" / "__MACOSX").mkdir(parents=True)
+        (d / "pack" / "assets" / "__MACOSX" / "x").write_text("x")
+        (d / "pack" / "pack.mcmeta").write_text("{}")
+        (d / "pack" / ".DS_Store").write_text("x")
+        (d / "pack" / "assets" / "._stone.png").write_text("x")
+        (d / "pack" / "assets" / "stone.png").write_text("x")
+        _remove_macos_junk(d)
+        left = sorted(p.relative_to(d).as_posix() for p in d.rglob("*"))
+        assert left == [
+            "pack",
+            "pack/assets",
+            "pack/assets/stone.png",
+            "pack/pack.mcmeta",
+        ], left
+        assert _unwrap(d) == d / "pack"
 
     print("selftest OK")
 
