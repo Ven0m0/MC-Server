@@ -7,17 +7,39 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from common import SCRIPT_DIR, check_server_port, is_server_running
+from common import (
+    SCRIPT_DIR,
+    SERVER_PORT,
+    SERVER_PROCESS_PATTERNS,
+    check_server_port,
+    is_server_running,
+)
 
 SERVER_START_SCRIPT = SCRIPT_DIR / "tools" / "server-start.py"
 CHECK_INTERVAL = 30
 MAX_RESTART_ATTEMPTS = 3
 RESTART_COOLDOWN = 300
 LOG_FILE = SCRIPT_DIR / "logs" / "watchdog.log"
-SERVER_PORT = 25565
 
-restart_count = 0
-last_restart_time = 0.0
+
+class RestartPolicy:
+    """Caps consecutive restarts; only a healthy server (or a long wait) clears the count."""
+
+    def __init__(self, max_attempts: int) -> None:
+        self.max_attempts = max_attempts
+        self.count = 0
+
+    def allow(self) -> bool:
+        if self.count >= self.max_attempts:
+            return False
+        self.count += 1
+        return True
+
+    def reset(self) -> None:
+        self.count = 0
+
+
+policy = RestartPolicy(MAX_RESTART_ATTEMPTS)
 
 
 def log(msg: str) -> None:
@@ -41,20 +63,6 @@ def check_health() -> bool:
     return True
 
 
-def can_restart() -> bool:
-    global last_restart_time, restart_count
-    now = time.time()
-    if (
-        now - last_restart_time < RESTART_COOLDOWN
-        and restart_count >= MAX_RESTART_ATTEMPTS
-    ):
-        log("Too many restarts, waiting for cooldown...")
-        return False
-    last_restart_time = now
-    restart_count += 1
-    return True
-
-
 def start_server() -> bool:
     if not SERVER_START_SCRIPT.is_file():
         log(f"Server start script not found: {SERVER_START_SCRIPT}")
@@ -67,7 +75,7 @@ def start_server() -> bool:
 
 def stop_server() -> bool:
     log("Stopping server...")
-    for pattern in ("fabric-server-launch.jar", "server.jar"):
+    for pattern in SERVER_PROCESS_PATTERNS:
         subprocess.run(["pkill", "-f", pattern], capture_output=True, check=False)
     time.sleep(2)
     return True
@@ -75,7 +83,8 @@ def stop_server() -> bool:
 
 def restart_server() -> bool:
     log("Restarting server...")
-    if not can_restart():
+    if not policy.allow():
+        log("Too many restarts, giving up until the policy resets.")
         return False
     if is_server_running():
         stop_server()
@@ -83,7 +92,6 @@ def restart_server() -> bool:
 
 
 def monitor_mode() -> None:
-    global restart_count, last_restart_time
     log(
         f"Watchdog started (interval: {CHECK_INTERVAL}s, max attempts: {MAX_RESTART_ATTEMPTS})"
     )
@@ -93,14 +101,15 @@ def monitor_mode() -> None:
             if restart_server():
                 log("Restart successful")
                 time.sleep(RESTART_COOLDOWN)
-                restart_count = 0
+                # A start that crashes straight away must keep counting toward the cap
+                if check_health():
+                    policy.reset()
             else:
                 log("Restart failed")
-                if restart_count >= MAX_RESTART_ATTEMPTS:
+                if policy.count >= policy.max_attempts:
                     log("Waiting 30 minutes before retry...")
                     time.sleep(1800)
-                    restart_count = 0
-                    last_restart_time = 0
+                    policy.reset()
         time.sleep(CHECK_INTERVAL)
 
 

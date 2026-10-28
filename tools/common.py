@@ -10,6 +10,7 @@ import socket
 import subprocess
 import sys
 import urllib.request
+from collections.abc import Callable, Iterable
 from pathlib import Path
 from typing import Any
 
@@ -74,27 +75,31 @@ def download_file(url: str, dest: str | Path, connections: int = 8) -> None:
             shutil.copyfileobj(r, f)
 
 
+SERVER_PROCESS_PATTERNS = ("fabric-server-launch.jar", "server.jar")
+
+
+def find_server_pids(pgrep: Callable[[str], str] | None = None) -> list[int]:
+    """PIDs of server processes; `pgrep` maps a pattern to its stdout (fake in tests)."""
+
+    def run_pgrep(pattern: str) -> str:
+        return subprocess.run(
+            ["pgrep", "-f", pattern], capture_output=True, text=True, check=False
+        ).stdout
+
+    runner = pgrep or run_pgrep
+    pids: list[int] = []
+    for pat in SERVER_PROCESS_PATTERNS:
+        pids += [int(p) for p in runner(pat).split() if int(p) not in pids]
+    return pids
+
+
 def is_server_running() -> bool:
-    for pat in ("fabric-server-launch.jar", "server.jar"):
-        if (
-            subprocess.run(
-                ["pgrep", "-f", pat], capture_output=True, check=False
-            ).returncode
-            == 0
-        ):
-            return True
-    return False
+    return bool(find_server_pids())
 
 
 def get_server_pid() -> int | None:
-    r = subprocess.run(
-        ["pgrep", "-f", "fabric-server-launch.jar"],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    pids = r.stdout.strip().split()
-    return int(pids[0]) if pids else None
+    pids = find_server_pids()
+    return pids[0] if pids else None
 
 
 def total_ram_gb() -> int:
@@ -182,75 +187,32 @@ def run_as_root(*cmd: str, **kwargs: Any) -> subprocess.CompletedProcess[Any]:
     return subprocess.run(args, check=True, **kwargs)
 
 
+def find_tool(name: str, hints: Iterable[Path] = ()) -> str | None:
+    """Locate a binary: mise, then PATH, then fixed install locations."""
+    if shutil.which("mise"):
+        r = subprocess.run(
+            ["mise", "which", name], capture_output=True, text=True, check=False
+        )
+        found = r.stdout.strip()
+        if r.returncode == 0 and found and Path(found).is_file():
+            return found
+    on_path = shutil.which(name)
+    if on_path:
+        return on_path
+    return next((str(h) for h in hints if h.is_file()), None)
+
+
 def detect_java() -> str:
     java_home = os.environ.get("JAVA_HOME")
     if java_home and (Path(java_home) / "bin" / "java").is_file():
         return str(Path(java_home) / "bin" / "java")
-    if shutil.which("mise"):
-        r = subprocess.run(
-            ["mise", "which", "java"], capture_output=True, text=True, check=False
-        )
-        if r.returncode == 0 and r.stdout.strip():
-            return r.stdout.strip()
-    return "java"
+    return find_tool("java") or "java"
 
 
-def check_server_port(port: int = 25565, host: str = "localhost") -> bool:
+SERVER_PORT = 25565
+
+
+def check_server_port(port: int = SERVER_PORT, host: str = "localhost") -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.settimeout(1)
         return s.connect_ex((host, port)) == 0
-
-
-def send_command(cmd: str, session_name: str = "minecraft") -> bool:
-    if shutil.which("screen"):
-        r = subprocess.run(
-            ["screen", "-list"], capture_output=True, text=True, check=False
-        )
-        if session_name in r.stdout:
-            info(f"Sending command to Screen: {cmd}")
-            subprocess.run(
-                ["screen", "-S", session_name, "-p", "0", "-X", "stuff", f"{cmd}\r"],
-                check=False,
-            )
-            return True
-    if shutil.which("tmux"):
-        r = subprocess.run(["tmux", "has-session", "-t", session_name], check=False)
-        if r.returncode == 0:
-            info(f"Sending command to Tmux: {cmd}")
-            subprocess.run(
-                ["tmux", "send-keys", "-t", session_name, cmd, "Enter"], check=False
-            )
-            return True
-    error(f"Server session '{session_name}' not found (Screen/Tmux).")
-    return False
-
-
-def game_command(
-    cmd: str,
-    host: str | None = None,
-    port: int | None = None,
-    password: str | None = None,
-) -> None:
-    host = host or os.environ.get("RCON_HOST", "localhost")
-    port = port or int(os.environ.get("RCON_PORT", "25575"))
-    password = password if password is not None else os.environ.get("RCON_PASSWORD", "")
-    if shutil.which("mcrcon"):
-        env = {
-            **os.environ,
-            "MCRCON_HOST": host,
-            "MCRCON_PORT": str(port),
-            "MCRCON_PASS": password,
-        }
-        subprocess.run(["mcrcon", "-c", cmd], env=env, check=True)
-    else:
-        subprocess.run(
-            [
-                sys.executable,
-                str(SCRIPT_DIR / "tools" / "rcon.py"),
-                host,
-                str(port),
-                password,
-                cmd,
-            ],
-            check=True,
-        )

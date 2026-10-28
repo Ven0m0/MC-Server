@@ -17,7 +17,11 @@ import subprocess
 import sys
 import tempfile
 import zipfile
+from collections.abc import Callable
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+from common import find_tool
 
 REPO_ROOT = Path(__file__).parent.parent
 TOML_TEMPLATE = REPO_ROOT / "minecraft" / "packsquash.toml"
@@ -46,31 +50,16 @@ _KEEP_LANGS = frozenset({"en_us", "en_gb", "de_de"})
 
 
 def find_packsquash() -> str:
-    if shutil.which("mise"):
-        r = subprocess.run(
-            ["mise", "which", "packsquash"], capture_output=True, text=True, check=False
-        )
-        if r.returncode == 0 and Path(r.stdout.strip()).is_file():
-            return r.stdout.strip()
-    ps = shutil.which("packsquash")
+    ps = find_tool("packsquash", _EXTRA_HINTS)
     if ps:
         return ps
-    for hint in _EXTRA_HINTS:
-        if hint.is_file():
-            return str(hint)
     print("ERROR: packsquash not found. Run: mise install", file=sys.stderr)
     sys.exit(1)
 
 
 def find_7zip() -> str | None:
     """Find 7-Zip binary for ZIP extraction fallback. Returns path or None."""
-    z = shutil.which("7z")
-    if z:
-        return z
-    for hint in _EXTRA_7Z_HINTS:
-        if hint.is_file():
-            return str(hint)
-    return None
+    return find_tool("7z", _EXTRA_7Z_HINTS)
 
 
 def fmt_bytes(n: int) -> str:
@@ -487,6 +476,33 @@ def _extract(zip_path: Path, dest: Path) -> None:
             subprocess.run(["unzip", "-o", str(zip_path), "-d", str(dest)], check=True)
 
 
+def _optimize(
+    ps_bin: str, pack_dir: Path, output_zip: Path, restore_original: Callable[[], None]
+) -> None:
+    """Clean pack_dir, squash it into output_zip and verify the result.
+
+    Any failure (including PackSquash itself, which may leave a partial
+    output_zip) calls restore_original() before re-raising.
+    """
+    try:
+        _remove_macos_junk(pack_dir)
+        _remove_problematic(pack_dir)
+        _strip_languages(pack_dir)
+        _remove_empty_dirs(pack_dir)
+        _fix_pack_metadata(pack_dir)
+        _widen_pack_format(pack_dir)
+        mcmeta_bytes, overlay_dirs = _capture_pack_metadata(pack_dir)
+        overlay_mapping, clobbered = _merge_overlays_into_main(pack_dir, overlay_dirs)
+        _run(ps_bin, pack_dir, output_zip)
+        _restore_pack_metadata(
+            output_zip, mcmeta_bytes, overlay_dirs, overlay_mapping, clobbered
+        )
+        _verify_zip_integrity(output_zip)
+    except Exception:
+        restore_original()
+        raise
+
+
 def process_zip(ps_bin: str, zip_path: Path) -> tuple[int, int]:
     bak = zip_path.with_suffix(zip_path.suffix + ".bak")
     # Use .bak as source if it exists (original before any prior PackSquash run)
@@ -496,24 +512,14 @@ def process_zip(ps_bin: str, zip_path: Path) -> tuple[int, int]:
         backup(zip_path)
     with tempfile.TemporaryDirectory() as tmp_dir:
         _extract(source, Path(tmp_dir))
+        # Junk must go before _unwrap: a __MACOSX sibling would hide the wrapper dir
         _remove_macos_junk(Path(tmp_dir))
         pack_dir = _unwrap(Path(tmp_dir))
-        _remove_problematic(pack_dir)
-        _strip_languages(pack_dir)
-        _remove_empty_dirs(pack_dir)
-        _fix_pack_metadata(pack_dir)
-        _widen_pack_format(pack_dir)
-        mcmeta_bytes, overlay_dirs = _capture_pack_metadata(pack_dir)
-        overlay_mapping, clobbered = _merge_overlays_into_main(pack_dir, overlay_dirs)
-        _run(ps_bin, pack_dir, zip_path)
-    try:
-        _restore_pack_metadata(
-            zip_path, mcmeta_bytes, overlay_dirs, overlay_mapping, clobbered
-        )
-        _verify_zip_integrity(zip_path)
-    except Exception:
-        shutil.copy2(bak, zip_path)
-        raise
+
+        def restore() -> None:
+            shutil.copy2(bak, zip_path)
+
+        _optimize(ps_bin, pack_dir, zip_path, restore)
     return before, zip_path.stat().st_size
 
 
@@ -526,25 +532,14 @@ def process_dir(ps_bin: str, pack_dir: Path) -> tuple[int, int]:
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp_pack = Path(tmp_dir) / pack_dir.name
         shutil.copytree(pack_dir, tmp_pack, copy_function=shutil.copy)
-        _remove_macos_junk(tmp_pack)
-        _remove_problematic(tmp_pack)
-        _strip_languages(tmp_pack)
-        _fix_pack_metadata(tmp_pack)
-        _widen_pack_format(tmp_pack)
-        mcmeta_bytes, overlay_dirs = _capture_pack_metadata(tmp_pack)
-        overlay_mapping, clobbered = _merge_overlays_into_main(tmp_pack, overlay_dirs)
-        _run(ps_bin, tmp_pack, output_zip)
-    try:
-        _restore_pack_metadata(
-            output_zip, mcmeta_bytes, overlay_dirs, overlay_mapping, clobbered
-        )
-        _verify_zip_integrity(output_zip)
-    except Exception:
-        if bak.exists():
-            shutil.copy2(bak, output_zip)
-        else:
-            output_zip.unlink(missing_ok=True)
-        raise
+
+        def restore() -> None:
+            if bak.exists():
+                shutil.copy2(bak, output_zip)
+            else:
+                output_zip.unlink(missing_ok=True)
+
+        _optimize(ps_bin, tmp_pack, output_zip, restore)
     return before, output_zip.stat().st_size
 
 
@@ -575,7 +570,7 @@ def process_one(ps_bin: str, target: Path) -> bool:
         saved = f"  saved {fmt_bytes(before - after)}" if before > after else ""
         print(f"  done  {fmt_bytes(after)}{saved}")
         return True
-    except (subprocess.CalledProcessError, RuntimeError) as e:
+    except Exception as e:  # noqa: BLE001 - one bad pack must not abort the batch
         print(f"  FAILED: {e}", file=sys.stderr)
         return False
 

@@ -20,7 +20,7 @@ repos:
       - id: ty
         name: ty
         language: system
-        entry: uv run ty check --python-platform linux --extra-search-path minecraft/config
+        entry: uv run ty check --python-platform linux --extra-search-path minecraft/config --extra-search-path tools
         types: [python]
         pass_filenames: false
 

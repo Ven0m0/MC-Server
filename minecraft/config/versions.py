@@ -11,13 +11,7 @@ LAZYMC_SHA256 = {
 RUSTIC_VERSION = "0.19.1"
 RUSTIC_SHA256 = {"x86_64": "", "aarch64": ""}  # Auto-download from GitHub if empty
 
-CHUNKCLEANER_VERSION = "1.0.0"
 CHUNKCLEANER_SHA256 = ""  # Add checksum from releases page
-
-# Minecraft plugins (for mcctl)
-LUCKPERMS_VERSION = "5.4.146"
-FREEDOMCHAT_VERSION = "1.5.0"
-DELUXEMENUS_VERSION = "1.14.0"
 
 _CHECKSUMS = {
     "lazymc": LAZYMC_SHA256,

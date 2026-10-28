@@ -2,7 +2,6 @@
 """Minecraft server monitor."""
 
 import shutil
-import socket
 import subprocess
 import sys
 import time
@@ -12,6 +11,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from common import (
     SCRIPT_DIR,
+    SERVER_PORT,
+    check_server_port,
     error,
     get_server_pid,
     header,
@@ -20,16 +21,11 @@ from common import (
 )
 
 LOG_FILE = SCRIPT_DIR / "logs" / "latest.log"
-SERVER_PORT = 25565
 CHECK_INTERVAL = 60
 
 
-def port_open():
-    try:
-        socket.create_connection(("localhost", SERVER_PORT), timeout=1).close()
-        return True
-    except OSError:
-        return False
+def port_open() -> bool:
+    return check_server_port(SERVER_PORT)
 
 
 def get_status():

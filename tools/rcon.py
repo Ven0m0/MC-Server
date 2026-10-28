@@ -5,7 +5,8 @@ import os
 import socket
 import struct
 import sys
-from typing import Protocol
+from collections.abc import Callable
+from typing import Any, Protocol
 
 
 class _Readable(Protocol):
@@ -34,13 +35,23 @@ def _read(sock: _Readable) -> tuple[int, str]:
     return req_id, data[8:-2].decode(errors="replace")
 
 
-def rcon_command(host: str, port: str | int, password: str, command: str) -> str:
-    with socket.create_connection((host, int(port)), timeout=5) as s:
+class RconAuthError(Exception):
+    """The server rejected the RCON password."""
+
+
+def rcon_command(
+    host: str,
+    port: str | int,
+    password: str,
+    command: str,
+    connect: Callable[..., Any] = socket.create_connection,
+) -> str:
+    """Run one command; `connect` returns a socket-like context manager (fake in tests)."""
+    with connect((host, int(port)), timeout=5) as s:
         s.sendall(_packet(3, password, 12))
         rid, _ = _read(s)
         if rid in (-1, 0xFFFFFFFF):
-            print("Authentication failed: wrong RCON password", file=sys.stderr)
-            sys.exit(1)
+            raise RconAuthError("Authentication failed: wrong RCON password")
         s.sendall(_packet(2, command, 13))
         _, response = _read(s)
         return response
@@ -55,4 +66,8 @@ if __name__ == "__main__":
     if not command:
         print("Usage: rcon.py [host] [port] [password] <command>", file=sys.stderr)
         sys.exit(1)
-    print(rcon_command(host, port, password, command))
+    try:
+        print(rcon_command(host, port, password, command))
+    except RconAuthError as e:
+        print(e, file=sys.stderr)
+        sys.exit(1)

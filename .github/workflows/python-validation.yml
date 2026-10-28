@@ -52,6 +52,10 @@ jobs:
           mapfile -t python_files < /tmp/mc-server-python-files.txt
           ~/.local/bin/ruff check "${python_files[@]}"
 
+      - name: Run unit tests
+        run: |
+          for t in tools/tests/test_*.py; do python3 "$t"; done
+
       - name: Check formatting
         run: |
           mapfile -t python_files < /tmp/mc-server-python-files.txt

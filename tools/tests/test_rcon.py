@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from rcon import _packet, _read
+from rcon import RconAuthError, _packet, _read, rcon_command
 
 
 class FakeSocket:
@@ -54,11 +54,46 @@ def test_auth_failure_detection():
     assert rid in (-1, 0xFFFFFFFF), f"expected -1 or 0xFFFFFFFF, got {rid}"
 
 
+def _fake_connect(*replies: tuple[int, str]):
+    """connect() stand-in whose socket replays framed (req_id, text) replies."""
+    data = b""
+    for rid, text in replies:
+        body = struct.pack("<ii", rid, 0) + text.encode() + b"\x00\x00"
+        data += struct.pack("<i", len(body)) + body
+
+    class Conn(FakeSocket):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_exc):
+            return False
+
+        def sendall(self, _data: bytes) -> None:
+            pass
+
+    return lambda *_a, **_kw: Conn(data)
+
+
+def test_rcon_command_returns_response():
+    out = rcon_command("h", 1, "pw", "list", _fake_connect((12, ""), (13, "pong")))
+    assert out == "pong", out
+
+
+def test_rcon_command_raises_on_bad_password():
+    try:
+        rcon_command("h", 1, "bad", "list", _fake_connect((-1, "")))
+    except RconAuthError:
+        return
+    raise AssertionError("expected RconAuthError")
+
+
 tests = [
     test_packet_roundtrip,
     test_read_roundtrip,
     test_encode_int_little_endian,
     test_auth_failure_detection,
+    test_rcon_command_returns_response,
+    test_rcon_command_raises_on_bad_password,
 ]
 failed = 0
 for t in tests:
