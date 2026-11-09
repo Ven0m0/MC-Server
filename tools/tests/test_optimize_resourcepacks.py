@@ -5,6 +5,7 @@ import importlib.util
 import subprocess
 import sys
 import tempfile
+import zipfile
 from pathlib import Path
 from typing import Any
 
@@ -59,18 +60,39 @@ def test_process_one_survives_unexpected_error():
             opt.process_dir = original
 
 
-tests = [
-    test_restore_runs_when_packsquash_fails,
-    test_process_one_survives_unexpected_error,
-]
-failed = 0
-for t in tests:
-    try:
-        t()
-        print(f"\033[0;32m✓\033[0m {t.__name__}")
-    except AssertionError as e:
-        print(f"\033[0;31m✗\033[0m {t.__name__}: {e}")
-        failed += 1
+def test_selected_packs_txt_is_kept():
+    def fake_run(_ps, pack_dir, output_zip):
+        # PackSquash output: only pack files, no stray root .txt
+        with zipfile.ZipFile(output_zip, "w") as zf:
+            zf.write(pack_dir / "pack.mcmeta", "pack.mcmeta")
 
-print(f"\nTests: {len(tests)}, Failed: {failed}")
-sys.exit(failed)
+    with tempfile.TemporaryDirectory() as tmp:
+        pack = _make_pack(Path(tmp))
+        (pack / "Selected Packs.txt").write_bytes(b"Packs:\nDarkUI")
+        out = Path(tmp) / "out.zip"
+        original_run, opt._run = opt._run, fake_run
+        try:
+            opt._optimize("ps", pack, out, lambda: None)
+        finally:
+            opt._run = original_run
+        with zipfile.ZipFile(out) as zf:
+            assert zf.read("Selected Packs.txt") == b"Packs:\nDarkUI"
+
+
+if __name__ == "__main__":
+    tests = [
+        test_selected_packs_txt_is_kept,
+        test_restore_runs_when_packsquash_fails,
+        test_process_one_survives_unexpected_error,
+    ]
+    failed = 0
+    for t in tests:
+        try:
+            t()
+            print(f"\033[0;32m✓\033[0m {t.__name__}")
+        except AssertionError as e:
+            print(f"\033[0;31m✗\033[0m {t.__name__}: {e}")
+            failed += 1
+
+    print(f"\nTests: {len(tests)}, Failed: {failed}")
+    sys.exit(failed)

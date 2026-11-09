@@ -348,12 +348,54 @@ def _merge_overlays_into_main(
                 continue
             main_arcname = arcname[len(prefix) :]
             main_file = pack_dir / main_arcname
-            if main_file.is_file() and main_arcname not in clobbered:
+            # Only a file that predates the merge is the base pack's own; one
+            # an earlier overlay wrote must not be "restored" into the main path
+            if (
+                main_file.is_file()
+                and main_arcname not in clobbered
+                and main_arcname not in mapping.values()
+            ):
                 clobbered[main_arcname] = main_file.read_bytes()
             main_file.parent.mkdir(parents=True, exist_ok=True)
             main_file.write_bytes(data)
             mapping[arcname] = main_arcname
     return mapping, clobbered
+
+
+# Root-level files PackSquash would drop but users want kept (Vanilla Tweaks pack list)
+_KEEP_FILES = ("Selected Packs.txt",)
+
+
+def _hold_out_include_shaders(
+    pack_dir: Path,
+    mapping: dict[str, str],
+    clobbered: dict[str, bytes],
+) -> tuple[dict[str, str], dict[str, bytes]]:
+    """Take shaders using `#include` out of pack_dir so PackSquash never sees them.
+
+    PackSquash 0.4.1 rejects `#include` (upstream issue #397) and aborts the run.
+    Overlay-sourced files lose their mapping entries, so _restore_pack_metadata
+    writes the original overlay bytes back; base-pack files go into the returned
+    clobbered dict, which is restored after PackSquash. Returns new
+    (mapping, clobbered) dicts.
+    """
+    targets = set(mapping.values())
+    held_mapping = dict(mapping)
+    held_clobbered = dict(clobbered)
+    for f in list(pack_dir.rglob("*")):
+        if not f.is_file() or f.suffix.lower() not in _SHADER_EXTS:
+            continue
+        data = f.read_bytes()
+        if b"#include" not in data:
+            continue
+        rel = f.relative_to(pack_dir).as_posix()
+        if rel in targets:
+            held_mapping = {k: v for k, v in held_mapping.items() if v != rel}
+        else:
+            held_clobbered[rel] = data
+        f.unlink()
+        print(f"  holding out (PackSquash lacks #include support): {rel}")
+    return held_mapping, held_clobbered
 
 
 def _repack_zip(src_dir: Path, zip_path: Path) -> None:
@@ -493,6 +535,14 @@ def _optimize(
         _widen_pack_format(pack_dir)
         mcmeta_bytes, overlay_dirs = _capture_pack_metadata(pack_dir)
         overlay_mapping, clobbered = _merge_overlays_into_main(pack_dir, overlay_dirs)
+        overlay_mapping, clobbered = _hold_out_include_shaders(
+            pack_dir, overlay_mapping, clobbered
+        )
+        # PackSquash drops non-pack files; re-add them after the run
+        for name in _KEEP_FILES:
+            kept = pack_dir / name
+            if kept.is_file():
+                clobbered.setdefault(name, kept.read_bytes())
         _run(ps_bin, pack_dir, output_zip)
         _restore_pack_metadata(
             output_zip, mcmeta_bytes, overlay_dirs, overlay_mapping, clobbered
@@ -701,6 +751,25 @@ def _selftest() -> None:
             "pack/pack.mcmeta",
         ], left
         assert _unwrap(d) == d / "pack"
+
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        sh = d / "assets" / "minecraft" / "shaders" / "core"
+        sh.mkdir(parents=True)
+        (sh / "text.vsh").write_text("#include <a:b.glsl>\nvoid main() {}")
+        (sh / "plain.vsh").write_text("void main() {}")
+        base = d / "assets" / "minecraft" / "shaders" / "base.fsh"
+        base.write_text("#include <a:b.glsl>")
+        mapping = {
+            "overlay_88/assets/minecraft/shaders/core/text.vsh": "assets/minecraft/shaders/core/text.vsh",
+            "overlay_96/assets/minecraft/shaders/core/text.vsh": "assets/minecraft/shaders/core/text.vsh",
+            "overlay_88/assets/minecraft/shaders/core/plain.vsh": "assets/minecraft/shaders/core/plain.vsh",
+        }
+        new_map, new_clob = _hold_out_include_shaders(d, mapping, {})
+        assert not (sh / "text.vsh").exists() and not base.exists()
+        assert (sh / "plain.vsh").exists()
+        assert list(new_map) == ["overlay_88/assets/minecraft/shaders/core/plain.vsh"]
+        assert list(new_clob) == ["assets/minecraft/shaders/base.fsh"], new_clob
 
     print("selftest OK")
 

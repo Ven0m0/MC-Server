@@ -87,22 +87,23 @@ def test_rcon_command_raises_on_bad_password():
     raise AssertionError("expected RconAuthError")
 
 
-tests = [
-    test_packet_roundtrip,
-    test_read_roundtrip,
-    test_encode_int_little_endian,
-    test_auth_failure_detection,
-    test_rcon_command_returns_response,
-    test_rcon_command_raises_on_bad_password,
-]
-failed = 0
-for t in tests:
-    try:
-        t()
-        print(f"\033[0;32m✓\033[0m {t.__name__}")
-    except AssertionError as e:
-        print(f"\033[0;31m✗\033[0m {t.__name__}: {e}")
-        failed += 1
+if __name__ == "__main__":
+    tests = [
+        test_packet_roundtrip,
+        test_read_roundtrip,
+        test_encode_int_little_endian,
+        test_auth_failure_detection,
+        test_rcon_command_returns_response,
+        test_rcon_command_raises_on_bad_password,
+    ]
+    failed = 0
+    for t in tests:
+        try:
+            t()
+            print(f"\033[0;32m✓\033[0m {t.__name__}")
+        except AssertionError as e:
+            print(f"\033[0;31m✗\033[0m {t.__name__}: {e}")
+            failed += 1
 
-print(f"\nTests: {len(tests)}, Failed: {failed}")
-sys.exit(failed)
+    print(f"\nTests: {len(tests)}, Failed: {failed}")
+    sys.exit(failed)

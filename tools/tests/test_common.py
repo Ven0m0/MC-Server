@@ -17,15 +17,16 @@ def test_no_match_means_no_pids():
     assert find_server_pids(lambda _pat: "") == []
 
 
-tests = [test_pids_from_both_patterns_deduplicated, test_no_match_means_no_pids]
-failed = 0
-for t in tests:
-    try:
-        t()
-        print(f"\033[0;32m✓\033[0m {t.__name__}")
-    except AssertionError as e:
-        print(f"\033[0;31m✗\033[0m {t.__name__}: {e}")
-        failed += 1
+if __name__ == "__main__":
+    tests = [test_pids_from_both_patterns_deduplicated, test_no_match_means_no_pids]
+    failed = 0
+    for t in tests:
+        try:
+            t()
+            print(f"\033[0;32m✓\033[0m {t.__name__}")
+        except AssertionError as e:
+            print(f"\033[0;31m✗\033[0m {t.__name__}: {e}")
+            failed += 1
 
-print(f"\nTests: {len(tests)}, Failed: {failed}")
-sys.exit(failed)
+    print(f"\nTests: {len(tests)}, Failed: {failed}")
+    sys.exit(failed)

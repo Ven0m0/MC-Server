@@ -21,15 +21,16 @@ def test_reset_reopens_the_cap():
     assert p.allow()
 
 
-tests = [test_cap_blocks_after_max_attempts, test_reset_reopens_the_cap]
-failed = 0
-for t in tests:
-    try:
-        t()
-        print(f"\033[0;32m✓\033[0m {t.__name__}")
-    except AssertionError as e:
-        print(f"\033[0;31m✗\033[0m {t.__name__}: {e}")
-        failed += 1
+if __name__ == "__main__":
+    tests = [test_cap_blocks_after_max_attempts, test_reset_reopens_the_cap]
+    failed = 0
+    for t in tests:
+        try:
+            t()
+            print(f"\033[0;32m✓\033[0m {t.__name__}")
+        except AssertionError as e:
+            print(f"\033[0;31m✗\033[0m {t.__name__}: {e}")
+            failed += 1
 
-print(f"\nTests: {len(tests)}, Failed: {failed}")
-sys.exit(failed)
+    print(f"\nTests: {len(tests)}, Failed: {failed}")
+    sys.exit(failed)
