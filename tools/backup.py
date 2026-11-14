@@ -164,6 +164,25 @@ def rustic_restore(snapshot: str = "latest", dest: str = "") -> None:
     success("Restore complete")
 
 
+def rustic_drill(snapshot: str = "latest") -> int:
+    """Restore a snapshot into a throwaway directory and fail if it is empty or the repo is corrupt.
+
+    Never touches the live server directory; safe to run from cron.
+    """
+    import tempfile
+
+    header("Rustic restore drill")
+    rustic_cmd("check", check=True)
+    with tempfile.TemporaryDirectory(prefix="rustic-drill-") as tmp:
+        rustic_cmd("restore", snapshot, tmp, check=True)
+        restored = sum(1 for p in Path(tmp).rglob("*") if p.is_file())
+    if restored == 0:
+        error(f"Drill failed: snapshot {snapshot} restored zero files")
+        return 1
+    success(f"Drill passed: {restored} files restored from {snapshot}")
+    return 0
+
+
 # ----------------------------------------------------------------------------
 # TAR FUNCTIONS
 # ----------------------------------------------------------------------------
@@ -395,6 +414,7 @@ Commands:
         rustic-backup [tag]             Backup server directory (excludes logs/backups)
         rustic-restore [snapshot]       Restore snapshot (default: latest)
         rustic-list                     List snapshots
+        rustic-drill [snapshot]         Restore into a temp dir to prove backups work (cron-safe)
         rustic-prune                    Prune old snapshots
 
     Btrfs Snapshots (requires Btrfs filesystem):
@@ -445,6 +465,8 @@ def main() -> None:
             rustic_restore(a[0] if a else "latest", a[1] if len(a) > 1 else "")
         case "rustic-list":
             rustic_cmd("snapshots")
+        case "rustic-drill":
+            sys.exit(rustic_drill(a[0] if a else "latest"))
         case "rustic-prune":
             rustic_cmd("forget", "--prune", "--keep-last", str(MAX_BACKUPS))
         case "snapshot":
