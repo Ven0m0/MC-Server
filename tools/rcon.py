@@ -58,13 +58,16 @@ def rcon_command(
 
 
 if __name__ == "__main__":
-    args = sys.argv[1:]
-    host = args[0] if len(args) > 0 else os.environ.get("RCON_HOST", "localhost")
-    port = args[1] if len(args) > 1 else os.environ.get("RCON_PORT", "25575")
-    password = args[2] if len(args) > 2 else os.environ.get("RCON_PASSWORD", "")
-    command = args[3] if len(args) > 3 else ""
+    # Connection settings come from the environment only: argv is visible to every local user in `ps`.
+    host = os.environ.get("RCON_HOST", "localhost")
+    port = os.environ.get("RCON_PORT", "25575")
+    password = os.environ.get("RCON_PASSWORD", "")
+    command = " ".join(sys.argv[1:])
     if not command:
-        print("Usage: rcon.py [host] [port] [password] <command>", file=sys.stderr)
+        print(
+            "Usage: rcon.py <command>  (env: RCON_HOST, RCON_PORT, RCON_PASSWORD)",
+            file=sys.stderr,
+        )
         sys.exit(1)
     try:
         print(rcon_command(host, port, password, command))
